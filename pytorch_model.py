@@ -159,14 +159,14 @@ class ConvNet(nn.Module):
         self.relu3 = nn.ReLU()
 
     def forward(self, x):
-        self.layer1(x)
-        self.relu1(out)
+        out = self.layer1(x)
+        out = self.relu1(out)
 
-        self.layer2(out)
-        self.relu2(out)
+        out = self.layer2(out)
+        out = self.relu2(out)
 
-        self.layer3(out)
-        self.relu3(out)
+        out = self.layer3(out)
+        out = self.relu3(out)
 
         return out
 
