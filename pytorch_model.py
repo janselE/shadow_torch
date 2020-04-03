@@ -170,7 +170,7 @@ learningRate = 0.001
 epochs = 10
 
 criterion = nn.CrossEntropyLoss()#torch.nn.MSELoss() # Loss function
-optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate) #torch.optim.SGD(model.parameters(), lr=learningRate) # Gradient
+optimizer = torch.optim.Adam(model.parameters(), lr=learningRate) #torch.optim.SGD(model.parameters(), lr=learningRate) # Gradient
 
 
 # Train the model
