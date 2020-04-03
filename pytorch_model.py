@@ -180,6 +180,8 @@ else:
 model = ConvNet().to(device) # Initialize the model
 trainloader = DataLoader(dataset=Data(device), batch_size=32) # Create the loader for the model 
 
+print(model)
+
 learningRate = 0.001
 epochs = 10
 
