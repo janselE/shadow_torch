@@ -92,9 +92,9 @@ from torch.utils.data import Dataset, DataLoader
 # Create the data class, this is done to load the data into the pytorch model
 class Data(Dataset):
     # Constructor
-    def __init__(self):
-        self.x = t_imgs.float()
-        self.y = t_target.float()
+    def __init__(self, device):
+        self.x = t_imgs.float().to(device)
+        self.y = t_target.float().to(device)
         self.len = self.x.shape[0]
     # Getter
     def __getitem__(self, index):
@@ -170,16 +170,16 @@ class ConvNet(nn.Module):
 
         return out
 
-trainloader = DataLoader(dataset=Data(), batch_size=32) # Create the loader for the model 
-
 if torch.cuda.is_available():
-    device = torch.device("cuda:0")
+    device0 = torch.device("cuda:0")
+    device1 = torch.device("cuda:1")
     print("running on GPU")
 else:
-    device = torch.device("cpu")
+    device0 = torch.device("cpu")
     print("running on CPU")
 
-model = ConvNet().to(device) # Initialize the model
+trainloader = DataLoader(dataset=Data(device), batch_size=32) # Create the loader for the model 
+model = ConvNet().to(device0) # Initialize the model
 
 learningRate = 0.001
 epochs = 10
