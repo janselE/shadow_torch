@@ -48,11 +48,11 @@ def reader(filename):
 imgs_g, target_g, imgs_c, target_c = reader('../../../ISTD_Dataset/train/train_A/*.png')
 
 #process the images
-imgsr = imgs_g.reshape(-1, 480, 640, 1).astype('float32') / 255
-targetr = target_g.reshape(-1, 480, 640, 1).astype('float32') / 255
+imgsr = imgs_g.reshape(-1, 1, 480, 640).astype('float32') / 255
+targetr = target_g.reshape(-1, 1, 480, 640).astype('float32') / 255
 
-imgsr_c = imgs_c.reshape(-1, 480, 640, 3).astype('float32') / 255
-targetr_c = target_c.reshape(-1, 480, 640, 3).astype('float32') / 255
+imgsr_c = imgs_c.reshape(-1, 3, 480, 640).astype('float32') / 255
+targetr_c = target_c.reshape(-1, 3, 480, 640).astype('float32') / 255
 
 print(imgsr.shape,  targetr.shape)
 print(imgsr_c.shape,  targetr_c.shape)
