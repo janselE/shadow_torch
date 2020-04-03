@@ -45,7 +45,7 @@ def reader(filename):
 
     return imgs_g, target_g, imgs_c, target_c
 
-imgs_g, target_g, imgs_c, target_c = reader('../ISTD_Dataset/train/train_A/*.png')
+imgs_g, target_g, imgs_c, target_c = reader('../../../ISTD_Dataset/train/train_A/*.png')
 
 #process the images
 imgsr = imgs_g.reshape(-1, 480, 640, 1).astype('float32') / 255
