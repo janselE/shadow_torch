@@ -165,12 +165,7 @@ class ConvNet(nn.Module):
 trainloader = DataLoader(dataset=Data(), batch_size=32) # Create the loader for the model 
 model = ConvNet() # Initialize the model
 
-<<<<<<< HEAD
-learningRate = 1
-=======
-
 learningRate = 0.001
->>>>>>> eda9fa14bea4bfed46109865e8fab12c6109495e
 epochs = 10
 
 criterion = nn.CrossEntropyLoss()#torch.nn.MSELoss() # Loss function
