@@ -150,7 +150,6 @@ class SimpleNet(nn.Module):
 trainloader = DataLoader(dataset=Data(), batch_size=32) # Create the loader for the model 
 model = SimpleNet(1, 1) # Initialize the model
 
-
 learningRate = 1
 epochs = 10
 
