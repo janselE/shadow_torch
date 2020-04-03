@@ -156,7 +156,7 @@ class ConvNet(nn.Module):
         self.relu2 = nn.ReLU()
 
         self.layer3 = nn.Conv2d(64, 1, kernel_size=5, stride=1, padding=2)
-        self.relu3 = nn.ReLU()
+        self.sig = nn.Sigmoid()
 
     def forward(self, x):
         out = self.layer1(x)
@@ -166,7 +166,7 @@ class ConvNet(nn.Module):
         out = self.relu2(out)
 
         out = self.layer3(out)
-        out = self.relu3(out)
+        out = self.sig(out)
 
         return out
 
@@ -185,8 +185,10 @@ print(model)
 learningRate = 0.001
 epochs = 10
 
-criterion = torch.nn.MSELoss() # Loss function
-optimizer = torch.optim.SGD(model.parameters(), lr=learningRate) # Gradient
+#criterion = torch.nn.MSELoss() # Loss function
+#optimizer = torch.optim.SGD(model.parameters(), lr=learningRate) # Gradient
+criterion = torch.nn.BCELoss() # Loss function
+optimizer = torch.optim.Adam(model.parameters(), lr=learningRate) # Gradient
 
 
 # Train the model
