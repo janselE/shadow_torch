@@ -146,15 +146,35 @@ class SimpleNet(nn.Module):
 
         return output
 
+class ConvNet(nn.Module):
+    def __init__(self):
+        super(ConvNet, self).__init__()
+
+        self.layer1 = nn.Sequential(nn.Conv2d(1, 32, kernel_size=5, stride=1, padding=2),nn.ReLU(),nn.MaxPool2d(kernel_size=2, stride=2))
+        self.layer2 = nn.Sequential(nn.Conv2d(32, 64, kernel_size=5, stride=1, padding=2),nn.ReLU(),nn.MaxPool2d(kernel_size=2, stride=2))
+        self.layer3 = nn.Sequential(nn.Conv2d(32, 1, kernel_size=5, stride=1, padding=2),nn.ReLU(),nn.MaxPool2d(kernel_size=2, stride=2))
+
+    def forward(self, x):
+       out = self.layer1(x)
+       out = self.layer2(out)
+       out = self.layer3(out)
+
+       return out
+
 
 trainloader = DataLoader(dataset=Data(), batch_size=32) # Create the loader for the model 
-model = SimpleNet(1, 1) # Initialize the model
+model = ConvNet() # Initialize the model
 
+<<<<<<< HEAD
 learningRate = 1
+=======
+
+learningRate = 0.001
+>>>>>>> eda9fa14bea4bfed46109865e8fab12c6109495e
 epochs = 10
 
-criterion = torch.nn.MSELoss() # Loss function
-optimizer = torch.optim.SGD(model.parameters(), lr=learningRate) # Gradient
+criterion = nn.CrossEntropyLoss()#torch.nn.MSELoss() # Loss function
+optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate) #torch.optim.SGD(model.parameters(), lr=learningRate) # Gradient
 
 
 # Train the model
@@ -176,4 +196,4 @@ def train_model(epochs):
 
 train_model(10)
 
-torch.cuda.is_available()
+print(torch.cuda.is_available())
