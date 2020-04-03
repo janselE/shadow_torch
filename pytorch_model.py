@@ -171,7 +171,15 @@ class ConvNet(nn.Module):
         return out
 
 trainloader = DataLoader(dataset=Data(), batch_size=32) # Create the loader for the model 
-model = ConvNet() # Initialize the model
+
+if torch.cuda.is_available():
+    device = torch.device("cuda:0")
+    print("running on GPU")
+else:
+    device = torch.device("cpu")
+    print("running on CPU")
+
+model = ConvNet().to(device) # Initialize the model
 
 learningRate = 0.001
 epochs = 10
