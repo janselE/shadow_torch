@@ -165,7 +165,6 @@ class ConvNet(nn.Module):
 trainloader = DataLoader(dataset=Data(), batch_size=32) # Create the loader for the model 
 model = ConvNet() # Initialize the model
 
-
 learningRate = 0.001
 epochs = 10
 
