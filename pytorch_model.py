@@ -176,10 +176,11 @@ if torch.cuda.is_available():
     print("running on GPU")
 else:
     device0 = torch.device("cpu")
+    device1 = torch.device("cpu")
     print("running on CPU")
 
-trainloader = DataLoader(dataset=Data(device), batch_size=32) # Create the loader for the model 
 model = ConvNet().to(device0) # Initialize the model
+trainloader = DataLoader(dataset=Data(device1), batch_size=32) # Create the loader for the model 
 
 learningRate = 0.001
 epochs = 10
