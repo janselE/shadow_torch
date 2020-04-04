@@ -83,7 +83,7 @@ class Data(Dataset):
 
     # Get items
     def __len__(self):
-        return len
+        return self.len
 
 print(t_imgs.size(), t_target.size())
 
