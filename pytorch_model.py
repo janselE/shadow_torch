@@ -82,7 +82,7 @@ class Data(Dataset):
         return self.x[index], self.y[index]
 
     # Get items
-    def __len__():
+    def __len__(self):
         return len
 
 print(t_imgs.size(), t_target.size())
