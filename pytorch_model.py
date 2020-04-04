@@ -72,13 +72,14 @@ from torch.utils.data import Dataset, DataLoader
 # Create the data class, this is done to load the data into the pytorch model
 class Data(Dataset):
     # Constructor
-    def __init__( device):
-        x = t_imgs.float().to(device)
-        y = t_target.float().to(device)
-        len = x.shape[0]
+    def __init__(self, device):
+        self.x = t_imgs.float().to(device)
+        self.y = t_target.float().to(device)
+        self.len = self.x.shape[0]
+
     # Getter
-    def __getitem__( index):
-        return x[index], y[index]
+    def __getitem__(self, index):
+        return self.x[index], self.y[index]
 
     # Get items
     def __len__():
