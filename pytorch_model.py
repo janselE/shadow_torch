@@ -149,7 +149,7 @@ class UNet(nn.Module):
             bypass = F.pad(bypass, (-c, -c, -c, -c))
         return torch.cat((upsampled, bypass), 1)
 
-    def forward(x):
+    def forward(self, x):
         # Encode
         encode_block1 = self.conv_encode1(x)
         encode_pool1 = self.conv_maxpool1(encode_block1)
