@@ -4,7 +4,6 @@ import numpy as np
 from torch.autograd import Variable
 import torch.nn as nn
 
-
 def read_dataset(filename):
     imgs_names = []
     target_names = []
@@ -57,25 +56,7 @@ targetr_c = target_c.reshape(-1, 3, 480, 640).astype('float32') / 255
 print(imgsr.shape,  targetr.shape)
 print(imgsr_c.shape,  targetr_c.shape)
 
-
-
-import matplotlib.pyplot as plt
-
-# This output the images that are being used and generated
-# First column is for the training image (original)
-# Third column is the target values (gt)
-for i in range(20):
-    fig, ax = plt.subplots(1, 2, sharex='col', sharey='row')
-    for j in range(3):
-        if j == 0:
-            ax[j].imshow(imgs_c[i])
-        elif j == 1:
-            ax[j].imshow(target_c[i])
-
-
-
 targetr.shape
-
 
 import torch
 # converting the lists into numpy arrays
@@ -86,24 +67,22 @@ import torch
 t_imgs = torch.tensor(np.asarray(imgsr)) # this is to do regression on channels
 t_target = torch.tensor(np.asarray(targetr)) # this is to do regression on channels
 
-
 from torch.utils.data import Dataset, DataLoader
 
 # Create the data class, this is done to load the data into the pytorch model
 class Data(Dataset):
     # Constructor
-    def __init__(self, device):
-        self.x = t_imgs.float().to(device)
-        self.y = t_target.float().to(device)
-        self.len = self.x.shape[0]
+    def __init__( device):
+        x = t_imgs.float().to(device)
+        y = t_target.float().to(device)
+        len = x.shape[0]
     # Getter
-    def __getitem__(self, index):
-        return self.x[index], self.y[index]
+    def __getitem__( index):
+        return x[index], y[index]
 
     # Get items
-    def __len__(self):
-        return self.len
-
+    def __len__():
+        return len
 
 print(t_imgs.size(), t_target.size())
 
@@ -114,61 +93,109 @@ def save_models(epoch):
     print("Chekcpoint saved")
 
 
-class SimpleNet(nn.Module):
-    def __init__(self, inputSize, outputSize):
-        super(SimpleNet, self).__init__()
+class UNet(nn.Module):
+    def contracting_block(self, in_channels, out_channels, kernel_size=3):
+        block = torch.nn.Sequential(
+                torch.nn.Conv2d(kernel_size=kernel_size, in_channels=in_channels, out_channels=out_channels),
+                torch.nn.ReLU(), torch.nn.BatchNorm2d(out_channels), torch.nn.Conv2d(kernel_size=kernel_size, in_channels=out_channels, out_channels=out_channels),
+                torch.nn.ReLU(), torch.nn.BatchNorm2d(out_channels)
+                )
 
-        self.i = nn.Linear(inputSize, 32)
-        self.relu1 = nn.ReLU()
+        return block
 
-        self.h2 = nn.Linear(32, 64)
-        self.relu2 = nn.ReLU()
+    def expansive_block(self, in_channels, mid_channel, out_channels, kernel_size=3):
+        block = torch.nn.Sequential(torch.nn.Conv2d(kernel_size=kernel_size, in_channels=in_channels, out_channels=mid_channel),
+                torch.nn.ReLU(), torch.nn.BatchNorm2d(mid_channel), torch.nn.Conv2d(kernel_size=kernel_size, in_channels=mid_channel, out_channels=mid_channel),
+                torch.nn.ReLU(), torch.nn.BatchNorm2d(mid_channel),
+                torch.nn.ConvTranspose2d(in_channels=mid_channel, out_channels=out_channels, kernel_size=3, stride=2, padding=1, output_padding=1)
+                )
+        return  block
 
-        self.h3 = nn.Linear(64, 32)
-        self.relu3 = nn.ReLU()
+    def final_block(self, in_channels, mid_channel, out_channels, kernel_size=3):
+        block = torch.nn.Sequential(torch.nn.Conv2d(kernel_size=kernel_size, in_channels=in_channels, out_channels=mid_channel),
+                torch.nn.ReLU(), torch.nn.BatchNorm2d(mid_channel), torch.nn.Conv2d(kernel_size=kernel_size, in_channels=mid_channel, out_channels=mid_channel),
+                torch.nn.ReLU(), torch.nn.BatchNorm2d(mid_channel), torch.nn.Conv2d(kernel_size=kernel_size, in_channels=mid_channel, out_channels=out_channels, padding=1),
+                torch.nn.ReLU(), torch.nn.BatchNorm2d(out_channels))
+        return  block
 
-        self.o = nn.Linear(32, outputSize)
-        self.relu4 = nn.ReLU()
+    def __init__(self, in_channel, out_channel):
+        super(UNet, self).__init__()
+        #Encode
+        self.conv_encode1 = self.contracting_block(in_channels=in_channel, out_channels=64)
+        self.conv_maxpool1 = torch.nn.MaxPool2d(kernel_size=2)
+        self.conv_encode2 = self.contracting_block(64, 128)
+        self.conv_maxpool2 = torch.nn.MaxPool2d(kernel_size=2)
+        self.conv_encode3 = self.contracting_block(128, 256)
+        self.conv_maxpool3 = torch.nn.MaxPool2d(kernel_size=2)
 
-    def forward(self, x):
-        output1 = self.i(x)
-        output1 = self.relu1(output1)
+        # Bottleneck
+        self.bottleneck = torch.nn.Sequential(torch.nn.Conv2d(kernel_size=3, in_channels=256, out_channels=512),
+                torch.nn.ReLU(), torch.nn.BatchNorm2d(512),
+                torch.nn.Conv2d(kernel_size=3, in_channels=512, out_channels=512),
+                torch.nn.ReLU(),
+                torch.nn.BatchNorm2d(512),
+                torch.nn.ConvTranspose2d(in_channels=512, out_channels=256, kernel_size=3, stride=2, padding=1, output_padding=1)
+                )
 
-        output2 = self.h2(output1)
-        output2 = self.relu2(output2)
+        # Decode
+        self.conv_decode3 = self.expansive_block(512, 256, 128)
+        self.conv_decode2 = self.expansive_block(256, 128, 64)
+        self.final_layer = self.final_block(128, 64, out_channel)
 
-        output3 = self.h3(output2)
-        output3 = self.relu3(output3)
+    def crop_and_concat(self, upsampled, bypass, crop=False):
+        if crop:
+            c = (bypass.size()[2] - upsampled.size()[2]) // 2
+            bypass = F.pad(bypass, (-c, -c, -c, -c))
+        return torch.cat((upsampled, bypass), 1)
 
-        output4 = output1 + output3 # skip connection
+    def forward(x):
+        # Encode
+        encode_block1 = self.conv_encode1(x)
+        encode_pool1 = self.conv_maxpool1(encode_block1)
+        encode_block2 = self.conv_encode2(encode_pool1)
+        encode_pool2 = self.conv_maxpool2(encode_block2)
+        encode_block3 = self.conv_encode3(encode_pool2)
+        encode_pool3 = self.conv_maxpool3(encode_block3)
 
-        output = self.o(output4)
+        # Bottleneck
+        bottleneck1 = self.bottleneck(encode_pool3)
 
-        return output
+        # Decode
+        decode_block3 = self.crop_and_concat(bottleneck1, encode_block3, crop=True)
+        cat_layer2 = self.conv_decode3(decode_block3)
+        decode_block2 = self.crop_and_concat(cat_layer2, encode_block2, crop=True)
+        cat_layer1 = self.conv_decode2(decode_block2)
+        decode_block1 = self.crop_and_concat(cat_layer1, encode_block1, crop=True)
+        final_layer = self.final_layer(decode_block1)
 
-class ConvNet(nn.Module):
-    def __init__(self):
-        super(ConvNet, self).__init__()
-        self.layer1 = nn.Conv2d(1, 32, kernel_size=5, stride=1, padding=2)
-        self.relu1 = nn.ReLU()
+        return  final_layer
 
-        self.layer2 = nn.Conv2d(32, 64, kernel_size=5, stride=1, padding=2)
-        self.relu2 = nn.ReLU()
 
-        self.layer3 = nn.Conv2d(64, 1, kernel_size=5, stride=1, padding=2)
-        self.sig = nn.Sigmoid()
 
-    def forward(self, x):
-        out = self.layer1(x)
-        out = self.relu1(out)
 
-        out = self.layer2(out)
-        out = self.relu2(out)
-
-        out = self.layer3(out)
-        out = self.sig(out)
-
-        return out
+#class ConvNet(nn.Module):
+#    def __init__(:
+#        super(ConvNet, .__init__()
+#        layer1 = nn.Conv2d(1, 32, kernel_size=5, stride=1, padding=2)
+#        relu1 = nn.ReLU()
+#
+#        layer2 = nn.Conv2d(32, 64, kernel_size=5, stride=1, padding=2)
+#        relu2 = nn.ReLU()
+#
+#        layer3 = nn.Conv2d(64, 1, kernel_size=5, stride=1, padding=2)
+#        sig = nn.Sigmoid()
+#
+#    def forward( x):
+#        out = layer1(x)
+#        out = relu1(out)
+#
+#        out = layer2(out)
+#        out = relu2(out)
+#
+#        out = layer3(out)
+#        out = sig(out)
+#
+#        return out
 
 if torch.cuda.is_available():
     device = torch.device("cuda:0")
@@ -189,7 +216,6 @@ epochs = 10
 #optimizer = torch.optim.SGD(model.parameters(), lr=learningRate) # Gradient
 criterion = torch.nn.BCELoss() # Loss function
 optimizer = torch.optim.Adam(model.parameters(), lr=learningRate) # Gradient
-
 
 # Train the model
 def train_model(epochs):
