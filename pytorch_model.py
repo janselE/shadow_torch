@@ -239,6 +239,9 @@ def train_model(epochs):
         print('epoch {}, loss {}'.format(epoch, loss.item()))
         if epoch % 10 ==0:
             save_models(epoch)
+        del x
+        del y
+        torch.cuda.empty_cache()
 
 
 train_model(10)
