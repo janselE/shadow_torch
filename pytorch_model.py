@@ -72,9 +72,9 @@ from torch.utils.data import Dataset, DataLoader
 # Create the data class, this is done to load the data into the pytorch model
 class Data(Dataset):
     # Constructor
-    def __init__(self, device):
-        self.x = t_imgs.float().to(device)
-        self.y = t_target.float().to(device)
+    def __init__(self):
+        self.x = t_imgs.float()
+        self.y = t_target.float()
         self.len = self.x.shape[0]
 
     # Getter
@@ -122,12 +122,12 @@ class UNet(nn.Module):
     def __init__(self, in_channel, out_channel):
         super(UNet, self).__init__()
         #Encode
-        self.conv_encode1 = self.contracting_block(in_channels=in_channel, out_channels=64)
-        self.conv_maxpool1 = torch.nn.MaxPool2d(kernel_size=2)
-        self.conv_encode2 = self.contracting_block(64, 128)
-        self.conv_maxpool2 = torch.nn.MaxPool2d(kernel_size=2)
-        self.conv_encode3 = self.contracting_block(128, 256)
-        self.conv_maxpool3 = torch.nn.MaxPool2d(kernel_size=2)
+        self.conv_encode1 = self.contracting_block(in_channels=in_channel, out_channels=64).to(0)
+        self.conv_maxpool1 = torch.nn.MaxPool2d(kernel_size=2).to(0)
+        self.conv_encode2 = self.contracting_block(64, 128).to(0)
+        self.conv_maxpool2 = torch.nn.MaxPool2d(kernel_size=2).to(0)
+        self.conv_encode3 = self.contracting_block(128, 256).to(0)
+        self.conv_maxpool3 = torch.nn.MaxPool2d(kernel_size=2).to(0)
 
         # Bottleneck
         self.bottleneck = torch.nn.Sequential(torch.nn.Conv2d(kernel_size=3, in_channels=256, out_channels=512),
@@ -136,12 +136,12 @@ class UNet(nn.Module):
                 torch.nn.ReLU(),
                 torch.nn.BatchNorm2d(512),
                 torch.nn.ConvTranspose2d(in_channels=512, out_channels=256, kernel_size=3, stride=2, padding=1, output_padding=1)
-                )
+                ).to(1)
 
         # Decode
-        self.conv_decode3 = self.expansive_block(512, 256, 128)
-        self.conv_decode2 = self.expansive_block(256, 128, 64)
-        self.final_layer = self.final_block(128, 64, out_channel)
+        self.conv_decode3 = self.expansive_block(512, 256, 128).to(1)
+        self.conv_decode2 = self.expansive_block(256, 128, 64).to(1)
+        self.final_layer = self.final_block(128, 64, out_channel).to(1)
 
     def crop_and_concat(self, upsampled, bypass, crop=False):
         if crop:
@@ -157,6 +157,9 @@ class UNet(nn.Module):
         encode_pool2 = self.conv_maxpool2(encode_block2)
         encode_block3 = self.conv_encode3(encode_pool2)
         encode_pool3 = self.conv_maxpool3(encode_block3)
+
+        # transfering results to GPU:1
+        encode_pool3.to(1)
 
         # Bottleneck
         bottleneck1 = self.bottleneck(encode_pool3)
@@ -198,15 +201,15 @@ class UNet(nn.Module):
 #
 #        return out
 
-if torch.cuda.is_available():
-    device = torch.device("cuda:0")
-    print("running on GPU")
-else:
-    device = torch.device("cpu")
-    print("running on CPU")
+#if torch.cuda.is_available():
+#    device = torch.device("cuda:0")
+#    print("running on GPU")
+#else:
+#    device = torch.device("cpu")
+#    print("running on CPU")
 
-model = UNet(1, 1).to(device) # Initialize the model
-trainloader = DataLoader(dataset=Data(device), batch_size=32) # Create the loader for the model 
+model = UNet(1, 1) # Initialize the model
+trainloader = DataLoader(dataset=Data(), batch_size=32) # Create the loader for the model 
 
 print(model)
 
@@ -222,6 +225,8 @@ optimizer = torch.optim.Adam(model.parameters(), lr=learningRate) # Gradient
 def train_model(epochs):
     for epoch in range(epochs):
         for x, y in trainloader:
+            x.to(0)
+            y.to(0)
             yhat = model(x)
             print("{} {}".format(yhat.shape, "this is the shape"))
 
