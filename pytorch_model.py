@@ -73,8 +73,8 @@ from torch.utils.data import Dataset, DataLoader
 class Data(Dataset):
     # Constructor
     def __init__(self):
-        self.x = t_imgs.float()
-        self.y = t_target.float()
+        self.x = t_imgs.float().cuda(0)
+        self.y = t_target.float().cuda(0)
         self.len = self.x.shape[0]
 
     # Getter
@@ -144,8 +144,6 @@ optimizer = torch.optim.Adam(model.parameters(), lr=learningRate) # Gradient
 def train_model(epochs):
     for epoch in range(epochs):
         for x, y in trainloader:
-            x.to(0)
-            y.to(0)
             yhat = model(x)
             print("{} {}".format(yhat.shape, "this is the shape"))
 
