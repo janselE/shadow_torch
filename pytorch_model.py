@@ -150,6 +150,7 @@ class UNet(nn.Module):
         return torch.cat((upsampled, bypass), 1)
 
     def forward(self, x):
+        x = x.to(0)
         # Encode
         encode_block1 = self.conv_encode1(x)
         encode_pool1 = self.conv_maxpool1(encode_block1)
@@ -159,7 +160,7 @@ class UNet(nn.Module):
         encode_pool3 = self.conv_maxpool3(encode_block3)
 
         # transfering results to GPU:1
-        encode_pool3.to(1)
+        encode_pool3 = encode_pool3.to(1)
 
         # Bottleneck
         bottleneck1 = self.bottleneck(encode_pool3)
