@@ -93,114 +93,32 @@ def save_models(epoch):
     torch.save(model.state_dict(), "reg_model{}.model".format(epoch))
     print("Chekcpoint saved")
 
+class ConvNet(nn.Module):
+    def __init__(self):
+        super(ConvNet, self).__init__()
+        self.layer1 = nn.Conv2d(1, 32, kernel_size=5, stride=1, padding=2).cuda(0)
+        self.relu1 = nn.ReLU().cuda(0)
 
-class UNet(nn.Module):
-    def contracting_block(self, in_channels, out_channels, kernel_size=3):
-        block = torch.nn.Sequential(
-                torch.nn.Conv2d(kernel_size=kernel_size, in_channels=in_channels, out_channels=out_channels),
-                torch.nn.ReLU(), torch.nn.BatchNorm2d(out_channels), torch.nn.Conv2d(kernel_size=kernel_size, in_channels=out_channels, out_channels=out_channels),
-                torch.nn.ReLU(), torch.nn.BatchNorm2d(out_channels)
-                )
+        self.layer2 = nn.Conv2d(32, 64, kernel_size=5, stride=1, padding=2).cuda(0)
+        self.relu2 = nn.ReLU().cuda(0)
 
-        return block
-
-    def expansive_block(self, in_channels, mid_channel, out_channels, kernel_size=3):
-        block = torch.nn.Sequential(torch.nn.Conv2d(kernel_size=kernel_size, in_channels=in_channels, out_channels=mid_channel),
-                torch.nn.ReLU(), torch.nn.BatchNorm2d(mid_channel), torch.nn.Conv2d(kernel_size=kernel_size, in_channels=mid_channel, out_channels=mid_channel),
-                torch.nn.ReLU(), torch.nn.BatchNorm2d(mid_channel),
-                torch.nn.ConvTranspose2d(in_channels=mid_channel, out_channels=out_channels, kernel_size=3, stride=2, padding=1, output_padding=1)
-                )
-        return  block
-
-    def final_block(self, in_channels, mid_channel, out_channels, kernel_size=3):
-        block = torch.nn.Sequential(torch.nn.Conv2d(kernel_size=kernel_size, in_channels=in_channels, out_channels=mid_channel),
-                torch.nn.ReLU(), torch.nn.BatchNorm2d(mid_channel), torch.nn.Conv2d(kernel_size=kernel_size, in_channels=mid_channel, out_channels=mid_channel),
-                torch.nn.ReLU(), torch.nn.BatchNorm2d(mid_channel), torch.nn.Conv2d(kernel_size=kernel_size, in_channels=mid_channel, out_channels=out_channels, padding=1),
-                torch.nn.ReLU(), torch.nn.BatchNorm2d(out_channels))
-        return  block
-
-    def __init__(self, in_channel, out_channel):
-        super(UNet, self).__init__()
-        #Encode
-        self.conv_encode1 = self.contracting_block(in_channels=in_channel, out_channels=64).to(0)
-        self.conv_maxpool1 = torch.nn.MaxPool2d(kernel_size=2).to(0)
-        self.conv_encode2 = self.contracting_block(64, 128).to(0)
-        self.conv_maxpool2 = torch.nn.MaxPool2d(kernel_size=2).to(0)
-        self.conv_encode3 = self.contracting_block(128, 256).to(0)
-        self.conv_maxpool3 = torch.nn.MaxPool2d(kernel_size=2).to(0)
-
-        # Bottleneck
-        self.bottleneck = torch.nn.Sequential(torch.nn.Conv2d(kernel_size=3, in_channels=256, out_channels=512),
-                torch.nn.ReLU(), torch.nn.BatchNorm2d(512),
-                torch.nn.Conv2d(kernel_size=3, in_channels=512, out_channels=512),
-                torch.nn.ReLU(),
-                torch.nn.BatchNorm2d(512),
-                torch.nn.ConvTranspose2d(in_channels=512, out_channels=256, kernel_size=3, stride=2, padding=1, output_padding=1)
-                ).to(1)
-
-        # Decode
-        self.conv_decode3 = self.expansive_block(512, 256, 128).to(1)
-        self.conv_decode2 = self.expansive_block(256, 128, 64).to(1)
-        self.final_layer = self.final_block(128, 64, out_channel).to(1)
-
-    def crop_and_concat(self, upsampled, bypass, crop=False):
-        if crop:
-            c = (bypass.size()[2] - upsampled.size()[2]) // 2
-            bypass = F.pad(bypass, (-c, -c, -c, -c))
-        return torch.cat((upsampled, bypass), 1)
+        self.layer3 = nn.Conv2d(64, 1, kernel_size=5, stride=1, padding=2).cuda(1)
+        self.sig = nn.Sigmoid().cuda(1)
 
     def forward(self, x):
-        x = x.to(0)
-        # Encode
-        encode_block1 = self.conv_encode1(x)
-        encode_pool1 = self.conv_maxpool1(encode_block1)
-        encode_block2 = self.conv_encode2(encode_pool1)
-        encode_pool2 = self.conv_maxpool2(encode_block2)
-        encode_block3 = self.conv_encode3(encode_pool2)
-        encode_pool3 = self.conv_maxpool3(encode_block3)
+        x = x.cuda(0)
+        out = self.layer1(x)
+        out = self.relu1(out)
 
-        # transfering results to GPU:1
-        encode_pool3 = encode_pool3.to(1)
+        out = self.layer2(out)
+        out = self.relu2(out)
 
-        # Bottleneck
-        bottleneck1 = self.bottleneck(encode_pool3)
+        out = out.cuda(1)
 
-        # Decode
-        decode_block3 = self.crop_and_concat(bottleneck1, encode_block3, crop=True)
-        cat_layer2 = self.conv_decode3(decode_block3)
-        decode_block2 = self.crop_and_concat(cat_layer2, encode_block2, crop=True)
-        cat_layer1 = self.conv_decode2(decode_block2)
-        decode_block1 = self.crop_and_concat(cat_layer1, encode_block1, crop=True)
-        final_layer = self.final_layer(decode_block1)
+        out = self.layer3(out)
+        out = self.sig(out)
 
-        return  final_layer
-
-
-
-
-#class ConvNet(nn.Module):
-#    def __init__(:
-#        super(ConvNet, .__init__()
-#        layer1 = nn.Conv2d(1, 32, kernel_size=5, stride=1, padding=2)
-#        relu1 = nn.ReLU()
-#
-#        layer2 = nn.Conv2d(32, 64, kernel_size=5, stride=1, padding=2)
-#        relu2 = nn.ReLU()
-#
-#        layer3 = nn.Conv2d(64, 1, kernel_size=5, stride=1, padding=2)
-#        sig = nn.Sigmoid()
-#
-#    def forward( x):
-#        out = layer1(x)
-#        out = relu1(out)
-#
-#        out = layer2(out)
-#        out = relu2(out)
-#
-#        out = layer3(out)
-#        out = sig(out)
-#
-#        return out
+        return out
 
 #if torch.cuda.is_available():
 #    device = torch.device("cuda:0")
