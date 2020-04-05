@@ -73,13 +73,13 @@ from torch.utils.data import Dataset, DataLoader
 class Data(Dataset):
     # Constructor
     def __init__(self):
-        self.x = t_imgs.float().cuda(0)
-        self.y = t_target.float().cuda(0)
+        self.x = t_imgs.float()
+        self.y = t_target.float()
         self.len = self.x.shape[0]
 
     # Getter
     def __getitem__(self, index):
-        return self.x[index], self.y[index]
+        return self.x[index].cuda(0), self.y[index].cuda(0)
 
     # Get items
     def __len__(self):
