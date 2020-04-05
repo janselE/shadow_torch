@@ -127,7 +127,7 @@ class ConvNet(nn.Module):
 #    device = torch.device("cpu")
 #    print("running on CPU")
 
-model = UNet(1, 1) # Initialize the model
+model = ConvNet() # Initialize the model
 trainloader = DataLoader(dataset=Data(), batch_size=16) # Create the loader for the model 
 
 print(model)
