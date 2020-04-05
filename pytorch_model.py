@@ -210,7 +210,7 @@ class UNet(nn.Module):
 #    print("running on CPU")
 
 model = UNet(1, 1) # Initialize the model
-trainloader = DataLoader(dataset=Data(), batch_size=32) # Create the loader for the model 
+trainloader = DataLoader(dataset=Data(), batch_size=16) # Create the loader for the model 
 
 print(model)
 
