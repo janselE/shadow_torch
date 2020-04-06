@@ -113,9 +113,13 @@ class UNet(nn.Module):
 
     def forward(self, x):
         out = self.layer0(x)
+        print(out.shape)
         out = self.bn0(out)
+        print(out.shape)
         out = self.relu0(out)
+        print(out.shape)
         out = self.mp0(out)
+        print(out.shape)
 
         out = self.layer1(out)
         out = out.to(1)
