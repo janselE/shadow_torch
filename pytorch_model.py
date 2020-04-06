@@ -95,7 +95,7 @@ def save_models(epoch):
 
 class UNet(nn.Module):
     def __init__(self):
-        super(ConvNet, self).__init__()
+        super(UNet, self).__init__()
         self.layeri = nn.Conv2d(1, 16, (3,3)).cuda(0)
         self.layer0 = nn.Conv2d(16, 1, (3,3)).cuda(0)
         #self.layer1 = nn.Conv2d(1, 32, kernel_size=5, sConvNettride=1, padding=2).cuda(0)
@@ -108,7 +108,7 @@ class UNet(nn.Module):
         self.sig = nn.Sigmoid().cuda(1)
 
     def forward(self, x):
-        out = self.layer1(x)
+        out = self.layeri(x)
         out = self.layer0(out)
         out = out.to(1)
         #out = self.relu1(out)
