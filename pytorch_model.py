@@ -178,7 +178,7 @@ predicted = predicted.reshape(-1, 480, 640)
 #res = res.reshape(-1, 480, 640)
 
 for i in range(0, len(predicted)):
-    name = 'predicted/img' + str(i) + '.png'
+    name = 'prediction/img' + str(i) + '.png'
     cv2.imwrite(name, predicted[i])
 
 print("Done writing")
