@@ -96,8 +96,8 @@ def save_models(epoch):
 class UNet(nn.Module):
     def __init__(self):
         super(UNet, self).__init__()
-        self.layeri = nn.Conv2d(1, 16, (3,3)).cuda(0)
-        self.layer0 = nn.Conv2d(16, 1, (3,3)).cuda(0)
+        self.layeri = nn.Conv2d(1, 16, (3,3), 1).cuda(0)
+        self.layer0 = nn.Conv2d(16, 1, (3,3), 1).cuda(0)
         #self.layer1 = nn.Conv2d(1, 32, kernel_size=5, stride=1, padding=2).cuda(0)
         #self.relu1 = nn.ReLU().cuda(0)
 
