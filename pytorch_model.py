@@ -79,7 +79,7 @@ class Data(Dataset):
 
     # Getter
     def __getitem__(self, index):
-        return self.x[index].cuda(0), self.y[index].cuda(0)
+        return self.x[index], self.y[index]
 
     # Get items
     def __len__(self):
@@ -143,6 +143,8 @@ optimizer = torch.optim.Adam(model.parameters(), lr=learningRate) # Gradient
 def train_model(epochs):
     for epoch in range(epochs):
         for x, y in trainloader:
+            x = x.to(0)
+            y = y.to(1)
             yhat = model(x)
             print("{} {}".format(yhat.shape, "this is the shape"))
 
