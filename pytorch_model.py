@@ -145,17 +145,17 @@ def train_model(epochs):
         for x, y in trainloader:
             x = x.to(0)
             y = y.to(1)
-            yhat = model(x)
-            print("{} {}".format(yhat.shape, "this is the shape"))
 
-            loss = criterion(yhat, y)
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
+            optimizer.zero_grad() # Clears out the gradients
+            pred = model(x) # Forward pass
+            loss = criterion(pred, y) # Compute loss function
+            loss.backward() # backward pass
+            optimizer.step() # Optimizer step
 
         print('epoch {}, loss {}'.format(epoch, loss.item()))
         if epoch % 10 ==0:
             save_models(epoch)
+
         del x
         del y
         torch.cuda.empty_cache()
