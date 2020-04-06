@@ -165,4 +165,18 @@ def train_model(epochs):
 
 train_model(10)
 
-print(torch.cuda.is_available())
+with torch.no_grad():
+    predicted = model(t_imgs.float()).data.numpy()
+    org = t_imgs.numpy()
+    res = t_target.numpy()
+
+predicted = predicted.reshape(-1, 480, 640)
+org = org.reshape(-1, 480, 640)
+res = res.reshape(-1, 480, 640)
+
+for i in range(0, len(predicted)):
+    name = 'predicted/img' + str(i) + '.png'
+    cv2.imwrite(name, predicted[i])
+
+
+
