@@ -102,8 +102,8 @@ class ConvNet(nn.Module):
         self.layer2 = nn.Conv2d(32, 64, kernel_size=5, stride=1, padding=2).cuda(0)
         self.relu2 = nn.ReLU().cuda(0)
 
-        self.layer3 = nn.Conv2d(64, 1, kernel_size=5, stride=1, padding=2).cuda(0)
-        self.sig = nn.Sigmoid().cuda(0)
+        self.layer3 = nn.Conv2d(64, 1, kernel_size=5, stride=1, padding=2).cuda(1)
+        self.sig = nn.Sigmoid().cuda(1)
 
     def forward(self, x):
         out = self.layer1(x)
@@ -111,6 +111,8 @@ class ConvNet(nn.Module):
 
         out = self.layer2(out)
         out = self.relu2(out)
+
+        out = out.to(1)
 
         out = self.layer3(out)
         out = self.sig(out)
