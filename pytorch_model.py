@@ -93,28 +93,31 @@ def save_models(epoch):
     torch.save(model.state_dict(), "reg_model{}.model".format(epoch))
     print("Chekcpoint saved")
 
-class ConvNet(nn.Module):
+class UNet(nn.Module):
     def __init__(self):
         super(ConvNet, self).__init__()
-        self.layer1 = nn.Conv2d(1, 32, kernel_size=5, stride=1, padding=2).cuda(0)
-        self.relu1 = nn.ReLU().cuda(0)
+        self.layeri = nn.Conv2d(1, 16, (3,3)).cuda(0)
+        self.layer0 = nn.Conv2d(16, 1, (3,3)).cuda(0)
+        #self.layer1 = nn.Conv2d(1, 32, kernel_size=5, sConvNettride=1, padding=2).cuda(0)
+        #self.relu1 = nn.ReLU().cuda(0)
 
-        self.layer2 = nn.Conv2d(32, 64, kernel_size=5, stride=1, padding=2).cuda(0)
-        self.relu2 = nn.ReLU().cuda(0)
+        #self.layer2 = nn.Conv2d(32, 64, kernel_size=5, stride=1, padding=2).cuda(0)
+        #self.relu2 = nn.ReLU().cuda(0)
 
-        self.layer3 = nn.Conv2d(64, 1, kernel_size=5, stride=1, padding=2).cuda(1)
+        #self.layer3 = nn.Conv2d(64, 1, kernel_size=5, stride=1, padding=2).cuda(1)
         self.sig = nn.Sigmoid().cuda(1)
 
     def forward(self, x):
         out = self.layer1(x)
-        out = self.relu1(out)
-
-        out = self.layer2(out)
-        out = self.relu2(out)
-
         out = out.to(1)
+        #out = self.relu1(out)
 
-        out = self.layer3(out)
+        #out = self.layer2(out)
+        #out = self.relu2(out)
+
+        #out = out.to(1)
+
+        #out = self.layer3(out)
         out = self.sig(out)
 
         return out
@@ -126,7 +129,7 @@ class ConvNet(nn.Module):
 #    device = torch.device("cpu")
 #    print("running on CPU")
 
-model = ConvNet() # Initialize the model
+model = UNet() # Initialize the model
 trainloader = DataLoader(dataset=Data(), batch_size=16) # Create the loader for the model 
 
 print(model)
@@ -182,6 +185,3 @@ for i in range(0, len(predicted)):
     cv2.imwrite(name, predicted[i] * 255)
 
 print("Done writing")
-
-
-
