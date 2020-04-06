@@ -167,7 +167,7 @@ train_model(10)
 
 print("Starting prediction")
 with torch.no_grad():
-    predicted = model(t_imgs.float().cuda(0)).data.numpy()
+    predicted = model(t_imgs.float().cuda(0)).cpu().data.numpy()
 #    org = t_imgs.numpy()
 #    res = t_target.numpy()
 
