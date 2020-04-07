@@ -173,9 +173,10 @@ class UNet(nn.Module):
         print("Middle layer")
         print(out.shape)
 
-        out = self.layer4(out)
-        out = self.layer5(out)
         print("Transpose layer")
+        out = self.layer4(out)
+        print(out.shape)
+        out = self.layer5(out)
         print(out.shape)
         print(out1.shape)
         out = torch.cat((out, out1), 0)
