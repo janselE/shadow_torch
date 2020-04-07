@@ -185,22 +185,22 @@ class UNet(nn.Module):
         out = self.layerM(out)
 
         out = self.layer4(out)
-        out += out1
+        out += out1.to(1)
         out = self.dp4(out)
         out = self.cn4(out)
 
         out = self.layer5(out)
-        out += out2
+        out += out2.to(1)
         out = self.dp5(out)
         out = self.cn5(out)
 
         out = self.layer6(out)
-        out += out3
+        out += out3.to(1)
         out = self.dp6(out)
         out = self.cn6(out)
 
         out = self.layer7(out)
-        out += out4
+        out += out4.to(1)
         out = self.dp7(out)
         out = self.cn7(out)
 
