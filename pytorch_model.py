@@ -126,7 +126,7 @@ class UNet(nn.Module):
 
         self.layerM = nn.Conv2d(16 * 8, 16 * 16, kernel_size=5, stride=1, padding=2).cuda(0)
 
-        self.layer4 = nn.ConvTranspose2d(16 * 16, 16 * 8, kernel_size=5, stride=2, padding=2).cuda(0)
+        self.layer4 = nn.ConvTranspose2d(16 * 16, 16 * 8, kernel_size=5, stride=1, padding=2).cuda(0)
 
         self.layerO = nn.Conv2d(16, 1, kernel_size=5, stride=1, padding=2).cuda(0)
         self.sig = nn.Sigmoid().cuda(1)
@@ -162,9 +162,9 @@ class UNet(nn.Module):
         # Forth block
         out = self.layer3(out)
         out = self.bn3(out)
-        out1 = self.relu3(out)
+        out = self.relu3(out)
         out = self.mp3(out1)
-        out = self.dp3(out)
+        out1 = self.dp3(out)
         print("Forth layer")
         print(out.shape)
 
