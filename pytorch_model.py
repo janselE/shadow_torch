@@ -124,11 +124,18 @@ class UNet(nn.Module):
         self.mp3 = nn.MaxPool2d(2).cuda(0)
         self.dp3 = nn.Dropout(0.5).cuda(0)
 
+        # Middle
         self.layerM = nn.Conv2d(16 * 8, 16 * 16, kernel_size=5, stride=1, padding=2).cuda(0)
 
+        # Deconvolution 1
         self.layer4 = nn.ConvTranspose2d(16 * 16, 16 * 8, kernel_size=(2,2), stride=(2,2), padding=0).cuda(0)
         self.dp4 = nn.Dropout(0.5).cuda(0)
         self.cn4 = nn.Conv2d(16 * 8, 16 * 8, kernel_size=5, stride=1, padding=2).cuda(0)
+
+        # Deconvolution 2
+        self.layer5 = nn.ConvTranspose2d(16 * 8, 16 * 4, kernel_size=(2,2), stride=(2,2), padding=0).cuda(0)
+        self.dp5 = nn.Dropout(0.5).cuda(0)
+        self.cn5 = nn.Conv2d(16 * 4, 16 * 4, kernel_size=5, stride=1, padding=2).cuda(0)
 
         self.layerO = nn.Conv2d(16, 1, kernel_size=5, stride=1, padding=2).cuda(0)
         self.sig = nn.Sigmoid().cuda(1)
@@ -155,8 +162,8 @@ class UNet(nn.Module):
         # Third block
         out = self.layer2(out)
         out = self.bn2(out)
-        out = self.relu2(out)
-        out = self.mp2(out)
+        out2 = self.relu2(out)
+        out = self.mp2(out2)
         out = self.dp2(out)
         print("Third layer")
         print(out.shape)
@@ -179,6 +186,13 @@ class UNet(nn.Module):
         out = torch.cat((out, out1), 0)
         out = self.dp4(out)
         out = self.cn4(out)
+        print(out.shape)
+
+        print("Second transpose layer")
+        out = self.layer5(out)
+        out = torch.cat((out, out2), 0)
+        out = self.dp5(out)
+        out = self.cn5(out)
         print(out.shape)
 
         # Output layer
