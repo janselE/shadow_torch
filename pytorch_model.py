@@ -127,6 +127,8 @@ class UNet(nn.Module):
         self.layerM = nn.Conv2d(16 * 8, 16 * 16, kernel_size=5, stride=1, padding=2).cuda(0)
 
         self.layer4 = nn.ConvTranspose2d(16 * 16, 16 * 8, kernel_size=(2,2), stride=(2,2), padding=0).cuda(0)
+        self.dp4 = nn.Dropout(0.5).cuda(0)
+        self.cn4 = nn.Conv2d(16 * 8, 16 * 8, kernel_size=5, stride=1, padding=2).cuda(0)
 
         self.layerO = nn.Conv2d(16, 1, kernel_size=5, stride=1, padding=2).cuda(0)
         self.sig = nn.Sigmoid().cuda(1)
@@ -172,12 +174,11 @@ class UNet(nn.Module):
         print("Middle layer")
         print(out.shape)
 
-        print("Transpose layer")
+        print("First transpose layer")
         out = self.layer4(out)
-        print(out.shape)
-        print(out1.shape)
         out = torch.cat((out, out1), 0)
-        print("Concat layer")
+        out = self.dp4(out)
+        out = self.cn4(out)
         print(out.shape)
 
         # Output layer
