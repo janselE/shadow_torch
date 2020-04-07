@@ -125,29 +125,29 @@ class UNet(nn.Module):
         self.dp3 = nn.Dropout(0.5).cuda(0)
 
         # Middle
-        self.layerM = nn.Conv2d(16 * 8, 16 * 16, kernel_size=5, stride=1, padding=2).cuda(0)
+        self.layerM = nn.Conv2d(16 * 8, 16 * 16, kernel_size=5, stride=1, padding=2).cuda(1)
 
         # Deconvolution 1
-        self.layer4 = nn.ConvTranspose2d(16 * 16, 16 * 8, kernel_size=(2,2), stride=(2,2), padding=0).cuda(0)
-        self.dp4 = nn.Dropout(0.5).cuda(0)
-        self.cn4 = nn.Conv2d(16 * 8, 16 * 8, kernel_size=5, stride=1, padding=2).cuda(0)
+        self.layer4 = nn.ConvTranspose2d(16 * 16, 16 * 8, kernel_size=(2,2), stride=(2,2), padding=0).cuda(1)
+        self.dp4 = nn.Dropout(0.5).cuda(1)
+        self.cn4 = nn.Conv2d(16 * 8, 16 * 8, kernel_size=5, stride=1, padding=2).cuda(1)
 
         # Deconvolution 2
-        self.layer5 = nn.ConvTranspose2d(16 * 8, 16 * 4, kernel_size=(2,2), stride=(2,2), padding=0).cuda(0)
-        self.dp5 = nn.Dropout(0.5).cuda(0)
-        self.cn5 = nn.Conv2d(16 * 4, 16 * 4, kernel_size=5, stride=1, padding=2).cuda(0)
+        self.layer5 = nn.ConvTranspose2d(16 * 8, 16 * 4, kernel_size=(2,2), stride=(2,2), padding=0).cuda(1)
+        self.dp5 = nn.Dropout(0.5).cuda(1)
+        self.cn5 = nn.Conv2d(16 * 4, 16 * 4, kernel_size=5, stride=1, padding=2).cuda(1)
 
         # Deconvolution 3
-        self.layer6 = nn.ConvTranspose2d(16 * 4, 16 * 2, kernel_size=(2,2), stride=(2,2), padding=0).cuda(0)
-        self.dp6 = nn.Dropout(0.5).cuda(0)
-        self.cn6 = nn.Conv2d(16 * 2, 16 * 2, kernel_size=5, stride=1, padding=2).cuda(0)
+        self.layer6 = nn.ConvTranspose2d(16 * 4, 16 * 2, kernel_size=(2,2), stride=(2,2), padding=0).cuda(1)
+        self.dp6 = nn.Dropout(0.5).cuda(1)
+        self.cn6 = nn.Conv2d(16 * 2, 16 * 2, kernel_size=5, stride=1, padding=2).cuda(1)
 
         # Deconvolution 4
-        self.layer7 = nn.ConvTranspose2d(16 * 2, 16, kernel_size=(2,2), stride=(2,2), padding=0).cuda(0)
-        self.dp7 = nn.Dropout(0.5).cuda(0)
-        self.cn7 = nn.Conv2d(16, 16, kernel_size=5, stride=1, padding=2).cuda(0)
+        self.layer7 = nn.ConvTranspose2d(16 * 2, 16, kernel_size=(2,2), stride=(2,2), padding=0).cuda(1)
+        self.dp7 = nn.Dropout(0.5).cuda(1)
+        self.cn7 = nn.Conv2d(16, 16, kernel_size=5, stride=1, padding=2).cuda(1)
 
-        self.layerO = nn.Conv2d(16, 1, kernel_size=5, stride=1, padding=2).cuda(0)
+        self.layerO = nn.Conv2d(16, 1, kernel_size=5, stride=1, padding=2).cuda(1)
         self.sig = nn.Sigmoid().cuda(1)
 
     def forward(self, x):
@@ -179,6 +179,9 @@ class UNet(nn.Module):
         out = self.mp3(out1)
         out = self.dp3(out)
 
+        # Changing the gpu
+        out = out.to(1)
+
         out = self.layerM(out)
 
         out = self.layer4(out)
@@ -204,8 +207,6 @@ class UNet(nn.Module):
         # Output layer
         out = self.layerO(out)
 
-        # Changing the gpu
-        out = out.to(1)
 
         out = self.sig(out)
 
@@ -224,7 +225,6 @@ trainloader = DataLoader(dataset=Data(), batch_size=16) # Create the loader for 
 print(model)
 
 learningRate = 0.001
-epochs = 10
 
 #criterion = torch.nn.MSELoss() # Loss function
 #optimizer = torch.optim.SGD(model.parameters(), lr=learningRate) # Gradient
@@ -253,7 +253,7 @@ def train_model(epochs):
         torch.cuda.empty_cache()
 
 
-train_model(100)
+train_model(400)
 
 print("Starting prediction")
 with torch.no_grad():
