@@ -97,37 +97,36 @@ class UNet(nn.Module):
     def __init__(self):
         super(UNet, self).__init__()
         # First block
-        self.layer0 = nn.Conv2d(1, 16, kernel_size=5, stride=1, padding=2).cuda(0)
+        self.layer0 = nn.Conv2d(1, 16, kernel_size=5, stride=2, padding=2).cuda(0)
         self.relu0 = nn.ReLU(16).cuda(0)
         self.bn0 = nn.BatchNorm2d(16).cuda(0)
         self.mp0 = nn.MaxPool2d(2).cuda(0)
         self.dp0 = nn.Dropout(0.5).cuda(0)
 
         # Second block
-        self.layer1 = nn.Conv2d(16, 16 * 2, kernel_size=5, stride=1, padding=2).cuda(0)
+        self.layer1 = nn.Conv2d(16, 16 * 2, kernel_size=5, stride=2, padding=2).cuda(0)
         self.relu1 = nn.ReLU(16 * 2).cuda(0)
         self.bn1 = nn.BatchNorm2d(16 * 2).cuda(0)
         self.mp1 = nn.MaxPool2d(2).cuda(0)
         self.dp1 = nn.Dropout(0.5).cuda(0)
 
         # Third block
-        self.layer2 = nn.Conv2d(16 * 2, 16 * 4, kernel_size=5, stride=1, padding=2).cuda(0)
+        self.layer2 = nn.Conv2d(16 * 2, 16 * 4, kernel_size=5, stride=2, padding=2).cuda(0)
         self.relu2 = nn.ReLU(16 * 4).cuda(0)
         self.bn2 = nn.BatchNorm2d(16 * 4).cuda(0)
         self.mp2 = nn.MaxPool2d(2).cuda(0)
         self.dp2 = nn.Dropout(0.5).cuda(0)
 
         # Forth block
-        self.layer3 = nn.Conv2d(16 * 4, 16 * 8, kernel_size=5, stride=1, padding=2).cuda(0)
+        self.layer3 = nn.Conv2d(16 * 4, 16 * 8, kernel_size=5, stride=2, padding=2).cuda(0)
         self.relu3 = nn.ReLU(16 * 8).cuda(0)
         self.bn3 = nn.BatchNorm2d(16 * 8).cuda(0)
         self.mp3 = nn.MaxPool2d(2).cuda(0)
         self.dp3 = nn.Dropout(0.5).cuda(0)
 
-        self.layerM = nn.Conv2d(16 * 8, 16 * 16, kernel_size=5, stride=1, padding=2).cuda(0)
+        self.layerM = nn.Conv2d(16 * 8, 16 * 16, kernel_size=5, stride=2, padding=2).cuda(0)
 
-        self.layer4 = nn.ConvTranspose2d(16 * 16, 16 * 8, kernel_size=5, stride=1, padding=2).cuda(0)
-        self.layer5 = nn.ConvTranspose2d(16 * 8, 16 * 8, kernel_size=5, stride=1, padding=2).cuda(0)
+        self.layer4 = nn.ConvTranspose2d(16 * 16, 16 * 8, kernel_size=5, stride=2, padding=2).cuda(0)
 
         self.layerO = nn.Conv2d(16, 1, kernel_size=5, stride=1, padding=2).cuda(0)
         self.sig = nn.Sigmoid().cuda(1)
@@ -175,10 +174,6 @@ class UNet(nn.Module):
 
         print("Transpose layer")
         out = self.layer4(out)
-        print(out.shape)
-        out = self.layer5(out)
-        print(out.shape)
-        print(out1.shape)
         out = torch.cat((out, out1), 0)
         print("Concat layer")
         print(out.shape)
