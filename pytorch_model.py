@@ -173,8 +173,9 @@ class UNet(nn.Module):
         print(out.shape)
 
         out = self.layer4(out)
-        out = torch.cat((out, out1), 0)
         print("Transpose layer")
+        out = torch.cat((out, out1), 0)
+        print("Concat layer")
         print(out.shape)
 
         # Output layer
