@@ -159,8 +159,8 @@ class UNet(nn.Module):
         # Forth block
         out = self.layer3(out)
         out = self.bn3(out)
-        out = self.relu3(out)
-        out = self.mp3(out)
+        out1 = self.relu3(out)
+        out = self.mp3(out1)
         out = self.dp3(out)
         print(out.shape)
 
@@ -168,6 +168,7 @@ class UNet(nn.Module):
         print(out.shape)
 
         out = self.layer4(out)
+        out = torch.cat((out, out1), 0)
         print(out.shape)
 
         # Output layer
