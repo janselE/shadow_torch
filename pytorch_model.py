@@ -137,6 +137,11 @@ class UNet(nn.Module):
         self.dp5 = nn.Dropout(0.5).cuda(0)
         self.cn5 = nn.Conv2d(16 * 4, 16 * 4, kernel_size=5, stride=1, padding=2).cuda(0)
 
+        # Deconvolution 3
+        self.layer6 = nn.ConvTranspose2d(16 * 4, 16 * 2, kernel_size=(2,2), stride=(2,2), padding=0).cuda(0)
+        self.dp6 = nn.Dropout(0.5).cuda(0)
+        self.cn6 = nn.Conv2d(16 * 2, 16 * 2, kernel_size=5, stride=1, padding=2).cuda(0)
+
         self.layerO = nn.Conv2d(16, 1, kernel_size=5, stride=1, padding=2).cuda(0)
         self.sig = nn.Sigmoid().cuda(1)
 
@@ -153,8 +158,8 @@ class UNet(nn.Module):
         # Second block
         out = self.layer1(out)
         out = self.bn1(out)
-        out = self.relu1(out)
-        out = self.mp1(out)
+        out3 = self.relu1(out)
+        out = self.mp1(out3)
         out = self.dp1(out)
         print("Second layer")
         print(out.shape)
@@ -183,7 +188,6 @@ class UNet(nn.Module):
 
         print("First transpose layer")
         out = self.layer4(out)
-        print(out1.shape)
         out += out1
         out = self.dp4(out)
         out = self.cn4(out)
@@ -194,6 +198,13 @@ class UNet(nn.Module):
         out += out2
         out = self.dp5(out)
         out = self.cn5(out)
+        print(out.shape)
+
+        print("Third transpose layer")
+        out = self.layer6(out)
+        out += out3
+        out = self.dp6(out)
+        out = self.cn6(out)
         print(out.shape)
 
         # Output layer
