@@ -253,7 +253,7 @@ def train_model(epochs):
         torch.cuda.empty_cache()
 
 
-train_model(10)
+train_model(100)
 
 print("Starting prediction")
 with torch.no_grad():
