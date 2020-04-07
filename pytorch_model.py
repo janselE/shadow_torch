@@ -110,6 +110,13 @@ class UNet(nn.Module):
         self.mp1 = nn.MaxPool2d(2).cuda(0)
         self.dp1 = nn.Dropout(0.5).cuda(0)
 
+        # Third block
+        self.layer2 = nn.Conv2d(16 * 2, 16 * 4, kernel_size=5, stride=1, padding=2).cuda(0)
+        self.relu2 = nn.ReLU(16 * 4).cuda(0)
+        self.bn2 = nn.BatchNorm2d(16 * 4).cuda(0)
+        self.mp2 = nn.MaxPool2d(2).cuda(0)
+        self.dp2 = nn.Dropout(0.5).cuda(0)
+
         self.layerO = nn.Conv2d(16, 1, kernel_size=5, stride=1, padding=2).cuda(0)
         self.sig = nn.Sigmoid().cuda(1)
 
@@ -128,6 +135,14 @@ class UNet(nn.Module):
         out = self.relu1(out)
         out = self.mp1(out)
         out = self.dp1(out)
+        print(out.shape)
+
+        # Third block
+        out = self.layer2(out)
+        out = self.bn2(out)
+        out = self.relu2(out)
+        out = self.mp2(out)
+        out = self.dp2(out)
         print(out.shape)
 
         # Output layer
