@@ -249,8 +249,6 @@ def train_model(epochs):
         if epoch % 10 ==0:
             save_models(epoch)
 
-        print(x.shape, y.shape)
-
         del x
         del y
         torch.cuda.empty_cache()
