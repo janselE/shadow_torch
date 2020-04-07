@@ -96,35 +96,39 @@ def save_models(epoch):
 class UNet(nn.Module):
     def __init__(self):
         super(UNet, self).__init__()
+        # First block
         self.layer0 = nn.Conv2d(1, 16, kernel_size=5, stride=1, padding=2).cuda(0)
         self.relu0 = nn.ReLU(16).cuda(0)
         self.bn0 = nn.BatchNorm2d(16).cuda(0)
         self.mp0 = nn.MaxPool2d(2).cuda(0)
         self.dp0 = nn.Dropout(0.5).cuda(0)
 
-        self.layer1 = nn.Conv2d(16, 1, kernel_size=5, stride=1, padding=2).cuda(0)
-        #self.layer1 = nn.Conv2d(1, 32, kernel_size=5, stride=1, padding=2).cuda(0)
-        #self.relu1 = nn.ReLU().cuda(0)
+        # Second block
+        self.layer1 = nn.Conv2d(16, 16 * 2, kernel_size=5, stride=1, padding=2).cuda(0)
+        self.relu1 = nn.ReLU(16 * 2).cuda(0)
+        self.bn1 = nn.BatchNorm2d(16 * 2).cuda(0)
+        self.mp1 = nn.MaxPool2d(2).cuda(0)
+        self.dp1 = nn.Dropout(0.5).cuda(0)
 
-        #self.layer2 = nn.Conv2d(32, 64, kernel_size=5, stride=1, padding=2).cuda(0)
-        #self.relu2 = nn.ReLU().cuda(0)
-
-        #self.layer3 = nn.Conv2d(64, 1, kernel_size=5, stride=1, padding=2).cuda(1)
+        self.layerO = nn.Conv2d(16, 1, kernel_size=5, stride=1, padding=2).cuda(0)
         self.sig = nn.Sigmoid().cuda(1)
 
     def forward(self, x):
+        # First block
         out = self.layer0(x)
-        print(out.shape)
         out = self.bn0(out)
-        print(out.shape)
         out = self.relu0(out)
-        print(out.shape)
         out = self.mp0(out)
-        print(out.shape)
         out = self.dp0(out)
-        print(out.shape)
 
-        out = self.layer1(out)
+        # Second block
+        out = self.layer1(x)
+        out = self.bn1(out)
+        out = self.relu1(out)
+        out = self.mp1(out)
+        out = self.dp1(out)
+
+        out = self.layerO(out)
         out = out.to(1)
         #out = self.relu1(out)
 
