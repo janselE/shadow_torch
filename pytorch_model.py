@@ -98,8 +98,9 @@ class UNet(nn.Module):
         super(UNet, self).__init__()
         self.layer0 = nn.Conv2d(1, 16, kernel_size=5, stride=1, padding=2).cuda(0)
         self.relu0 = nn.ReLU(16).cuda(0)
-        self.bn0 = nn.BatchNorm2d(16) .cuda(0)
-        self.mp0 = nn.MaxPool2d(16).cuda(0)
+        self.bn0 = nn.BatchNorm2d(16).cuda(0)
+        self.mp0 = nn.MaxPool2d(2).cuda(0)
+        self.dp0 = nn.Dropout(0.5).cuda(0)
 
         self.layer1 = nn.Conv2d(16, 1, kernel_size=5, stride=1, padding=2).cuda(0)
         #self.layer1 = nn.Conv2d(1, 32, kernel_size=5, stride=1, padding=2).cuda(0)
@@ -119,6 +120,8 @@ class UNet(nn.Module):
         out = self.relu0(out)
         print(out.shape)
         out = self.mp0(out)
+        print(out.shape)
+        out = self.dp0(out)
         print(out.shape)
 
         out = self.layer1(out)
