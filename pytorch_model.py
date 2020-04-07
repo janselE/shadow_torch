@@ -183,7 +183,8 @@ class UNet(nn.Module):
 
         print("First transpose layer")
         out = self.layer4(out)
-        out += out2
+        print(out1.shape)
+        out += out1
         out = self.dp4(out)
         out = self.cn4(out)
         print(out.shape)
