@@ -120,6 +120,7 @@ class UNet(nn.Module):
         out = self.relu0(out)
         out = self.mp0(out)
         out = self.dp0(out)
+        print(out.shape)
 
         # Second block
         out = self.layer1(x)
@@ -127,17 +128,14 @@ class UNet(nn.Module):
         out = self.relu1(out)
         out = self.mp1(out)
         out = self.dp1(out)
+        print(out.shape)
 
+        # Output layer
         out = self.layerO(out)
+
+        # Changing the gpu
         out = out.to(1)
-        #out = self.relu1(out)
 
-        #out = self.layer2(out)
-        #out = self.relu2(out)
-
-        #out = out.to(1)
-
-        #out = self.layer3(out)
         out = self.sig(out)
         print(out.shape)
 
