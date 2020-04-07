@@ -138,6 +138,7 @@ class UNet(nn.Module):
         out = self.relu0(out)
         out = self.mp0(out)
         out = self.dp0(out)
+        print("First layer")
         print(out.shape)
 
         # Second block
@@ -146,6 +147,7 @@ class UNet(nn.Module):
         out = self.relu1(out)
         out = self.mp1(out)
         out = self.dp1(out)
+        print("Second layer")
         print(out.shape)
 
         # Third block
@@ -154,6 +156,7 @@ class UNet(nn.Module):
         out = self.relu2(out)
         out = self.mp2(out)
         out = self.dp2(out)
+        print("Third layer")
         print(out.shape)
 
         # Forth block
@@ -162,13 +165,16 @@ class UNet(nn.Module):
         out1 = self.relu3(out)
         out = self.mp3(out1)
         out = self.dp3(out)
+        print("Forth layer")
         print(out.shape)
 
         out = self.layerM(out)
+        print("Middle layer")
         print(out.shape)
 
         out = self.layer4(out)
         out = torch.cat((out, out1), 0)
+        print("Transpose layer")
         print(out.shape)
 
         # Output layer
