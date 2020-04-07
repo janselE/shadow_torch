@@ -183,14 +183,14 @@ class UNet(nn.Module):
 
         print("First transpose layer")
         out = self.layer4(out)
-        out = torch.cat((out, out1), 1)
+        out += out2
         out = self.dp4(out)
         out = self.cn4(out)
         print(out.shape)
 
         print("Second transpose layer")
         out = self.layer5(out)
-        out = torch.cat((out, out2), 1)
+        out += out2
         out = self.dp5(out)
         out = self.cn5(out)
         print(out.shape)
