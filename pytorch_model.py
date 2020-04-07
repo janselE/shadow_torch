@@ -214,7 +214,7 @@ class UNet(nn.Module):
 
         print("Forth transpose layer")
         out = self.layer7(out)
-        out += out5
+        out += out4
         out = self.dp7(out)
         out = self.cn7(out)
         print(out.shape)
