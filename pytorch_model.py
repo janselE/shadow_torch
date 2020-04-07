@@ -174,6 +174,8 @@ class UNet(nn.Module):
 
         out = self.layer4(out)
         print("Transpose layer")
+        print(out.shape)
+        print(out1.shape)
         out = torch.cat((out, out1), 0)
         print("Concat layer")
         print(out.shape)
