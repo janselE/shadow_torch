@@ -157,8 +157,6 @@ class UNet(nn.Module):
         out4 = self.relu0(out)
         out = self.mp0(out4)
         out = self.dp0(out)
-        print("First layer")
-        print(out.shape)
 
         # Second block
         out = self.layer1(out)
@@ -166,8 +164,6 @@ class UNet(nn.Module):
         out3 = self.relu1(out)
         out = self.mp1(out3)
         out = self.dp1(out)
-        print("Second layer")
-        print(out.shape)
 
         # Third block
         out = self.layer2(out)
@@ -175,8 +171,6 @@ class UNet(nn.Module):
         out2 = self.relu2(out)
         out = self.mp2(out2)
         out = self.dp2(out)
-        print("Third layer")
-        print(out.shape)
 
         # Forth block
         out = self.layer3(out)
@@ -184,40 +178,28 @@ class UNet(nn.Module):
         out1 = self.relu3(out)
         out = self.mp3(out1)
         out = self.dp3(out)
-        print("Forth layer")
-        print(out.shape)
 
         out = self.layerM(out)
-        print("Middle layer")
-        print(out.shape)
 
-        print("First transpose layer")
         out = self.layer4(out)
         out += out1
         out = self.dp4(out)
         out = self.cn4(out)
-        print(out.shape)
 
-        print("Second transpose layer")
         out = self.layer5(out)
         out += out2
         out = self.dp5(out)
         out = self.cn5(out)
-        print(out.shape)
 
-        print("Third transpose layer")
         out = self.layer6(out)
         out += out3
         out = self.dp6(out)
         out = self.cn6(out)
-        print(out.shape)
 
-        print("Forth transpose layer")
         out = self.layer7(out)
         out += out4
         out = self.dp7(out)
         out = self.cn7(out)
-        print(out.shape)
 
         # Output layer
         out = self.layerO(out)
