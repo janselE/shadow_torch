@@ -163,8 +163,9 @@ class UNet(nn.Module):
         out = self.layer3(out)
         out = self.bn3(out)
         out = self.relu3(out)
-        out = self.mp3(out1)
-        out1 = self.dp3(out)
+        out = self.mp3(out)
+        out = self.dp3(out)
+        out1 = out
         print("Forth layer")
         print(out.shape)
 
