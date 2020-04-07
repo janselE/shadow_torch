@@ -208,7 +208,6 @@ class UNet(nn.Module):
         out = out.to(1)
 
         out = self.sig(out)
-        print(out.shape)
 
         return out
 
