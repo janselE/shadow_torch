@@ -123,7 +123,7 @@ class UNet(nn.Module):
         print(out.shape)
 
         # Second block
-        out = self.layer1(x)
+        out = self.layer1(out)
         out = self.bn1(out)
         out = self.relu1(out)
         out = self.mp1(out)
