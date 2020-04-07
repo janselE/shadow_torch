@@ -126,6 +126,8 @@ class UNet(nn.Module):
 
         self.layerM = nn.Conv2d(16 * 8, 16 * 16, kernel_size=5, stride=1, padding=2).cuda(0)
 
+        self.layer4 = nn.ConvTranspose2d(16 * 16, 16 * 8, kernel_size=5, stride=1, padding=2).cuda(0)
+
         self.layerO = nn.Conv2d(16, 1, kernel_size=5, stride=1, padding=2).cuda(0)
         self.sig = nn.Sigmoid().cuda(1)
 
@@ -163,6 +165,9 @@ class UNet(nn.Module):
         print(out.shape)
 
         out = self.layerM(out)
+        print(out.shape)
+
+        out = self.layer4(out)
         print(out.shape)
 
         # Output layer
