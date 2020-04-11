@@ -73,3 +73,5 @@ for epoch in range(num_epochs):
         #use the previouse output of the discriminator to calculate the cost of the generator (criterion(output, label))
         #run the backpropagation (.backward())
         #update the generator (optimizer.step())
+        if epoch >= 1:
+            break
