@@ -9,7 +9,8 @@ netG = Generator()
 
 # Initialize BCELoss function
 criterionD = nn.BCELoss()
-criterionG = nn.L1Loss()
+criterionG_1 = nn.BCELoss()
+criterionG_2 = nn.L1Loss()
 
 # Establish convention for real and fake labels during training
 real_label = 1
@@ -42,8 +43,10 @@ for epoch in range(num_epochs):
 
         #zero_grad the discriminator
         netD.zero_grad()
+
         #get the size of the batchsize on that specific iteration(pytorch has an example)
         b_size = original_image.size(0)
+
         #generate real labels
         label = torch.full((b_size,), real_label) # we can add this to a divice by another device parameter
 
@@ -55,23 +58,44 @@ for epoch in range(num_epochs):
         #run discriminator on real data (reshape the output using .view(-1))
         output = netD(input_tensor).view(-1)
         print(output.shape)
+
         #calculate the error using the real data (.criterion(output, label))
+        lossD_real = criterionD(output, label)
+
         #run the backpropagation (.backward())
+        lossD_real.backward()
 
         # Train the discriminator on fake images
         #generate fake images
+        fake = netG(input_tensor)
+        fake_mask = torch.zeros(fake.shape)
+        gen_input_tensor = torch.cat((fake.detach(), fake_mask), 1)
+
         #generate fake labels (.fill(fake_labels))
+        label.fill_(fake_labels)
         #run the discriminator on fake images (detach the output of the generator) also, reshape (.view(-1))
+        output = netD(gen_input_tensor).view(-1)
         #calculate the error using the fake data (.criterion(output, label))
+        lossD_fake = criterionD(output, label)
         #run the backpropagation (.backward())
+        lossD_fake = backward()
         #add both errors of the discriminator
+        loss = lossD_fake + lossD_real
         #update the discriminator (optimizer.step())
+        optimizerD.step()
 
         # Train the generator
         #zero_grad the generator
+        netG.zero_grad()
         #generate real labels for the generator (they are real for the generator)
+        label.fill_(real_label)
         #use the previouse output of the discriminator to calculate the cost of the generator (criterion(output, label))
+        lossG_1 = criterionG_1(output, label)
+        lossG_2 = criterionG_2(fake, input_tensor)
+        lossG = lossG_1 + lossG_2
         #run the backpropagation (.backward())
+        lossG.backward()
         #update the generator (optimizer.step())
-        if epoch >= 1:
-            break
+        optimizerG.step()
+
+        break

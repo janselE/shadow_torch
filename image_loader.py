@@ -31,7 +31,7 @@ def read_dataset(filename):
 class Data(Dataset):
     # Constructor
     def __init__(self):
-        self.imgs_names, self.mask_names, self.target_names = read_dataset('../ISTD_Dataset/train/train_A/*.png') # known name
+        self.imgs_names, self.mask_names, self.target_names = read_dataset('../../../ISTD_Dataset/train/train_A/*.png') # known name
         self.len = len(self.imgs_names) # here we take the size of all the names that we can use
 
     # Getter
