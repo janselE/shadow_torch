@@ -31,7 +31,7 @@ def read_dataset(filename):
 class Data(Dataset):
     # Constructor
     def __init__(self):
-        self.imgs_names, self.mask_names, self.target_names = read_dataset('../../../ISTD_Dataset/train/train_A/*.png') # known name
+        self.imgs_names, self.mask_names, self.target_names = read_dataset('../ISTD_Dataset/train/train_A/*.png') # known name
         self.len = 20
         #self.len = len(self.imgs_names) # here we take the size of all the names that we can use
 
@@ -52,9 +52,9 @@ class Data(Dataset):
         targetr_c = target_c.reshape(3, 480, 640).astype('float32') / 255
 
         # convert the numpy arrays into torch tensors
-        t_imgs = torch.tensor(np.asarray(imgsr_c)) # this is to do regression on channels
-        t_mask = torch.tensor(np.asarray(maskr_c)) # this is to do regression on channels
-        t_target = torch.tensor(np.asarray(targetr_c)) # this is to do regression on channels
+        t_imgs = torch.tensor(np.asarray(imgsr_c), requires_grad=False) # this is to do regression on channels
+        t_mask = torch.tensor(np.asarray(maskr_c), requires_grad=False) # this is to do regression on channels
+        t_target = torch.tensor(np.asarray(targetr_c), requires_grad=False) # this is to do regression on channels
 
         self.x = t_imgs.float()
         self.y = t_mask.float()
