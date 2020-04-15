@@ -55,9 +55,9 @@ class Data(Dataset):
     def __init__(self):
         self.imgs, self.mask, self.target = reader('../ISTD_Dataset/train/train_A/*.png') # known name, this is for local
 
-        self.imgsr_c = self.imgs.reshape(3, 480, 640).astype('float32') / 255
-        self.maskr_c = self.mask.reshape(1, 480, 640).astype('float32') / 255
-        self.targetr_c = self.target.reshape(3, 480, 640).astype('float32') / 255
+        self.imgsr_c = self.imgs.reshape(-1, 3, 480, 640).astype('float32') / 255
+        self.maskr_c = self.mask.reshape(-1, 1, 480, 640).astype('float32') / 255
+        self.targetr_c = self.target.reshape(-1, 3, 480, 640).astype('float32') / 255
 
         # convert the numpy arrays into torch tensors
         self.t_imgs = torch.tensor(np.asarray(self.imgsr_c), requires_grad=False) # this is to do regression on channels
