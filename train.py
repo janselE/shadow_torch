@@ -54,10 +54,10 @@ for epoch in range(num_epochs):
         # Train the generator
         optimizerG.zero_grad()
 
-        fake = netG(real_imgs)
-        fake_mask = torch.zeros(fake.shape)
+        fake_imgs = netG(real_imgs)
+        fake_mask = torch.zeros(fake_imgs.shape)
 
-        gen_imgs = torch.cat((fake, fake_mask), 1)
+        gen_imgs = torch.cat((fake_imgs, fake_mask), 1)
         print('shape of fake {}'.format(gen_imgs))
 
         lossG_1 = adversarial_loss(netD(gen_imgs).view(-1), real) # maybe .view(-1)
@@ -82,5 +82,7 @@ for epoch in range(num_epochs):
         #run the backpropagation (.backward())
         lossD.backward()
         optimizerD.step()
+
+        print('Done')
 
         break

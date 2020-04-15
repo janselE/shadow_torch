@@ -53,7 +53,7 @@ def reader(filename):
 class Data(Dataset):
     # Constructor
     def __init__(self):
-        self.imgs, self.mask, self.target = reader('../ISTD_Dataset/train/train_A/*.png') # known name, this is for local
+        self.imgs, self.mask, self.target = reader('../../../ISTD_Dataset/train/train_A/*.png') # known name, this is for local
 
         self.imgsr_c = self.imgs.reshape(-1, 3, 480, 640).astype('float32') / 255
         self.maskr_c = self.mask.reshape(-1, 1, 480, 640).astype('float32') / 255
