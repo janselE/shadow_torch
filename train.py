@@ -58,7 +58,6 @@ for epoch in range(num_epochs):
         fake_mask = torch.zeros(fake_imgs.shape)
 
         gen_imgs = torch.cat((fake_imgs, fake_mask), 1)
-        print('shape of fake {}'.format(gen_imgs))
 
         lossG_1 = adversarial_loss(netD(gen_imgs).view(-1), real) # maybe .view(-1)
         lossG_2 = pixelwise_loss(gen_imgs, real_imgs) # this would be bad because the mask of generated is black
