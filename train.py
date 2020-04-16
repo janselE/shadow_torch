@@ -82,7 +82,7 @@ for epoch in range(num_epochs):
         #run the backpropagation (.backward())
         lossD.backward()
         optimizerD.step()
+        print(lossG.item(), lossD.item())
 
-        print('Done')
+    print('Done with the epoch')
 
-        break
