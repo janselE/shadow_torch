@@ -1,4 +1,3 @@
-import cv2
 import glob
 import numpy as np
 from torch.autograd import Variable
@@ -12,7 +11,6 @@ import random
 
 from PIL import Image
 
-import matplotlib.pyplot as plt
 
 # take as parameter the filename that we already know
 # we are just changing the part of the name that is different
@@ -24,21 +22,21 @@ def read_dataset(filename):
 
     return imgs_names
 
-def reader(filename):
-    imgs_c = []
-
-
-    imgs_names = read_dataset(filename)
-    amt = 20
-
-    # Loop that read in the images and the target images
-    for i in range(0, amt):
-        imgs_c.append(cv2.imread(imgs_names[i]))
-
-    imgs_c = np.asarray(imgs_c)
-
-
-    return imgs_c
+#def reader(filename):
+#    imgs_c = []
+#
+#
+#    imgs_names = read_dataset(filename)
+#    amt = 20
+#
+#    # Loop that read in the images and the target images
+#    for i in range(0, amt):
+#        imgs_c.append(cv2.imread(imgs_names[i]))
+#
+#    imgs_c = np.asarray(imgs_c)
+#
+#
+#    return imgs_c
 
 # Create the data class, this is done to load the data into the pytorch model
 # this class might be slow because is reading the image at the time is being requested
@@ -48,6 +46,7 @@ class Data(Dataset):
     def __init__(self, h, w, transform=None):
         self.imgs = read_dataset('../ISTD_Dataset/train/train_A/*.png') # known name, this is for local
         self.len = 20
+        #self.len = len(self.imgs) # read all the images of the dataset
         self.transform = transform
         self.h = h
         self.w = w
