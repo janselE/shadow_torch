@@ -8,12 +8,14 @@ class SegmentationNet10aTwoHead(VGGNet):
         # this variable was supposed to ba a static variable
         # from SegmentationNet10a
         self.cfg = [(64, 1), (128, 1), ('M', None), (256, 1), (256, 1), (512, 2), (512, 2)]  # 30x30 recep field
+        output = 2
 
         #self.batchnorm_track = config.batchnorm_track
+        self.batchnorm_track = False
 
         self.trunk  = SegmentationNet10aTrunk(cfg=self.cfg)
-        self.head_A = SegmentationNet10aHead(output_k=config.output_k_A, cfg=self.cfg)
-        self.head_B = SegmentationNet10aHead(output_k=config.output_k_B, cfg=self.cfg)
+        self.head_A = SegmentationNet10aHead(output_k=output, cfg=self.cfg)
+        self.head_B = SegmentationNet10aHead(output_k=output, cfg=self.cfg)
 
         self._initialize_weights()
 

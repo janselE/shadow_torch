@@ -11,7 +11,8 @@ class VGGTrunk(nn.Module):
         self.batchnorm_track = False
 
         layers = self._make_layers()
-        return nn.Sequential(*layers)
+        self.layers = nn.Sequential(*layers)
+        return self.layers
 
     def _make_layers(self, batch_norm=True):
         layers = []
@@ -42,6 +43,7 @@ class VGGTrunk(nn.Module):
 class VGGNet(nn.Module):
     def __init__(self):
         super(VGGNet, self).__init__()
+        self.batchnorm_track = False
 
     def _initialize_weights(self, mode='fan_in'):
         for m in self.modules():

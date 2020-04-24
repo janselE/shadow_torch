@@ -35,6 +35,10 @@ epoch_loss_head_B = []
 lamb_A = 1.0
 lamb_B = 1.0
 batch_sz = 8
+num_sub_heads = 2
+half_T_side_dense = 0
+half_T_side_sparse_min = 0
+half_T_side_sparse_max = 0
 
 transform = transforms.Compose([transforms.RandomHorizontalFlip(),
     transforms.RandomVerticalFlip()])
@@ -119,13 +123,14 @@ for e_i in range(0, num_epochs):
             avg_loss_batch = None  # avg over the heads
             avg_loss_no_lamb_batch = None
 
-            for i in range(config.num_sub_heads):
+            for i in range(num_sub_heads):
+                print("This is the shape {}".format(x1_outs.shape))
                 loss, loss_no_lamb = loss_fn(x1_outs[i], x2_outs[i],
                                              all_affine2_to_1=all_affine2_to_1,
                                              all_mask_img1=all_mask_img1, lamb=lamb,
-                                             half_T_side_dense=config.half_T_side_dense,
-                                             half_T_side_sparse_min=config.half_T_side_sparse_min,
-                                             half_T_side_sparse_max=config.half_T_side_sparse_max)
+                                             half_T_side_dense=half_T_side_dense,
+                                             half_T_side_sparse_min=half_T_side_sparse_min,
+                                             half_T_side_sparse_max=half_T_side_sparse_max)
 
                 if avg_loss_batch is None:
                     avg_loss_batch = loss
@@ -134,10 +139,12 @@ for e_i in range(0, num_epochs):
                     avg_loss_batch += loss
                     avg_loss_no_lamb_batch += loss_no_lamb
 
-            avg_loss_batch /= config.num_sub_heads
-            avg_loss_no_lamb_batch /= config.num_sub_heads
+            avg_loss_batch /= num_sub_heads
+            avg_loss_no_lamb_batch /= num_sub_heads
 
             # check the print statement that was here
+            print("e {} h {} b {} al {} aln {}".format(e_i, head, b_i, avg_loss_batch.item(),
+                avg_loss_no_lamb_batch.item()))
 
             if not np.isfinite(avg_loss_batch.item()):
                 print("Loss is not finite... %s:" % str(avg_loss_batch))
