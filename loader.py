@@ -4,7 +4,7 @@ import torch
 
 # scripts
 from image_loader import *
-from IIC_Network import *
+from net10a_twohead import *
 from IIC_Losses import *
 
 
@@ -12,7 +12,7 @@ h, w, in_channels = 240, 240, 3
 
 
 # Create the models
-net = net()
+net = SegmentationNet10aTwoHead()
 
 # Defining the learning rate, number of epochs and beta for the optimizers
 lr = 0.001
@@ -39,7 +39,11 @@ batch_sz = 8
 
 transform = transforms.Compose([transforms.RandomHorizontalFlip(),
     transforms.RandomVerticalFlip()])
-dataloader = DataLoader(dataset=Data(h, w, transform), batch_size=32, shuffle=True)  # Create the loader for the model
+dataloader_A = DataLoader(dataset=Data(h, w,"A", transform),
+        batch_size=batch_sz, shuffle=True)  # Create the loader for the model
+dataloader_B = DataLoader(dataset=Data(h, w,"B",  transform),
+        batch_size=batch_sz, shuffle=True)  # Create the loader for the model
+dataloaders_list = [dataloader_A, dataloader_B]
 
 ## For each epoch
 #for epoch in range(num_epochs):
@@ -56,13 +60,13 @@ for e_i in range(0, num_epochs):
     for head_i in range(2):
         head = heads[head_i]
         if head == "A":
-            dataloaders = dataloader
+            dataloaders = dataloaders_list
             epoch_loss = epoch_loss_head_A
             #epoch_loss_no_lamb = config.epoch_loss_no_lamb_head_A
             lamb = lamb_A
 
         elif head == "B":
-            dataloaders = dataloader
+            dataloaders = dataloaders_list
             epoch_loss = epoch_loss_head_B
             #epoch_loss_no_lamb = config.epoch_loss_no_lamb_head_B
             lamb = lamb_B
@@ -87,23 +91,26 @@ for e_i in range(0, num_epochs):
             curr_batch_sz = tup[0][0].shape[0]
             for d_i in range(2): # verify this, I think it does matter the amout of dataloaders
                 img1, img2 = tup[d_i]
+                print(img1.shape, img2.shape)
                 #img1, img2, affine2_to_1, mask_img1 = tup[d_i]
                 assert (img1.shape[0] == curr_batch_sz)
 
-                actual_batch_start = d_i * curr_batch_sz
-                actual_batch_end = actual_batch_start + curr_batch_sz
+                actual_batch_start = d_i * batch_sz
+                actual_batch_end = actual_batch_start + batch_sz
 
-                all_img1[actual_batch_start:actual_batch_end, :, :, :] = img1
-                all_img2[actual_batch_start:actual_batch_end, :, :, :] = img2
-                all_affine2_to_1[actual_batch_start:actual_batch_end, :, :] = affine2_to_1
-                all_mask_img1[actual_batch_start:actual_batch_end, :, :] = mask_img1
+                all_img1 = img1
+                all_img2 = img2
+                #all_img1[actual_batch_start:actual_batch_end, :, :, :] = img1
+                #all_img2[actual_batch_start:actual_batch_end, :, :, :] = img2
+                #all_affine2_to_1[actual_batch_start:actual_batch_end, :, :] = affine2_to_1
+                #all_mask_img1[actual_batch_start:actual_batch_end, :, :] = mask_img1
 
 
-            curr_total_batch_sz = curr_batch_sz * config.num_dataloaders  # times 2
+            curr_total_batch_sz = batch_sz * 2 #num_dataloaders  # times 2
             all_img1 = all_img1[:curr_total_batch_sz, :, :, :]
             all_img2 = all_img2[:curr_total_batch_sz, :, :, :]
-            all_affine2_to_1 = all_affine2_to_1[:curr_total_batch_sz, :, :]
-            all_mask_img1 = all_mask_img1[:curr_total_batch_sz, :, :]
+            #all_affine2_to_1 = all_affine2_to_1[:curr_total_batch_sz, :, :]
+            #all_mask_img1 = all_mask_img1[:curr_total_batch_sz, :, :]
 
             # erased the no sobel if statement
 

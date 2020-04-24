@@ -43,17 +43,21 @@ def read_dataset(filename):
 # in this manner we do not load a lot of the images and run out of memmory
 class Data(Dataset):
     # Constructor
-    def __init__(self, h, w, transform=None):
+    def __init__(self, h, w, mode="A", transform=None):
+        self.mode = mode
         self.imgs = read_dataset('../ISTD_Dataset/train/train_A/*.png') # known name, this is for local
         self.len = 20
         #self.len = len(self.imgs) # read all the images of the dataset
         self.transform = transform
         self.h = h
         self.w = w
+        self.size = int(self.len/2)
 
     # Getter
     def __getitem__(self, index):
         # baseline transformations
+        if "B" == self.mode:
+            index = index + self.size
 
         image = Image.open(self.imgs[index])
         image = transforms.RandomCrop((self.h, self.w))(image)
@@ -69,6 +73,6 @@ class Data(Dataset):
 
     # Get items
     def __len__(self):
-        return self.len
+        return self.size
 
 
