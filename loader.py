@@ -10,7 +10,6 @@ from IIC_Losses import *
 
 h, w, in_channels = 240, 240, 3
 
-
 # Create the models
 net = SegmentationNet10aTwoHead()
 
