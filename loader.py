@@ -11,7 +11,7 @@ from IIC_Losses import *
 h, w, in_channels = 240, 240, 3
 
 # Create the models
-net = SegmentationNet10aTwoHead()
+net = SegmentationNet10aTwoHead()  # isn't second head for overlustering? I did not think overclustering was an option for shadow detection since we only have 2 classes and no other labels in dataset. THerefore we should just use the single headed model?
 
 # Defining the learning rate, number of epochs and beta for the optimizers
 lr = 0.001
@@ -26,7 +26,7 @@ optimizer = torch.optim.Adam(net.parameters(), lr=lr, betas=(beta1, 0.1))
 
 # Lists to keep track of progress
 img_list = []
-G_losses = []
+G_losses = []  # maybe make sure just shadow mask prediction is working first before we test GAN
 D_losses = []
 iters = 0
 heads = ["A", "B"]
@@ -42,7 +42,7 @@ half_T_side_sparse_max = 0
 
 transform = transforms.Compose([transforms.RandomHorizontalFlip(),
     transforms.RandomVerticalFlip()])
-dataloader_A = DataLoader(dataset=Data(h, w,"A", transform),
+dataloader_A = DataLoader(dataset=Data(h, w,"A", transform),  # what data does this load? we just want to load images with shadows, right?
         batch_size=batch_sz, shuffle=True)  # Create the loader for the model
 dataloader_B = DataLoader(dataset=Data(h, w,"B",  transform),
         batch_size=batch_sz, shuffle=True)  # Create the loader for the model
@@ -66,7 +66,7 @@ for e_i in range(0, num_epochs):
             dataloaders = dataloaders_list
             epoch_loss = epoch_loss_head_A
             #epoch_loss_no_lamb = config.epoch_loss_no_lamb_head_A
-            lamb = lamb_A
+            lamb = lamb_A  # what is lamb? stands for lambda? is hyperparameter?
 
         elif head == "B":
             dataloaders = dataloaders_list
@@ -74,7 +74,7 @@ for e_i in range(0, num_epochs):
             #epoch_loss_no_lamb = config.epoch_loss_no_lamb_head_B
             lamb = lamb_B
 
-        iterators = (d for d in dataloaders)
+        iterators = (d for d in dataloaders)  # why two dataloaders? For image and transformed image?
         b_i = 0
         avg_loss = 0.  # over heads and head_epochs (and sub_heads)
         avg_loss_no_lamb = 0.
@@ -93,15 +93,15 @@ for e_i in range(0, num_epochs):
 
             curr_batch_sz = tup[0][0].shape[0]
             for d_i in range(2): # verify this, I think it does matter the amout of dataloaders
-                img1, img2 = tup[d_i]
+                img1, img2 = tup[d_i]  # so one dataloader provides the 2 images we want to compare? Then why are there 2 dataloaders?
                 print(img1.shape, img2.shape)
                 #img1, img2, affine2_to_1, mask_img1 = tup[d_i]
                 assert (img1.shape[0] == curr_batch_sz)
 
-                actual_batch_start = d_i * batch_sz
+                actual_batch_start = d_i * batch_sz  # why do we need to keep track of this? Wouldn't need it with only one dataloader?
                 actual_batch_end = actual_batch_start + batch_sz
 
-                all_img1 = img1
+                all_img1 = img1  # why? why initialize all_img1 if doing this?
                 all_img2 = img2
                 #all_img1[actual_batch_start:actual_batch_end, :, :, :] = img1
                 #all_img2[actual_batch_start:actual_batch_end, :, :, :] = img2
