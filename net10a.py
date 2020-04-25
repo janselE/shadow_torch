@@ -63,9 +63,10 @@ class SegmentationNet10a(VGGNet):
 
         #self.batchnorm_track = config.batchnorm_track
         self.batchnorm_track = False
+        output_k = 2 # is this the segmentation mask that we want?
 
-        self.trunk = SegmentationNet10aTrunk(config, cfg=self.cfg)
-        self.head = SegmentationNet10aHead(config, output_k=config.output_k,
+        self.trunk = SegmentationNet10aTrunk(cfg=self.cfg)
+        self.head = SegmentationNet10aHead(output_k=output_k,
                                            cfg=self.cfg)
 
         self._initialize_weights()
