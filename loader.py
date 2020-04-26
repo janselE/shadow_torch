@@ -65,26 +65,16 @@ for e_i in range(0, num_epochs):
 
         pre_channels = in_channels
 
-        all_img1 = torch.zeros(batch_sz, pre_channels, h, w).to(torch.float32) #cuda
-        all_img2 = torch.zeros(batch_sz, pre_channels, h, w).to(torch.float32) # cuda
-        all_affine2_to_1 = torch.zeros(batch_sz, 2, 3).to(torch.float32) # cuda
-        all_mask_img1 = torch.zeros(batch_sz, h, w).to(torch.float32) # cuda
-
-        all_img1 = img1
-        all_img2 = img2
-        all_affine2_to_1 = affine2_to_1
-        all_mask_img1 = mask_img1
-
-        x1_outs = net(all_img1)
-        x2_outs = net(all_img2)
+        x1_outs = net(img1)
+        x2_outs = net(img2)
 
         avg_loss_batch = None
         avg_loss_no_lamb_batch = None
 
         for i in range(num_sub_heads):
             loss, loss_no_lamb = loss_fn(x1_outs[i], x2_outs[i],
-                    all_affine2_to_1=all_affine2_to_1,
-                    all_mask_img1=all_mask_img1, lamb=lamb,
+                    all_affine2_to_1=affine2_to_1,
+                    all_mask_img1=mask_img1, lamb=lamb,
                     half_T_side_dense=half_T_side_dense,
                     half_T_side_sparse_min=half_T_side_sparse_min,
                     half_T_side_sparse_max=half_T_side_sparse_max)
