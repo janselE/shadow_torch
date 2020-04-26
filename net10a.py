@@ -27,7 +27,7 @@ class SegmentationNet10aTrunk(VGGTrunk):
         return x
 
 class SegmentationNet10aHead(nn.Module):
-    def __init__(self, output_k, cfg):
+    def __init__(self, output_k, cfg, num_sub_heads):
         super(SegmentationNet10aHead, self).__init__()
 
         #self.batchnorm_track = config.batchnorm_track
@@ -36,7 +36,7 @@ class SegmentationNet10aHead(nn.Module):
         self.cfg = cfg
         num_features = self.cfg[-1][0]
 
-        self.num_sub_heads = 2 #config.num_sub_heads
+        self.num_sub_heads = num_sub_heads #config.num_sub_heads
 
         self.heads = nn.ModuleList([nn.Sequential(nn.Conv2d(num_features, output_k, kernel_size=1,
                                                             stride=1, dilation=1, padding=1, bias=False),
@@ -55,7 +55,7 @@ class SegmentationNet10aHead(nn.Module):
 
 class SegmentationNet10a(VGGNet):
 
-    def __init__(self):
+    def __init__(self, num_sub_heads):
         super(SegmentationNet10a, self).__init__()
         # this variable was supposed to be used as a static var
         self.cfg = [(64, 1), (128, 1), ('M', None), (256, 1), (256, 1), (512, 2), (512, 2)]  # 30x30 recep field
@@ -66,7 +66,8 @@ class SegmentationNet10a(VGGNet):
 
         self.trunk = SegmentationNet10aTrunk(cfg=self.cfg)
         self.head = SegmentationNet10aHead(output_k=output_k,
-                                           cfg=self.cfg)
+                                           cfg=self.cfg,
+                                           num_sub_heads=num_sub_heads)
 
         self._initialize_weights()
 

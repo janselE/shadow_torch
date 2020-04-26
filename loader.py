@@ -10,20 +10,6 @@ from IIC_Losses import *
 
 h, w, in_channels = 240, 240, 3
 
-# Create the models
-net = SegmentationNet10a()
-
-# Defining the learning rate, number of epochs and beta for the optimizers
-lr = 0.001
-beta1 = 0.5
-num_epochs = 10
-
-# Initialize IIC objective function
-loss_fn = IID_segmentation_loss
-
-# Setup Adam optimizers for both
-optimiser = torch.optim.Adam(net.parameters(), lr=lr, betas=(beta1, 0.1))
-
 # Lists to keep track of progress
 img_list = []
 G_losses = []  # maybe make sure just shadow mask prediction is working first before we test GAN
@@ -35,6 +21,20 @@ num_sub_heads = 2
 half_T_side_dense = 0
 half_T_side_sparse_min = 0
 half_T_side_sparse_max = 0
+
+# Defining the learning rate, number of epochs and beta for the optimizers
+lr = 0.001
+beta1 = 0.5
+num_epochs = 10
+
+# Create the models
+net = SegmentationNet10a(num_sub_heads)
+
+# Initialize IIC objective function
+loss_fn = IID_segmentation_loss
+
+# Setup Adam optimizers for both
+optimiser = torch.optim.Adam(net.parameters(), lr=lr, betas=(beta1, 0.1))
 
 transform = transforms.Compose([transforms.RandomHorizontalFlip(),
     transforms.RandomVerticalFlip()])
