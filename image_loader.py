@@ -109,6 +109,7 @@ class Data(Dataset):
 
         mask_img1 = torch.ones(self.input_sz, self.input_sz).to(torch.uint8) #cuda
 
+
         #if self.transform:
         #    target = self.transform(image)
 
