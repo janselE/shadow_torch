@@ -6,7 +6,7 @@ import torch.nn.functional as F
 
 def perform_affine_tf(data, tf_matrices):
     # expects 4D tensor, we preserve gradients if there are any
-    
+
     n_i, k, h, w = data.shape
     n_i2, r, c = tf_matrices.shape
     assert (n_i == n_i2)
@@ -20,7 +20,7 @@ def perform_affine_tf(data, tf_matrices):
 
 def random_translation_multiple(data, half_side_min, half_side_max):
     n, c, h, w = data.shape
-        
+
     # pad last 2, i.e. spatial, dimensions, equally in all directions
     data = F.pad(data,
                  (half_side_max, half_side_max, half_side_max, half_side_max), "constant", 0)
