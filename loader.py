@@ -43,13 +43,6 @@ dataloader = DataLoader(dataset=Data(h, w, transform),  # what data does this lo
         batch_size=batch_sz, shuffle=True, drop_last=True)  # shuffle is to pick random images and drop last is to drop the last batch so the size does not changes
 
 
-## For each epoch
-#for epoch in range(num_epochs):
-#    # For each batch in the dataloader
-#    for i, data in enumerate(dataloader, 0):
-#        img1, img2, aff, mask = data
-#        print(img1.shape, img2.shape, aff.shape, mask.shape)
-
 for e_i in range(0, num_epochs):
     print("Starting e_i: %d " % (e_i))
 
