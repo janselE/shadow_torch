@@ -40,8 +40,10 @@ half_T_side_sparse_max = 0
 
 transform = transforms.Compose([transforms.RandomHorizontalFlip(),
     transforms.RandomVerticalFlip()])
-dataloaders = DataLoader(dataset=Data(h, w, transform),  # what data does this load? we just want to load images with shadows, right?
+dataloader = DataLoader(dataset=Data(h, w, transform),  # what data does this load? we just want to load images with shadows, right?
         batch_size=batch_sz, shuffle=True)  # Create the loader for the model
+dataloaders = [dataloader, dataloader]
+
 
 ## For each epoch
 #for epoch in range(num_epochs):
@@ -76,6 +78,8 @@ for e_i in range(0, num_epochs):
         curr_batch_sz = tup[0][0].shape[0]
         for d_i in range(2): # verify this, I think it does matter the amout of dataloaders
             img1, img2 = tup[d_i]  # so one dataloader provides the 2 images we want to compare? Then why are there 2 dataloaders?
+            affine2_to_1 = img1
+            mask_img1 = img1
             print(img1.shape, img2.shape)
             #img1, img2, affine2_to_1, mask_img1 = tup[d_i]
             assert (img1.shape[0] == curr_batch_sz)
@@ -99,14 +103,13 @@ for e_i in range(0, num_epochs):
 
         # erased the no sobel if statement
 
-        x1_outs = net(all_img1, head=head)
-        x2_outs = net(all_img2, head=head)
+        x1_outs = net(all_img1)
+        x2_outs = net(all_img2)
 
         avg_loss_batch = None  # avg over the heads
         avg_loss_no_lamb_batch = None
 
         for i in range(num_sub_heads):
-            print("This is the shape {}".format(x1_outs.shape))
             loss, loss_no_lamb = loss_fn(x1_outs[i], x2_outs[i],
                     all_affine2_to_1=all_affine2_to_1,
                     all_mask_img1=all_mask_img1, lamb=lamb,
@@ -125,7 +128,7 @@ for e_i in range(0, num_epochs):
         avg_loss_no_lamb_batch /= num_sub_heads
 
         # check the print statement that was here
-        print("e {} h {} b {} al {} aln {}".format(e_i, head, b_i, avg_loss_batch.item(),
+        print("e {} b {} al {} aln {}".format(e_i, b_i, avg_loss_batch.item(),
             avg_loss_no_lamb_batch.item()))
 
         if not np.isfinite(avg_loss_batch.item()):
