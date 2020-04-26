@@ -22,7 +22,7 @@ num_epochs = 10
 loss_fn = IID_segmentation_loss
 
 # Setup Adam optimizers for both
-optimizer = torch.optim.Adam(net.parameters(), lr=lr, betas=(beta1, 0.1))
+optimiser = torch.optim.Adam(net.parameters(), lr=lr, betas=(beta1, 0.1))
 
 # Lists to keep track of progress
 img_list = []
@@ -40,8 +40,9 @@ half_T_side_sparse_max = 0
 
 transform = transforms.Compose([transforms.RandomHorizontalFlip(),
     transforms.RandomVerticalFlip()])
+# Creates a dataloader for the model
 dataloader = DataLoader(dataset=Data(h, w, transform),  # what data does this load? we just want to load images with shadows, right?
-        batch_size=batch_sz, shuffle=True)  # Create the loader for the model
+        batch_size=batch_sz, shuffle=True, drop_last=True)  # shuffle is to pick random images and drop last is to drop the last batch so the size does not changes
 dataloaders = [dataloader, dataloader]
 
 
@@ -66,7 +67,6 @@ for e_i in range(0, num_epochs):
     avg_loss_count = 0
 
     for tup in zip(*iterators):
-        print(type(tup))
         net.zero_grad()
 
         pre_channels = in_channels
@@ -88,13 +88,13 @@ for e_i in range(0, num_epochs):
             all_img1[actual_batch_start:actual_batch_end, :, :, :] = img1
             all_img2[actual_batch_start:actual_batch_end, :, :, :] = img2
             all_affine2_to_1[actual_batch_start:actual_batch_end, :, :] = affine2_to_1
-            #all_mask_img1[actual_batch_start:actual_batch_end, :, :] = mask_img1
+            all_mask_img1[actual_batch_start:actual_batch_end, :, :] = mask_img1
 
-        curr_total_batch_sz = batch_sz * 2 #num_dataloaders  # times 2
+        curr_total_batch_sz = batch_sz * num_dataloaders  # times 2
         all_img1 = all_img1[:curr_total_batch_sz, :, :, :]
         all_img2 = all_img2[:curr_total_batch_sz, :, :, :]
         all_affine2_to_1 = all_affine2_to_1[:curr_total_batch_sz, :, :]
-        #all_mask_img1 = all_mask_img1[:curr_total_batch_sz, :, :]
+        all_mask_img1 = all_mask_img1[:curr_total_batch_sz, :, :]
 
         # erased the no sobel if statement
 
@@ -145,7 +145,3 @@ for e_i in range(0, num_epochs):
 
     avg_loss = float(avg_loss / avg_loss_count)
     avg_loss_no_lamb = float(avg_loss_no_lamb / avg_loss_count)
-
-    epoch_loss.append(avg_loss)
-    epoch_loss_no_lamb.append(avg_loss_no_lamb)
-
