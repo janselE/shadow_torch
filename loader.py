@@ -49,8 +49,8 @@ dataloaders = [dataloader, dataloader]
 for epoch in range(num_epochs):
     # For each batch in the dataloader
     for i, data in enumerate(dataloader, 0):
-        original_image, transformed = data
-        print(original_image.shape)
+        img1, img2, aff, mask = data
+        print(img1.shape, img2.shape, aff.shape, mask.shape)
 
 #for e_i in range(0, num_epochs):
 #    print("Starting e_i: %d " % (e_i))
