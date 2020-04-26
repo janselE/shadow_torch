@@ -21,7 +21,6 @@ class SegmentationNet10aTrunk(VGGTrunk):
         self.in_channels = 3 #config.in_channels if hasattr(config, 'in_channels') else 3
 
         self.features = self.layers #self._make_layers()
-        print("Hereeeee {}".format(type(self.features)))
 
     def forward(self, x):
         x = self.features(x)  # do not flatten

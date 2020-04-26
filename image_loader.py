@@ -8,6 +8,9 @@ from torch.utils.data import Dataset, DataLoader
 import torchvision.transforms as transforms
 import torchvision.transforms.functional as TF
 import random
+import scipy.io as sio
+
+from transforms import *
 
 from PIL import Image
 
@@ -43,8 +46,7 @@ def read_dataset(filename):
 # in this manner we do not load a lot of the images and run out of memmory
 class Data(Dataset):
     # Constructor
-    def __init__(self, h, w, mode="A", transform=None):
-        self.mode = mode
+    def __init__(self, h, w, transform=None, use_random_scale=False):
         self.imgs = read_dataset('../ISTD_Dataset/train/train_A/*.png') # known name, this is for local
         self.len = 20
         #self.len = len(self.imgs) # read all the images of the dataset
@@ -53,18 +55,35 @@ class Data(Dataset):
         self.w = w
         self.size = int(self.len/2)
 
+        # config parameters
+        self.use_random_scale = use_random_scale
+        self.scale_max = 1.4
+        self.scale_min = 0.6
+        self.input_sz = h
+
     # Getter
     def __getitem__(self, index):
         # baseline transformations
-        if "B" == self.mode:
-            index = index + self.size
 
-        image = Image.open(self.imgs[index])
-        image = transforms.RandomCrop((self.h, self.w))(image)
+        image = sio.loadmat(self.imgs[index])["img"]
+        #image = transforms.RandomCrop((self.h, self.w))(image)
+        image = np.asarray(image).astype(np.float32)
         target = image
 
-        if self.transform:
-            target = self.transform(image)
+        if self.use_random_scale:
+            scale_factor = (np.random.rand() * (self.scale_max - self.scale_min)) + \
+                    self.scale_min
+            image = cv2.resize(image, dsize=None, fx=scale_factor, fy=scale_factor, interpolation=cv2.INTER_LINEAR)
+
+        img, coords = pad_and_or_crop(image, self.input_sz, mode="random")
+
+        img_ir = img[:, :, 3]
+        img = img[:, :, :3]
+
+        img1 = Image.fromarray(img.astype(np.uint8))
+
+        #if self.transform:
+        #    target = self.transform(image)
 
         self.x = transforms.ToTensor()(image)
         self.y = transforms.ToTensor()(target)

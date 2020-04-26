@@ -20,7 +20,7 @@ from torch.utils import data
 
 
 class DoerschDataset(data.Dataset):
-    def __init__(self, config, base_dataset):
+    def __init__(self, base_dataset):
     # base_dataset already constructed with config
         super(DoerschDataset, self).__init__()
         self.base_dataset = base_dataset
