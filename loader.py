@@ -61,10 +61,10 @@ for epoch in range(0, num_epochs):
         img1, img2, affine2_to_1, mask_img1 = data
 
         # just moving everything to cuda
-        img1.cuda()
-        img2.cuda()
-        affine2_to_1.cuda()
-        mask_img1.cuda()
+        img1 = img1.cuda()
+        img2 = img2.cuda()
+        affine2_to_1 = affine2_to_1.cuda()
+        mask_img1 = mask_img1.cuda()
 
         net.zero_grad()
 
