@@ -19,15 +19,15 @@ def IID_segmentation_loss(x1_outs, x2_outs, all_affine2_to_1=None, all_mask_img1
     assert (x1_outs.shape == x2_outs.shape)
 
     # bring x2 back into x1's spatial frame
-    x2_outs_inv = perform_affine_tf(x2_outs, all_affine2_to_1)
+    x2_outs_inv = perform_affine_tf(x2_outs, all_affine2_to_1)  # g^(-1) in paper
 
     if (half_T_side_sparse_min != 0) or (half_T_side_sparse_max != 0):
         x2_outs_inv = random_translation_multiple(x2_outs_inv, half_side_min=half_T_side_sparse_min, half_side_max=half_T_side_sparse_max)
 
     # zero out all irrelevant patches
-    bn, k, h, w = x1_outs.shape
+    bn, k, h, w = x1_outs.shape  # k is classes
     all_mask_img1 = all_mask_img1.view(bn, 1, h, w)  # mult, already float32
-    x1_outs = x1_outs * all_mask_img1  # broadcasts
+    x1_outs = x1_outs * all_mask_img1  # broadcasts  # zeroes out all pixels with 0 in mask_img1
     x2_outs_inv = x2_outs_inv * all_mask_img1
 
     # sum over everything except classes, by convolving x1_outs with x2_outs_inv
@@ -40,7 +40,7 @@ def IID_segmentation_loss(x1_outs, x2_outs, all_affine2_to_1=None, all_mask_img1
                                                        half_T_side_dense))
     p_i_j = p_i_j.sum(dim=2, keepdim=False).sum(dim=2, keepdim=False)  # k, k
 
-    #normalise, use sum, not bn * h * w * T_side * T_side, because we use a mask
+    # normalise, use sum, not bn * h * w * T_side * T_side, because we use a mask
     # also, some pixels did not have a completely unmasked box neighbourhood,
     # but it's fine - just less samples from that pixel
     current_norm = float(p_i_j.sum())

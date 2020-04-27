@@ -28,10 +28,10 @@ def read_dataset(filename):
 # Create the data class, this is done to load the data into the pytorch model
 # this class might be slow because is reading the image at the time is being requested
 # in this manner we do not load a lot of the images and run out of memmory
-class Data(Dataset):
+class ShadowDataset(Dataset):
     # Constructor
     def __init__(self, h, w, transform=None, use_random_scale=False, use_random_affine=False):
-        self.imgs = read_dataset('../ISTD_Dataset/train/train_A/*.png') # known name, this is for local
+        self.imgs = read_dataset('./ISTD_Dataset/train/train_A/*.png')  # known name, this is for local
         self.len = 20
         #self.len = len(self.imgs) # read all the images of the dataset
         self.transform = transform

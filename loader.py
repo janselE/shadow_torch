@@ -1,21 +1,24 @@
 import torchvision
 import torchvision.transforms as transforms
 import torch
+from torch.utils.data import DataLoader
+import cv2
+import numpy as np
 
 # scripts
-from image_loader import *
-from net10a_twohead import *
-from IIC_Losses import *
+from image_loader import ShadowDataset
+from net10a_twohead import SegmentationNet10a
+from IIC_Losses import IID_segmentation_loss
 
 
 h, w, in_channels = 240, 240, 3
 
 # Lists to keep track of progress
 img_list = []
-G_losses = []  # maybe make sure just shadow mask prediction is working first before we test GAN
-D_losses = []
-iters = 0
-lamb = 1.0
+# G_losses = []  # maybe make sure just shadow mask prediction is working first before we test GAN
+# D_losses = []
+# iters = 0
+lamb = 1.0  # will make loss equal to loss_no_lamb
 batch_sz = 8
 num_sub_heads = 1
 half_T_side_dense = 0
@@ -39,8 +42,8 @@ optimiser = torch.optim.Adam(net.parameters(), lr=lr, betas=(beta1, 0.1))
 transform = transforms.Compose([transforms.RandomHorizontalFlip(),
     transforms.RandomVerticalFlip()])
 # Creates a dataloader for the model
-dataloader = DataLoader(dataset=Data(h, w, transform),  # what data does this load? we just want to load images with shadows, right?
-        batch_size=batch_sz, shuffle=True, drop_last=True)  # shuffle is to pick random images and drop last is to drop the last batch so the size does not changes
+dataloader = DataLoader(dataset=ShadowDataset(h, w, transform),
+                        batch_size=batch_sz, shuffle=True, drop_last=True)  # shuffle is to pick random images and drop last is to drop the last batch so the size does not changes
 
 
 for e_i in range(0, num_epochs):
@@ -51,6 +54,9 @@ for e_i in range(0, num_epochs):
     avg_loss_count = 0
 
     for data in dataloader:
+        # img1 is image containing shadow, img2 is transformation of img1,
+        # affine2_to_1 allows reversing affine transforms to make img2 align pixels with img1,
+        # mask_img1 allows zeroing out pixels that are not comparable
         img1, img2, affine2_to_1, mask_img1 = data
 
         net.zero_grad()
@@ -60,6 +66,7 @@ for e_i in range(0, num_epochs):
         x1_outs = net(img1)
         x2_outs = net(img2)
 
+        # batch is passed through each subhead to calculate loss, store average loss per sub_head
         avg_loss_batch = None
         avg_loss_no_lamb_batch = None
 
@@ -81,8 +88,8 @@ for e_i in range(0, num_epochs):
         avg_loss_batch /= num_sub_heads
         avg_loss_no_lamb_batch /= num_sub_heads
 
-        # check the print statement that was here
-        print("e {} al {} aln {}".format(e_i, avg_loss_batch.item(), avg_loss_no_lamb_batch.item()))
+        # track losses
+        print("epoch {} average_loss {} ave_loss_no_lamb {}".format(e_i, avg_loss_batch.item(), avg_loss_no_lamb_batch.item()))
 
         if not np.isfinite(avg_loss_batch.item()):
             print("Loss is not finite... %s:" % str(avg_loss_batch))
@@ -96,12 +103,14 @@ for e_i in range(0, num_epochs):
         optimiser.step()
 
         # this is to test that the output makes sense
-        o = transforms.ToPILImage()(img1[0])
-        o.save("test1.png")
-        o = transforms.ToPILImage()(img2[0])
-        o.save("test2.png")
-        im = torch.argmax(x1_outs[0], dim=1).detach().numpy()
-        cv2.imwrite('test.png', im[0] * 255)
+        o = transforms.ToPILImage()(img1[0].detach())
+        o.save("test_img1.png")
+        o = transforms.ToPILImage()(img2[0].detach())
+        o.save("test_img2.png")
+        shadow_mask1_pred_bw = torch.argmax(x1_outs[0].detach(), dim=1).numpy()  # gets black and white image
+        cv2.imwrite('test_mask1_bw.png', shadow_mask1_pred_bw[0])
+        shadow_mask1_pred_grey = x1_outs[0].detach().numpy()  # gets black and white image
+        cv2.imwrite('test_mask1_grey.png', shadow_mask1_pred_grey[0])
 
         torch.cuda.empty_cache()
 

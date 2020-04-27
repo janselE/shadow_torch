@@ -1,7 +1,7 @@
 from network import *
 from image_loader import *
 
-dataloader  = DataLoader(dataset=Data(), batch_size=8, shuffle=True) # Create the loader for the model
+dataloader  = DataLoader(dataset=ShadowDataset(), batch_size=8, shuffle=True) # Create the loader for the model
 
 # Create the models
 netD = Discriminator()
