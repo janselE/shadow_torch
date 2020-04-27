@@ -58,7 +58,13 @@ for epoch in range(0, num_epochs):
         # img1 is image containing shadow, img2 is transformation of img1,
         # affine2_to_1 allows reversing affine transforms to make img2 align pixels with img1,
         # mask_img1 allows zeroing out pixels that are not comparable
-        img1, img2, affine2_to_1, mask_img1 = data.cuda()
+        img1, img2, affine2_to_1, mask_img1 = data
+
+        # just moving everything to cuda
+        img1.cuda()
+        img2.cuda()
+        affine2_to_1.cuda()
+        mask_img1.cuda()
 
         net.zero_grad()
 
