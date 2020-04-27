@@ -28,7 +28,7 @@ half_T_side_sparse_max = 0
 # Defining the learning rate, number of epochs and beta for the optimizers
 lr = 0.001
 beta1 = 0.5
-num_epochs = 10
+num_epochs = 100
 
 # Create the models
 net = SegmentationNet10a(num_sub_heads)
@@ -46,22 +46,20 @@ dataloader = DataLoader(dataset=ShadowDataset(h, w, transform),
                         batch_size=batch_sz, shuffle=True, drop_last=True)  # shuffle is to pick random images and drop last is to drop the last batch so the size does not changes
 
 
-for e_i in range(0, num_epochs):
-    print("Starting e_i: %d " % (e_i))
+for epoch in range(0, num_epochs):
+    print("Starting epoch: %d " % (epoch))
 
     avg_loss = 0.  # over heads and head_epochs (and sub_heads)
     avg_loss_no_lamb = 0.
     avg_loss_count = 0
 
-    for data in dataloader:
+    for idx, data in enumerate(dataloader):
         # img1 is image containing shadow, img2 is transformation of img1,
         # affine2_to_1 allows reversing affine transforms to make img2 align pixels with img1,
         # mask_img1 allows zeroing out pixels that are not comparable
         img1, img2, affine2_to_1, mask_img1 = data
 
         net.zero_grad()
-
-        pre_channels = in_channels
 
         x1_outs = net(img1)
         x2_outs = net(img2)
@@ -89,7 +87,7 @@ for e_i in range(0, num_epochs):
         avg_loss_no_lamb_batch /= num_sub_heads
 
         # track losses
-        print("epoch {} average_loss {} ave_loss_no_lamb {}".format(e_i, avg_loss_batch.item(), avg_loss_no_lamb_batch.item()))
+        print("epoch {} average_loss {} ave_loss_no_lamb {}".format(epoch, avg_loss_batch.item(), avg_loss_no_lamb_batch.item()))
 
         if not np.isfinite(avg_loss_batch.item()):
             print("Loss is not finite... %s:" % str(avg_loss_batch))
@@ -102,15 +100,16 @@ for e_i in range(0, num_epochs):
         avg_loss_batch.backward()
         optimiser.step()
 
-        # this is to test that the output makes sense
-        o = transforms.ToPILImage()(img1[0].detach())
-        o.save("test_img1.png")
-        o = transforms.ToPILImage()(img2[0].detach())
-        o.save("test_img2.png")
-        shadow_mask1_pred_bw = torch.argmax(x1_outs[0].detach(), dim=1).numpy()  # gets black and white image
-        cv2.imwrite('test_mask1_bw.png', shadow_mask1_pred_bw[0])
-        shadow_mask1_pred_grey = x1_outs[0].detach().numpy()  # gets black and white image
-        cv2.imwrite('test_mask1_grey.png', shadow_mask1_pred_grey[0])
+        # visualize outputs of last image in dataset every 10 epochs
+        if epoch % 10 == 0 and idx == len(dataloader):
+            o = transforms.ToPILImage()(img1[0].detach())
+            o.save("img_visual_checks/test_img1_e{}.png".format(epoch))
+            o = transforms.ToPILImage()(img2[0].detach())
+            o.save("img_visual_checks/test_img2_e{}.png".format(epoch))
+            shadow_mask1_pred_bw = torch.argmax(x1_outs[0].detach(), dim=1).numpy()  # gets black and white image
+            cv2.imwrite('img_visual_checks/test_mask1_bw_e{}.png'.format(epoch), shadow_mask1_pred_bw[0])
+            shadow_mask1_pred_grey = x1_outs[0][1].detach().numpy()  # gets probability pixel is black
+            cv2.imwrite('img_visual_checks/test_mask1_grey_e{}.png'.format(epoch), shadow_mask1_pred_grey[0])
 
         torch.cuda.empty_cache()
 
