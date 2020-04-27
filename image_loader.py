@@ -109,13 +109,6 @@ class Data(Dataset):
 
         mask_img1 = torch.ones(self.input_sz, self.input_sz).to(torch.uint8) #cuda
 
-
-        #if self.transform:
-        #    target = self.transform(image)
-
-        #self.x = transforms.ToTensor()(image)
-        #self.y = transforms.ToTensor()(target)
-
         return img1, img2, affine2_to_1, mask_img1
 
     # Get items

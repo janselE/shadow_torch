@@ -17,7 +17,7 @@ D_losses = []
 iters = 0
 lamb = 1.0
 batch_sz = 8
-num_sub_heads = 2
+num_sub_heads = 1
 half_T_side_dense = 0
 half_T_side_sparse_min = 0
 half_T_side_sparse_max = 0
@@ -46,7 +46,6 @@ dataloader = DataLoader(dataset=Data(h, w, transform),  # what data does this lo
 for e_i in range(0, num_epochs):
     print("Starting e_i: %d " % (e_i))
 
-    b_i = 0
     avg_loss = 0.  # over heads and head_epochs (and sub_heads)
     avg_loss_no_lamb = 0.
     avg_loss_count = 0
@@ -83,8 +82,7 @@ for e_i in range(0, num_epochs):
         avg_loss_no_lamb_batch /= num_sub_heads
 
         # check the print statement that was here
-        print("e {} b {} al {} aln {}".format(e_i, b_i, avg_loss_batch.item(),
-            avg_loss_no_lamb_batch.item()))
+        print("e {} al {} aln {}".format(e_i, avg_loss_batch.item(), avg_loss_no_lamb_batch.item()))
 
         if not np.isfinite(avg_loss_batch.item()):
             print("Loss is not finite... %s:" % str(avg_loss_batch))
@@ -97,7 +95,16 @@ for e_i in range(0, num_epochs):
         avg_loss_batch.backward()
         optimiser.step()
 
+        # this is to test that the output makes sense
+        o = transforms.ToPILImage()(img1[0])
+        o.save("test1.png")
+        o = transforms.ToPILImage()(img2[0])
+        o.save("test2.png")
+        im = torch.argmax(x1_outs[0], dim=1).detach().numpy()
+        cv2.imwrite('test.png', im[0] * 255)
+
         torch.cuda.empty_cache()
+
 
     avg_loss = float(avg_loss / avg_loss_count)
     avg_loss_no_lamb = float(avg_loss_no_lamb / avg_loss_count)
