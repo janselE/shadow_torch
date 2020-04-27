@@ -102,7 +102,7 @@ for epoch in range(0, num_epochs):
         optimiser.step()
 
         # visualize outputs of last image in dataset every 10 epochs
-        if epoch % 10 == 0 and idx == len(dataloader):
+        if epoch % 10 == 0:
             o = transforms.ToPILImage()(img1[0].detach())
             o.save("img_visual_checks/test_img1_e{}.png".format(epoch))
             o = transforms.ToPILImage()(img2[0].detach())
