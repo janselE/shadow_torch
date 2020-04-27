@@ -32,6 +32,7 @@ num_epochs = 100
 
 # Create the models
 net = SegmentationNet10a(num_sub_heads)
+net.cuda()
 
 # Initialize IIC objective function
 loss_fn = IID_segmentation_loss
@@ -57,7 +58,7 @@ for epoch in range(0, num_epochs):
         # img1 is image containing shadow, img2 is transformation of img1,
         # affine2_to_1 allows reversing affine transforms to make img2 align pixels with img1,
         # mask_img1 allows zeroing out pixels that are not comparable
-        img1, img2, affine2_to_1, mask_img1 = data
+        img1, img2, affine2_to_1, mask_img1 = data.cuda()
 
         net.zero_grad()
 
