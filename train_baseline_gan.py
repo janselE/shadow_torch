@@ -117,13 +117,13 @@ for epoch in range(0, num_epochs):
             exit(1)
 
         # predict shadow free image
-        gen_input = torch.cat([img1, x1_outs], dim=1)  # need to double check dim 1 is correct for both
+        gen_input = torch.cat((img1, x1_outs), dim=1)  # need to double check dim 1 is correct for both
         sf_pred = Gen(gen_input)
         sf_data_loss = criterion_sf_data(sf_pred, sf_img)
 
         # use discriminator
-        disc_input_pred = torch.cat([img1, sf_pred], dim=1)
-        disc_input_real = torch.cat([img1, sf_img], dim=1)
+        disc_input_pred = torch.cat((img1, sf_pred), dim=1)
+        disc_input_real = torch.cat((img1, sf_img), dim=1)
         prob_sf_real = Disc(disc_input_real.detach())
         prob_sf_pred = Disc(disc_input_pred.detach())
         prob_sf_pred_adv = Disc(disc_input_pred)  # not detached to backprop to Gen and IIC

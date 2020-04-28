@@ -119,7 +119,7 @@ for epoch in range(0, num_epochs):
         # avg_loss_count += 1
 
         # predict shadow free image
-        gen_input = torch.cat([img1, x1_outs], dim=1)  # need to double check dim 1 is correct for both
+        gen_input = torch.cat((img1, x1_outs), dim=1)  # need to double check dim 1 is correct for both
         sf_pred = Gen(gen_input)
         sf_data_loss = criterion_sf_data(sf_pred, sf_img)
 
@@ -130,7 +130,7 @@ for epoch in range(0, num_epochs):
         # make tensor to represent perfect prediction of no shadow
         s_layer = torch.full((sf_mask_pred[0].shape), 0).cuda()
         ns_layer = torch.full((sf_mask_pred[0].shape), 1).cuda()
-        no_shadow = torch.cat([ns_layer, s_layer], dim=1)
+        no_shadow = torch.cat((ns_layer, s_layer), dim=1)
 
         # detach for training discriminator, but not for training generator
         disc_loss = criterion_d(torch.log(sf_mask_pred_d), no_shadow.argmax(dim=1))
