@@ -109,13 +109,13 @@ for epoch in range(0, num_epochs):
 
         # visualize outputs of last image in dataset every 10 epochs
         if epoch % 10 == 0:
-            o = transforms.ToPILImage()(img1[0].detach())
+            o = transforms.ToPILImage()(img1[0].cpu().detach())
             o.save("img_visual_checks/test_img1_e{}.png".format(epoch))
-            o = transforms.ToPILImage()(img2[0].detach())
+            o = transforms.ToPILImage()(img2[0].cpu().detach())
             o.save("img_visual_checks/test_img2_e{}.png".format(epoch))
-            shadow_mask1_pred_bw = torch.argmax(x1_outs[0].detach(), dim=1).numpy()  # gets black and white image
+            shadow_mask1_pred_bw = torch.argmax(x1_outs[0].cpu().detach(), dim=1).numpy()  # gets black and white image
             cv2.imwrite('img_visual_checks/test_mask1_bw_e{}.png'.format(epoch), shadow_mask1_pred_bw[0] * 255)
-            shadow_mask1_pred_grey = x1_outs[0][1].detach().numpy()  # gets probability pixel is black
+            shadow_mask1_pred_grey = x1_outs[0][1].cpu().detach().numpy()  # gets probability pixel is black
             cv2.imwrite('img_visual_checks/test_mask1_grey_e{}.png'.format(epoch), shadow_mask1_pred_grey[0] * 255)
 
         torch.cuda.empty_cache()
