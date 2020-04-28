@@ -1,2 +1,5 @@
 .DS_Store
 img_visual_checks/
+__pycache__
+.ipynb_checkpoints
+
