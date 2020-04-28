@@ -91,6 +91,7 @@ for epoch in range(0, num_epochs):
                 avg_loss_no_lamb_batch += loss_no_lamb
 
         avg_loss_batch /= num_sub_heads
+        #avg_loss_batch *= -1 
         avg_loss_no_lamb_batch /= num_sub_heads
 
         # track losses
