@@ -17,12 +17,13 @@ from IIC_Losses import IID_segmentation_loss
 h, w, in_channels = 240, 240, 3
 
 # Lists to keep track of progress
-img_list = []
 discrete_losses = []
 ave_losses = []
+
+# keep track of folders and saved files when model is run multiple times
 time_begin = str(datetime.now()).replace(' ', '-')
 os.mkdir("img_visual_checks/"+time_begin)
-# iters = 0
+
 lamb = 1.0  # will make loss equal to loss_no_lamb
 batch_sz = 8
 num_sub_heads = 1
@@ -112,8 +113,8 @@ for epoch in range(0, num_epochs):
         avg_loss_batch.backward()
         optimiser.step()
 
-        # visualize outputs of last image in dataset every 10 epochs
-        if epoch % 10 == 0:
+        # visualize outputs of first image in dataset every 10 epochs
+        if epoch % 10 == 0 and idx == 0:
             o = transforms.ToPILImage()(img1[0].cpu().detach())
             o.save("img_visual_checks/"+time_begin+"/test_img1_e{}_{}.png".format(epoch, time_begin))
             o = transforms.ToPILImage()(img2[0].cpu().detach())
