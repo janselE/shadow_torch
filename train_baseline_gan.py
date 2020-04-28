@@ -122,7 +122,7 @@ for epoch in range(0, num_epochs):
         # predict shadow free image
         gen_input = torch.cat((img1, x1_outs[0]), 1)  # need to double check dim 1 is correct for both
         sf_pred = Gen(gen_input)
-        sf_data_loss = criterion_sf_data(sf_pred, sf_img)
+        sf_data_loss = criterion_sf_data(sf_pred, sf_img)  # supervised
 
         # use discriminator
         disc_input_pred = torch.cat((img1, sf_pred), 1)
@@ -139,7 +139,9 @@ for epoch in range(0, num_epochs):
         disc_loss = criterion_d(prob_sf_pred, FAKE_t) + criterion_d(prob_sf_real, REAL_t)
         gen_adv_loss = criterion_d(prob_sf_pred_adv, REAL_t)
 
-        gen_loss = sf_data_loss + gen_adv_loss + avg_loss_batch
+        # remove sf_data_loss for comparison to unsupervised
+        # gen_loss = avg_loss_batch + sf_data_loss + gen_adv_loss
+        gen_loss = avg_loss_batch + gen_adv_loss
 
         if idx % 10 == 0:
             discrete_losses.append([avg_loss_batch.item(), disc_loss.item(), gen_loss.item(), sf_data_loss.item(),
@@ -150,7 +152,7 @@ for epoch in range(0, num_epochs):
         avg_loss += avg_loss_batch.item()
         avg_disc_loss += disc_loss.item()
         avg_gen_loss += gen_loss.item()
-        avg_sf_data_loss += sf_data_loss.item()
+        avg_sf_data_loss += sf_data_loss.item()  # never used in backward() call since supervised
         avg_gen_adv_loss += gen_adv_loss.item()
 
         train_iic_only = False  # use for pretraining for some # of epochs if necessary
