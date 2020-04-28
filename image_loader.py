@@ -20,31 +20,25 @@ from PIL import Image
 # this method has to be changed for different datasets
 def read_dataset(filename):
     imgs_names = []
+    shadow_free_names = []
     for filename in glob.glob(filename):
         imgs_names.append(filename)
+        shadow_free_names.append(filename.replace("train_A", "train_C"))
 
-    return imgs_names
+    return imgs_names, shadow_free_names
 
 # Create the data class, this is done to load the data into the pytorch model
 # this class might be slow because is reading the image at the time is being requested
 # in this manner we do not load a lot of the images and run out of memmory
 class ShadowDataset(Dataset):
     # Constructor
-<<<<<<< HEAD
-    def __init__(self, h, w, transform=None, use_random_scale=False, use_random_affine=True):
-=======
-    def __init__(self, h, w, use_random_scale=False, use_random_affine=False):
->>>>>>> 29a183b75135b1542200af6344e733391d1e0daf
-        self.imgs = read_dataset('./ISTD_Dataset/train/train_A/*.png')  # known name, this is for local
+    def __init__(self, h, w, use_random_scale=False, use_random_affine=True):
+        self.imgs, _ = read_dataset('./ISTD_Dataset/train/train_A/*.png')  # known name, this is for local
         #self.len = 20
         self.len = len(self.imgs)  # read all the images of the dataset
         # self.transform = transform
         self.h = h
         self.w = w
-<<<<<<< HEAD
-=======
-        # self.size = int(self.len/2)
->>>>>>> 29a183b75135b1542200af6344e733391d1e0daf
 
         # config parameters
         self.use_random_scale = use_random_scale
@@ -70,7 +64,6 @@ class ShadowDataset(Dataset):
         # baseline transformations
 
         image = Image.open(self.imgs[index])
-        #image = transforms.RandomCrop((self.h, self.w))(image)
         image = np.asarray(image).astype(np.float32)
         target = image
 
@@ -129,11 +122,9 @@ class ShadowDataset(Dataset):
 class ShadowShadowFreeDataset(Dataset):
     # Constructor
     def __init__(self, h, w, use_random_scale=False, use_random_affine=False):
-        self.imgs_s = read_dataset('./ISTD_Dataset/train/train_A/*.png')  # shadow containing images
-        self.imgs_sf = read_dataset('./ISTD_Dataset/train/train_C/*.png')  # shadow-free images
+        self.imgs_s, self.imgs_sf = read_dataset('./ISTD_Dataset/train/train_A/*.png')  # shadow containing images
         #self.len = 20
         self.len = len(self.imgs_s)  # read all the images of the dataset
-        # self.transform = transform
         self.h = h
         self.w = w
         # self.size = int(self.len/2)
