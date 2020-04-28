@@ -88,8 +88,8 @@ class ShadowDataset(Dataset):
         img1 = img1.astype(np.float32) / 255
         img2 = img2.astype(np.float32) / 255
 
-        img1 = torch.from_numpy(img1).permute(2, 0, 1) # cuda
-        img2 = torch.from_numpy(img2).permute(2, 0, 1) # cuda
+        img1 = torch.from_numpy(img1).permute(2, 0, 1).cuda()
+        img2 = torch.from_numpy(img2).permute(2, 0, 1).cuda()
 
         if self.use_random_affine:
             affine_kwargs = {"min_rot": self.aff_min_rot, "max_rot": self.aff_max_rot,
@@ -183,9 +183,9 @@ class ShadowShadowFreeDataset(Dataset):
         sf_img = sf_img.astype(np.float32) / 255 * 2 - 2  # scales to [-1, 1] for tanh output
         img2 = img2.astype(np.float32) / 255
 
-        img1 = torch.from_numpy(img1).permute(2, 0, 1) # cuda
-        sf_img = torch.from_numpy(sf_img).permute(2, 0, 1)  # not sure if this is needed, but shouldn't matter
-        img2 = torch.from_numpy(img2).permute(2, 0, 1) # cuda
+        img1 = torch.from_numpy(img1).permute(2, 0, 1).cuda()
+        sf_img = torch.from_numpy(sf_img).permute(2, 0, 1).cuda()  # not sure if this is needed, but shouldn't matter
+        img2 = torch.from_numpy(img2).permute(2, 0, 1).cuda()
 
         if self.use_random_affine:
             affine_kwargs = {"min_rot": self.aff_min_rot, "max_rot": self.aff_max_rot,
