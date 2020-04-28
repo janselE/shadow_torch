@@ -40,10 +40,8 @@ loss_fn = IID_segmentation_loss
 # Setup Adam optimizers for both
 optimiser = torch.optim.Adam(net.parameters(), lr=lr, betas=(beta1, 0.1))
 
-transform = transforms.Compose([transforms.RandomHorizontalFlip(),
-    transforms.RandomVerticalFlip()])
 # Creates a dataloader for the model
-dataloader = DataLoader(dataset=ShadowDataset(h, w, transform),
+dataloader = DataLoader(dataset=ShadowDataset(h, w, use_random_scale=True, use_random_affine=True),
                         batch_size=batch_sz, shuffle=True, drop_last=True)  # shuffle is to pick random images and drop last is to drop the last batch so the size does not changes
 
 for epoch in range(0, num_epochs):
