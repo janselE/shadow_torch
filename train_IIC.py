@@ -54,7 +54,7 @@ for epoch in range(0, num_epochs):
     print("Starting epoch: %d " % (epoch))
 
     avg_loss = 0.  # over heads and head_epochs (and sub_heads)
-    avg_loss_no_lamb = 0.
+    # avg_loss_no_lamb = 0.
     avg_loss_count = 0
 
     for idx, data in enumerate(dataloader):
@@ -100,7 +100,7 @@ for epoch in range(0, num_epochs):
         # avg_loss_no_lamb_batch /= num_sub_heads
 
         # track losses
-        print("epoch {} average_loss {} ave_loss_no_lamb {}".format(epoch, avg_loss_batch.item(), avg_loss_no_lamb_batch.item()))
+        # print("epoch {} average_loss {} ".format(epoch, avg_loss_batch.item()))
 
         if not np.isfinite(avg_loss_batch.item()):
             print("Loss is not finite... %s:" % str(avg_loss_batch))
@@ -132,6 +132,7 @@ for epoch in range(0, num_epochs):
 
     avg_loss = float(avg_loss / avg_loss_count)
     ave_losses.append(avg_loss)
+    print("epoch {} average_loss {} ".format(epoch, avg_loss))
     # avg_loss_no_lamb = float(avg_loss_no_lamb / avg_loss_count)
 
     # save lists of losses as csv files for reading and graphing later
