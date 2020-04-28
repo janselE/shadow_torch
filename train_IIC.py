@@ -4,6 +4,9 @@ import torch
 from torch.utils.data import DataLoader
 import cv2
 import numpy as np
+import pandas as pd
+from datetime import datetime
+import os
 
 # scripts
 from image_loader import ShadowDataset
@@ -14,10 +17,13 @@ from IIC_Losses import IID_segmentation_loss
 h, w, in_channels = 240, 240, 3
 
 # Lists to keep track of progress
-img_list = []
-# G_losses = []  # maybe make sure just shadow mask prediction is working first before we test GAN
-# D_losses = []
-# iters = 0
+discrete_losses = []
+ave_losses = []
+
+# keep track of folders and saved files when model is run multiple times
+time_begin = str(datetime.now()).replace(' ', '-')
+os.mkdir("img_visual_checks/"+time_begin)
+
 lamb = 1.0  # will make loss equal to loss_no_lamb
 batch_sz = 8
 num_sub_heads = 1
@@ -40,10 +46,8 @@ loss_fn = IID_segmentation_loss
 # Setup Adam optimizers for both
 optimiser = torch.optim.Adam(net.parameters(), lr=lr, betas=(beta1, 0.1))
 
-transform = transforms.Compose([transforms.RandomHorizontalFlip(),
-    transforms.RandomVerticalFlip()])
 # Creates a dataloader for the model
-dataloader = DataLoader(dataset=ShadowDataset(h, w, transform),
+dataloader = DataLoader(dataset=ShadowDataset(h, w, use_random_scale=True, use_random_affine=True),
                         batch_size=batch_sz, shuffle=True, drop_last=True)  # shuffle is to pick random images and drop last is to drop the last batch so the size does not changes
 
 for epoch in range(0, num_epochs):
@@ -84,14 +88,16 @@ for epoch in range(0, num_epochs):
 
             if avg_loss_batch is None:
                 avg_loss_batch = loss
-                avg_loss_no_lamb_batch = loss_no_lamb
+                # avg_loss_no_lamb_batch = loss_no_lamb
             else:
                 avg_loss_batch += loss
-                avg_loss_no_lamb_batch += loss_no_lamb
+                # avg_loss_no_lamb_batch += loss_no_lamb
 
         avg_loss_batch /= num_sub_heads
+        if idx % 10 == 0:
+            discrete_losses.append(avg_loss_batch.item())  # store for graphing
         #avg_loss_batch *= -1 # this is to make the loss positive, only flip the labels
-        avg_loss_no_lamb_batch /= num_sub_heads
+        # avg_loss_no_lamb_batch /= num_sub_heads
 
         # track losses
         print("epoch {} average_loss {} ave_loss_no_lamb {}".format(epoch, avg_loss_batch.item(), avg_loss_no_lamb_batch.item()))
@@ -101,28 +107,40 @@ for epoch in range(0, num_epochs):
             exit(1)
 
         avg_loss += avg_loss_batch.item()
-        avg_loss_no_lamb += avg_loss_no_lamb_batch.item()
+        # avg_loss_no_lamb += avg_loss_no_lamb_batch.item()
         avg_loss_count += 1
 
         avg_loss_batch.backward()
         optimiser.step()
 
-        # visualize outputs of last image in dataset every 10 epochs
-        if epoch % 10 == 0:
+        # visualize outputs of first image in dataset every 10 epochs
+        if epoch % 10 == 0 and idx == 0:
             o = transforms.ToPILImage()(img1[0].cpu().detach())
-            o.save("img_visual_checks/test_img1_e{}.png".format(epoch))
+            o.save("img_visual_checks/"+time_begin+"/test_img1_e{}_{}.png".format(epoch, time_begin))
             o = transforms.ToPILImage()(img2[0].cpu().detach())
-            o.save("img_visual_checks/test_img2_e{}.png".format(epoch))
+            o.save("img_visual_checks/"+time_begin+"/test_img2_e{}_{}.png".format(epoch, time_begin))
             shadow_mask1_pred_bw = torch.argmax(x1_outs[0].cpu().detach(), dim=1).numpy()  # gets black and white image
-            cv2.imwrite('img_visual_checks/test_mask1_bw_e{}.png'.format(epoch), shadow_mask1_pred_bw[0] * 255)
+            cv2.imwrite("img_visual_checks/"+time_begin+"/test_mask1_bw_e{}_{}.png".format(epoch, time_begin), shadow_mask1_pred_bw[0] * 255)
             shadow_mask1_pred_grey = x1_outs[0][1].cpu().detach().numpy()  # gets probability pixel is black
-            cv2.imwrite('img_visual_checks/test_mask1_grey_e{}.png'.format(epoch), shadow_mask1_pred_grey[0] * 255)
+            cv2.imwrite("img_visual_checks/"+time_begin+"/test_mask1_grey_e{}_{}.png".format(epoch, time_begin), shadow_mask1_pred_grey[0] * 255)
 
             # this saves the model
-            torch.save(net.state_dict(), "models/iic{}.model".format(epoch))
+            torch.save(net.state_dict(), "saved_models/iic_e{}_{}.model".format(epoch, time_begin))
 
         torch.cuda.empty_cache()
 
 
     avg_loss = float(avg_loss / avg_loss_count)
-    avg_loss_no_lamb = float(avg_loss_no_lamb / avg_loss_count)
+    ave_losses.append(avg_loss)
+    # avg_loss_no_lamb = float(avg_loss_no_lamb / avg_loss_count)
+
+    # save lists of losses as csv files for reading and graphing later
+    df1 = pd.DataFrame(list(zip(*[ave_losses]))).add_prefix('Col')
+    filename = 'loss_csvs/iic_ave_e' + str(epoch) + '_' + time_begin + '.csv'
+    print('saving to', filename)
+    df1.to_csv(filename, index=False)
+
+    df2 = pd.DataFrame(list(zip(*[discrete_losses]))).add_prefix('Col')
+    filename = 'loss_csvs/iic_discrete_e' + str(epoch) + '_' + time_begin + '.csv'
+    print('saving to', filename)
+    df2.to_csv(filename, index=False)

@@ -44,17 +44,12 @@ pwd
 
 # the commands we're running are below
 
-# echo "beginning train_segnets.py"
-# ml-gpu chmod +x train_segnets.sh
-# ml-gpu ./train_segnets.sh
-# echo "finished train_segnets.py"
+echo "beginning train_IIC.py"
+ml-gpu python3 train_IIC.py
+echo "finished train_IIC.py"
 
-# echo "beginning train_segnet_gan.py (just discriminator training fro now)"
-# ml-gpu python3 train_segnet_gan.py
-# echo "finished train_segnet_gan.py"
-
-echo "beginning loader.py"
-ml-gpu python3 loader.py
-echo "finished loader.py"
+# echo "beginning train_baseline_gan.py"
+# ml-gpu python3 train_baseline_gan.py
+# echo "finished train_baseline_gan.py"
 
 
