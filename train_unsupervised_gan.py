@@ -3,6 +3,9 @@ import torch
 from torch.utils.data import DataLoader
 import cv2
 import numpy as np
+import pandas as pd
+import os
+from datetime import datetime
 
 # scripts
 from image_loader import ShadowShadowFreeDataset
@@ -16,10 +19,13 @@ FAKE = 0
 h, w, in_channels = 240, 240, 3
 
 # Lists to keep track of progress
-img_list = []
-# G_losses = []
-# D_losses = []
-# iters = 0
+discrete_losses = []
+ave_losses = []
+
+# keep track of folders and saved files when model is run multiple times
+time_begin = str(datetime.now()).replace(' ', '-')
+os.mkdir("img_visual_checks/" + time_begin)
+
 lamb = 1.0  # will make loss equal to loss_no_lamb
 batch_sz = 8
 num_sub_heads = 1
@@ -54,9 +60,12 @@ dataloader = DataLoader(dataset=ShadowShadowFreeDataset(h, w, use_random_scale=F
 for epoch in range(0, num_epochs):
     print("Starting epoch: %d " % (epoch))
 
-    # avg_loss = 0.  # over heads and head_epochs (and sub_heads)
-    # avg_loss_no_lamb = 0.
-    # avg_loss_count = 0
+    avg_loss = 0.  # over heads and head_epochs (and sub_heads)
+    avg_disc_loss = 0.
+    avg_gen_loss = 0.
+    avg_sf_data_loss = 0.
+    avg_gen_adv_loss = 0.
+    avg_loss_count = 0
 
     for idx, data in enumerate(dataloader):
         # img1 is image containing shadow, img2 is transformation of img1,
@@ -130,6 +139,18 @@ for epoch in range(0, num_epochs):
         # during gen training IIC loss and gen data loss and gen adversarial loss all help same tasks
         gen_loss = avg_loss_batch + sf_data_loss + gen_adv_loss
 
+        if idx % 10 == 0:
+            discrete_losses.append([avg_loss_batch.item(), disc_loss.item(), gen_loss.item(), sf_data_loss.item(),
+                                    gen_adv_loss.item()])  # store for graphing
+
+        # update average losses
+        avg_loss_count += 1
+        avg_loss += avg_loss_batch.item()
+        avg_disc_loss += disc_loss.item()
+        avg_gen_loss += gen_loss.item()
+        avg_sf_data_loss += sf_data_loss.item()
+        avg_gen_adv_loss += gen_adv_loss.item()
+
         train_iic_only = False  # use for pretraining for some # of epochs if necessary
         train_gen = True
         train_disc = False  # would train IIC to predict no shadow, so we never want this True (delete when sure)
@@ -150,21 +171,38 @@ for epoch in range(0, num_epochs):
             optimizer_d.step()
 
         # visualize outputs of last image in dataset every 10 epochs
-        # if epoch % 10 == 0:
-        #     o = transforms.ToPILImage()(img1[0].cpu().detach())
-        #     o.save("img_visual_checks/test_img1_e{}.png".format(epoch))
-        #     o = transforms.ToPILImage()(img2[0].cpu().detach())
-        #     o.save("img_visual_checks/test_img2_e{}.png".format(epoch))
-        #     shadow_mask1_pred_bw = torch.argmax(x1_outs[0].cpu().detach(), dim=1).numpy()  # gets black and white image
-        #     cv2.imwrite('img_visual_checks/test_mask1_bw_e{}.png'.format(epoch), shadow_mask1_pred_bw[0] * 255)
-        #     shadow_mask1_pred_grey = x1_outs[0][1].cpu().detach().numpy()  # gets probability pixel is black
-        #     cv2.imwrite('img_visual_checks/test_mask1_grey_e{}.png'.format(epoch), shadow_mask1_pred_grey[0] * 255)
-        #
-        #     # this saves the model
-        #     torch.save(IIC.state_dict(), "models/iic_e{}.model".format(epoch))
+        if epoch % 10 == 0 and idx == 0:
+            # o = transforms.ToPILImage()(img1[0].cpu().detach())
+            # o.save("img_visual_checks/test_img1_e{}.png".format(epoch))
+            # o = transforms.ToPILImage()(img2[0].cpu().detach())
+            # o.save("img_visual_checks/test_img2_e{}.png".format(epoch))
+            # shadow_mask1_pred_bw = torch.argmax(x1_outs[0].cpu().detach(), dim=1).numpy()  # gets black and white image
+            # cv2.imwrite('img_visual_checks/test_mask1_bw_e{}.png'.format(epoch), shadow_mask1_pred_bw[0] * 255)
+            # shadow_mask1_pred_grey = x1_outs[0][1].cpu().detach().numpy()  # gets probability pixel is black
+            # cv2.imwrite('img_visual_checks/test_mask1_grey_e{}.png'.format(epoch), shadow_mask1_pred_grey[0] * 255)
+
+            # this saves the model
+            torch.save(IIC.state_dict(), "models/unsupervised_gan_e{}_{}.model".format(epoch, time_begin))
 
         torch.cuda.empty_cache()
 
+    # calculate average over epoch
+    avg_loss = float(avg_loss / avg_loss_count)
+    avg_disc_loss = float(avg_disc_loss / avg_loss_count)
+    avg_gen_loss = float(avg_gen_loss / avg_loss_count)
+    avg_sf_data_loss = float(avg_sf_data_loss / avg_loss_count)
+    avg_gen_adv_loss = float(avg_gen_adv_loss / avg_loss_count)
 
-    # avg_loss = float(avg_loss / avg_loss_count)
-    # avg_loss_no_lamb = float(avg_loss_no_lamb / avg_loss_count)
+    ave_losses.append([avg_loss, avg_disc_loss, avg_gen_loss, avg_sf_data_loss, avg_gen_adv_loss])  # store for graphing
+
+    # save lists of losses as csv files for reading and graphing later
+    df1 = pd.DataFrame(list(zip(*ave_losses))).add_prefix('Col')
+    filename = 'loss_csvs/baseline_gan_ave_e' + str(epoch) + '_' + time_begin + '.csv'
+    print('saving to', filename)
+    df1.to_csv(filename, index=False)
+
+    df2 = pd.DataFrame(list(zip(*discrete_losses))).add_prefix('Col')
+    filename = 'loss_csvs/baseline_gan_discrete_e' + str(epoch) + '_' + time_begin + '.csv'
+    print('saving to', filename)
+    df2.to_csv(filename, index=False)
+
