@@ -35,6 +35,7 @@ half_T_side_sparse_max = 0
 lr = 0.001
 beta1 = 0.5
 num_epochs = 100
+decay = 0.1
 
 # Create the models
 net = SegmentationNet10a(num_sub_heads)
@@ -128,6 +129,11 @@ for epoch in range(0, num_epochs):
             torch.save(net.state_dict(), "saved_models/iic_e{}_{}.model".format(epoch, time_begin))
 
         torch.cuda.empty_cache()
+
+    # updates the learning rate
+    lr *= (1 / (1 + decay * epoch))
+    for param_group in optimiser.param_groups:
+        param_group['lr'] = lr
 
 
     avg_loss = float(avg_loss / avg_loss_count)
