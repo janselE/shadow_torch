@@ -95,13 +95,9 @@ for epoch in range(0, num_epochs):
                 # avg_loss_no_lamb_batch += loss_no_lamb
 
         avg_loss_batch /= num_sub_heads
+
         if idx % 10 == 0:
             discrete_losses.append(avg_loss_batch.item())  # store for graphing
-        #avg_loss_batch *= -1 # this is to make the loss positive, only flip the labels
-        # avg_loss_no_lamb_batch /= num_sub_heads
-
-        # track losses
-        # print("epoch {} average_loss {} ".format(epoch, avg_loss_batch.item()))
 
         if not np.isfinite(avg_loss_batch.item()):
             print("Loss is not finite... %s:" % str(avg_loss_batch))
