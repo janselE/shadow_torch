@@ -46,7 +46,6 @@ transform = transforms.Compose([transforms.RandomHorizontalFlip(),
 dataloader = DataLoader(dataset=ShadowDataset(h, w, transform),
                         batch_size=batch_sz, shuffle=True, drop_last=True)  # shuffle is to pick random images and drop last is to drop the last batch so the size does not changes
 
-
 for epoch in range(0, num_epochs):
     print("Starting epoch: %d " % (epoch))
 
@@ -91,7 +90,7 @@ for epoch in range(0, num_epochs):
                 avg_loss_no_lamb_batch += loss_no_lamb
 
         avg_loss_batch /= num_sub_heads
-        #avg_loss_batch *= -1 
+        #avg_loss_batch *= -1 # this is to make the loss positive, only flip the labels
         avg_loss_no_lamb_batch /= num_sub_heads
 
         # track losses
@@ -118,6 +117,9 @@ for epoch in range(0, num_epochs):
             cv2.imwrite('img_visual_checks/test_mask1_bw_e{}.png'.format(epoch), shadow_mask1_pred_bw[0] * 255)
             shadow_mask1_pred_grey = x1_outs[0][1].cpu().detach().numpy()  # gets probability pixel is black
             cv2.imwrite('img_visual_checks/test_mask1_grey_e{}.png'.format(epoch), shadow_mask1_pred_grey[0] * 255)
+
+            # this saves the model
+            torch.save(net.state_dict(), "models/iic{}.model".format(epoch))
 
         torch.cuda.empty_cache()
 

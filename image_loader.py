@@ -32,8 +32,8 @@ class ShadowDataset(Dataset):
     # Constructor
     def __init__(self, h, w, transform=None, use_random_scale=False, use_random_affine=False):
         self.imgs = read_dataset('./ISTD_Dataset/train/train_A/*.png')  # known name, this is for local
-        self.len = 20
-        #self.len = len(self.imgs) # read all the images of the dataset
+        #self.len = 20
+        self.len = len(self.imgs) # read all the images of the dataset
         self.transform = transform
         self.h = h
         self.w = w
