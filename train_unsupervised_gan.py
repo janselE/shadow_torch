@@ -35,17 +35,17 @@ num_epochs = 100
 # Create the models
 IIC = SegmentationNet10a(num_sub_heads).cuda()
 Gen = Generator_sf().cuda()
-Disc = Discriminator_sf().cuda()
+# Disc = Discriminator_sf().cuda()  # use IIC as discriminator
 
 # Initialize IIC objective function
 loss_fn = IID_segmentation_loss
 criterion_sf_data = torch.nn.L1Loss()
-criterion_d = torch.nn.BCELoss()
+criterion_d = torch.nn.NLLLoss()  # use 2d? use log(output of softmax layer) to make cross-entropy loss
 
 # Setup Adam optimizers for both
 optimizer_iic = torch.optim.Adam(IIC.parameters(), lr=lr, betas=(beta1, 0.1))
 optimizer_g = torch.optim.Adam([{'params': IIC.parameters()}, {'params': Gen.parameters()}], lr=lr, betas=(beta1, 0.1))
-optimizer_d = torch.optim.Adam(Disc.parameters(), lr=lr, betas=(beta1, 0.1))
+optimizer_d = torch.optim.Adam(IIC.parameters(), lr=lr, betas=(beta1, 0.1))
 
 # loads images with shadows (and transformed img and affine_2_to_1 and mask) and shadow-free images
 dataloader = DataLoader(dataset=ShadowShadowFreeDataset(h, w, use_random_scale=False, use_random_affine=True),
@@ -114,26 +114,25 @@ for epoch in range(0, num_epochs):
         sf_pred = Gen(gen_input)
         sf_data_loss = criterion_sf_data(sf_pred, sf_img)
 
-        # use discriminator
-        disc_input_pred = torch.cat([img1, sf_pred], dim=1)
-        disc_input_real = torch.cat([img1, sf_img], dim=1)
-        prob_sf_real = Disc(disc_input_real.detach())
-        prob_sf_pred = Disc(disc_input_pred.detach())
-        prob_sf_pred_adv = Disc(disc_input_pred)  # not detached to backprop to Gen and IIC
+        # use IIC as discriminator
+        sf_mask_pred = IIC(sf_pred)
+        sf_mask_pred_d = IIC(sf_pred.detach())  # for training IIC during this part (probably won't train it here?)
 
-        # get tensors of labels to compute loss for Disc
-        REAL_t = torch.full((prob_sf_real.shape), REAL).cuda()  # tensor of REAL labels
-        FAKE_t = torch.full((prob_sf_real.shape), FAKE).cuda()  # tensor of FAKE labels
+        # make tensor to represent perfect prediction of no shadow
+        s_layer = torch.full((sf_mask_pred[0].shape), 0).cuda()
+        ns_layer = torch.full((sf_mask_pred[0].shape), 1).cuda()
+        no_shadow = torch.cat([ns_layer, s_layer], dim=1)
 
-        # detached output for training discriminator, but not for training generator
-        disc_loss = criterion_d(prob_sf_pred, FAKE_t) + criterion_d(prob_sf_real, REAL_t)
-        gen_adv_loss = criterion_d(prob_sf_pred_adv, REAL_t)
+        # detach for training discriminator, but not for training generator
+        disc_loss = criterion_d(torch.log(sf_mask_pred_d), no_shadow.argmax(dim=1))
+        gen_adv_loss = criterion_d(torch.log(sf_mask_pred), no_shadow.argmax(dim=1))
 
-        gen_loss = sf_data_loss + gen_adv_loss + avg_loss_batch
+        # during gen training IIC loss and gen data loss and gen adversarial loss all help same tasks
+        gen_loss = avg_loss_batch + sf_data_loss + gen_adv_loss
 
         train_iic_only = False  # use for pretraining for some # of epochs if necessary
         train_gen = True
-        train_disc = True
+        train_disc = False  # would train IIC to predict no shadow, so we never want this True (delete when sure)
 
         if train_iic_only:
             optimizer_iic.zero_grad()
@@ -167,6 +166,5 @@ for epoch in range(0, num_epochs):
         torch.cuda.empty_cache()
 
 
-    # all average losses per epoch should be stored in lists, will implement later
     # avg_loss = float(avg_loss / avg_loss_count)
     # avg_loss_no_lamb = float(avg_loss_no_lamb / avg_loss_count)
