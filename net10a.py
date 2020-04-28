@@ -76,8 +76,3 @@ class SegmentationNet10a(VGGNet):
         x = self.head(x)
         return x
 
-
-
-
-
-
