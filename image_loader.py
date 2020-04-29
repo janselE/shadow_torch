@@ -270,14 +270,14 @@ class ShadowAndMaskDataset(Dataset):
         img2 = torch.from_numpy(img2).permute(2, 0, 1)
         mask_cat = torch.zeros(2, self.input_sz, self.input_sz).to(torch.uint8)
 
-        mask = mask.reshape(self.input_sz, self.input_sz, 1)
+        #mask = mask.reshape(self.input_sz, self.input_sz, 1)
 
         # not the best way but this is to flip the labels
-        mask_cat[1] = TF.to_tensor(mask)
+        mask_cat[1] = Variable(torch.Tensor(mask))
         mask[mask==1] = 3
         mask[mask==0] = 1
         mask[mask==3] = 0
-        mask_cat[0] = TF.to_tensor(mask)
+        mask_cat[0] = Variable(torch.Tensor(mask))
 
         if self.use_random_affine:
             affine_kwargs = {"min_rot": self.aff_min_rot, "max_rot": self.aff_max_rot,
