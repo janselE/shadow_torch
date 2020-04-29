@@ -212,7 +212,7 @@ class ShadowShadowFreeDataset(Dataset):
 class FullDataset(Dataset):
     # Constructor
     def __init__(self, h, w, use_random_scale=False, use_random_affine=False):
-        self.imgs_s, self.mask_s, self.imgs_sf = read_dataset('../ISTD_Dataset/train/train_A/*.png')  # shadow containing images
+        self.imgs_s, self.mask_s, self.imgs_sf = read_dataset('./ISTD_Dataset/train/train_A/*.png')  # shadow containing images
         self.len = len(self.imgs_s)  # read all the images of the dataset
 
         # config parameters
