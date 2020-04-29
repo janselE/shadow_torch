@@ -14,6 +14,8 @@ from transforms import *
 
 from PIL import Image
 
+path = '../ISTD_Dataset/train/train_A/*.png'
+
 
 # take as parameter the filename that we already know
 # we are just changing the part of the name that is different
@@ -35,7 +37,7 @@ def read_dataset(filename):
 class ShadowDataset(Dataset):
     # Constructor
     def __init__(self, h, w, use_random_scale=False, use_random_affine=True):
-        self.imgs, _, _ = read_dataset('../ISTD_Dataset/train/train_A/*.png')  # known name, this is for local
+        self.imgs, _, _ = read_dataset(path)  # known name, this is for local
         self.len = len(self.imgs)  # read all the images of the dataset
         self.h = h
         self.w = w
@@ -122,7 +124,7 @@ class ShadowDataset(Dataset):
 class ShadowShadowFreeDataset(Dataset):
     # Constructor
     def __init__(self, h, w, use_random_scale=False, use_random_affine=False):
-        self.imgs_s, _, self.imgs_sf = read_dataset('./ISTD_Dataset/train/train_A/*.png')  # shadow containing images
+        self.imgs_s, _, self.imgs_sf = read_dataset(path)  # shadow containing images
         self.len = len(self.imgs_s)  # read all the images of the dataset
         self.h = h
         self.w = w
@@ -212,7 +214,7 @@ class ShadowShadowFreeDataset(Dataset):
 class ShadowAndMaskDataset(Dataset):
     # Constructor
     def __init__(self, h, w, use_random_scale=False, use_random_affine=False):
-        self.imgs_s, self.mask_s, self.imgs_sf = read_dataset('./ISTD_Dataset/train/train_A/*.png')  # shadow containing images
+        self.imgs_s, self.mask_s, self.imgs_sf = read_dataset(path)  # shadow containing images
         self.len = len(self.imgs_s)  # read all the images of the dataset
 
         # config parameters
