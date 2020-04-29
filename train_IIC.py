@@ -9,7 +9,7 @@ from datetime import datetime
 import os
 
 # scripts
-from image_loader import ShadowDataset
+from image_loader import ShadowDataset, ShadowAndMaskDataset
 from net10a_twohead import SegmentationNet10a
 from IIC_Losses import IID_segmentation_loss
 
@@ -49,8 +49,8 @@ criterion_ssm = torch.nn.NLLLoss()  # supervised shadow mask loss function
 optimiser = torch.optim.Adam(net.parameters(), lr=lr, betas=(beta1, 0.1))
 
 # Need to change this to return img1, img2, affine2_to_1, mask_img1, shadow_mask1, shadow_mask2
-dataloader = DataLoader(dataset=ShadowDataset(h, w, use_random_scale=True, use_random_affine=True),
-                        batch_size=batch_sz, shuffle=True, drop_last=True)  # shuffle is to pick random images and drop last is to drop the last batch so the size does not changes
+dataloader = DataLoader(dataset=ShadowAndMaskDataset(h, w, use_random_scale=True, use_random_affine=True),
+                        batch_size=batch_sz, shuffle=True, drop_last=True)
 
 for epoch in range(0, num_epochs):
     print("Starting epoch: %d " % (epoch))
@@ -64,7 +64,7 @@ for epoch in range(0, num_epochs):
         # img1 is image containing shadow, img2 is transformation of img1,
         # affine2_to_1 allows reversing affine transforms to make img2 align pixels with img1,
         # mask_img1 allows zeroing out pixels that are not comparable
-        img1, img2, affine2_to_1, mask_img1, shadow_mask1, shadow_mask2 = data
+        img1, img2, affine2_to_1, mask_img1, shadow_mask1 = data
 
         # just moving everything to cuda
         img1 = img1.cuda()
@@ -93,15 +93,13 @@ for epoch in range(0, num_epochs):
             if avg_loss_batch is None:
                 avg_loss_batch = loss
                 # avg_loss_no_lamb_batch = loss_no_lamb
-                ssm_loss = criterion_ssm(torch.log(x1_outs[i]), shadow_mask1) + \
-                           criterion_ssm(torch.log(x2_outs[i]), shadow_mask2)
+                ssm_loss = criterion_ssm(torch.log(x1_outs[i]), shadow_mask1) # + criterion_ssm(torch.log(x2_outs[i]), shadow_mask2)
             else:
                 avg_loss_batch += loss
                 # avg_loss_no_lamb_batch += loss_no_lamb
 
                 # assumes shadow_mask1 is tensor of 0s and 1s corresponding to argmax of x1_outs (what NLLLoss expects)
-                ssm_loss += criterion_ssm(torch.log(x1_outs[i]), shadow_mask1) + \
-                            criterion_ssm(torch.log(x2_outs[i]), shadow_mask2)
+                ssm_loss += criterion_ssm(torch.log(x1_outs[i]), shadow_mask1) # + criterion_ssm(torch.log(x2_outs[i]), shadow_mask2)
 
         avg_loss_batch /= num_sub_heads
 

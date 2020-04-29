@@ -209,7 +209,7 @@ class ShadowShadowFreeDataset(Dataset):
     def __len__(self):
         return self.len
 
-class FullDataset(Dataset):
+class ShadowAndMaskDataset(Dataset):
     # Constructor
     def __init__(self, h, w, use_random_scale=False, use_random_affine=False):
         self.imgs_s, self.mask_s, self.imgs_sf = read_dataset('./ISTD_Dataset/train/train_A/*.png')  # shadow containing images
@@ -295,7 +295,7 @@ class FullDataset(Dataset):
 
         mask_img1 = torch.ones(self.input_sz, self.input_sz).to(torch.uint8) #cuda
 
-        return img1, img2, mask_cat, affine2_to_1, mask_img1
+        return img1, img2, affine2_to_1, mask_img1, mask_cat
 
     # Get items
     def __len__(self):
