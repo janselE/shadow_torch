@@ -270,6 +270,8 @@ class ShadowAndMaskDataset(Dataset):
         img2 = torch.from_numpy(img2).permute(2, 0, 1)
         mask_cat = torch.zeros(2, self.input_sz, self.input_sz).to(torch.uint8)
 
+        mask = mask.reshape(self.input_sz, self.input_sz, 1)
+
         # not the best way but this is to flip the labels
         mask_cat[1] = TF.to_tensor(mask)
         mask[mask==1] = 3
