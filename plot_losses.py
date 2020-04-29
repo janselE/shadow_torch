@@ -14,37 +14,21 @@ def plot_(x_val, y_val, x_label='Epochs',  y_label='Loss', title='Loss Scores'):
     plt.plot(x_val, y_val, marker='o')
     plt.show()
 
+def reader(file_path):
+    epochs = []
+    x_val = []
+    with open(file_path, 'r') as csvfile:
+        plots = csv.DictReader(csvfile)
+        i = 0
+        for row in plots:
+            if i % 10 == 0:
+                epochs.append(float(row['Col0']))
+                x_val.append(int(i))
+            i += 1
+
+        epochs = np.asarray(epochs) * -1
+    plot_(x_val, epochs)
 
 
-epochs = []
-x_val = []
-
-with open(FILE_BASE + 'iic_ave_e99.csv', 'r') as csvfile:
-    plots = csv.DictReader(csvfile)
-    i = 0
-    for row in plots:
-        if i % 10 == 0:
-            epochs.append(float(row['Col0']))
-            x_val.append(int(i))
-        i += 1
-
-    epochs = np.asarray(epochs) * -1
-plot_(x_val, epochs)
-
-
-epochs = []
-x_val = []
-with open(FILE_BASE + 'iic_discrete_e99.csv', 'r') as csvfile:
-    plots = csv.DictReader(csvfile)
-    i = 0
-    for row in plots:
-        if i % 10 == 0:
-            epochs.append(float(row['Col0']))
-            x_val.append(int(i))
-        i += 1
-
-    epochs = np.asarray(epochs) * -1
-    print(epochs)
-plot_(x_val, epochs, x_label='x')
-
-
+reader(FILE_BASE + 'iic_ave_e99.csv')
+reader(FILE_BASE + 'iic_discrete_e99.csv')
