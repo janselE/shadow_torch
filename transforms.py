@@ -102,7 +102,7 @@ def random_affine(img, min_rot=None, max_rot=None, min_shear=None,
     affine2_to_1 = np.linalg.inv(affine1_to_2).astype(np.float32)
 
     affine1_to_2, affine2_to_1 = affine1_to_2[:2, :], affine2_to_1[:2, :]  # 2x3
-    affine1_to_2, affine2_to_1 = torch.from_numpy(affine1_to_2).cuda(), torch.from_numpy(affine2_to_1).cuda()
+    affine1_to_2, affine2_to_1 = torch.from_numpy(affine1_to_2), torch.from_numpy(affine2_to_1)
 
     img = perform_affine_tf(img.unsqueeze(dim=0), affine1_to_2.unsqueeze(dim=0))
     img = img.squeeze(dim=0)

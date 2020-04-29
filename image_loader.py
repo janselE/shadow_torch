@@ -20,12 +20,14 @@ from PIL import Image
 # this method has to be changed for different datasets
 def read_dataset(filename):
     imgs_names = []
+    mask_names = []
     shadow_free_names = []
     for filename in glob.glob(filename):
         imgs_names.append(filename)
+        mask_names.append(filename.replace("train_A", "train_B"))
         shadow_free_names.append(filename.replace("train_A", "train_C"))
 
-    return imgs_names, shadow_free_names
+    return imgs_names, mask_names, shadow_free_names
 
 # Create the data class, this is done to load the data into the pytorch model
 # this class might be slow because is reading the image at the time is being requested
@@ -33,7 +35,7 @@ def read_dataset(filename):
 class ShadowDataset(Dataset):
     # Constructor
     def __init__(self, h, w, use_random_scale=False, use_random_affine=True):
-        self.imgs, _ = read_dataset('./ISTD_Dataset/train/train_A/*.png')  # known name, this is for local
+        self.imgs, _, _ = read_dataset('../ISTD_Dataset/train/train_A/*.png')  # known name, this is for local
         #self.len = 20
         self.len = len(self.imgs)  # read all the images of the dataset
         # self.transform = transform
@@ -88,8 +90,8 @@ class ShadowDataset(Dataset):
         img1 = img1.astype(np.float32) / 255
         img2 = img2.astype(np.float32) / 255
 
-        img1 = torch.from_numpy(img1).permute(2, 0, 1).cuda()
-        img2 = torch.from_numpy(img2).permute(2, 0, 1).cuda()
+        img1 = torch.from_numpy(img1).permute(2, 0, 1)
+        img2 = torch.from_numpy(img2).permute(2, 0, 1)
 
         if self.use_random_affine:
             affine_kwargs = {"min_rot": self.aff_min_rot, "max_rot": self.aff_max_rot,
@@ -122,7 +124,7 @@ class ShadowDataset(Dataset):
 class ShadowShadowFreeDataset(Dataset):
     # Constructor
     def __init__(self, h, w, use_random_scale=False, use_random_affine=False):
-        self.imgs_s, self.imgs_sf = read_dataset('./ISTD_Dataset/train/train_A/*.png')  # shadow containing images
+        self.imgs_s, _, self.imgs_sf = read_dataset('./ISTD_Dataset/train/train_A/*.png')  # shadow containing images
         #self.len = 20
         self.len = len(self.imgs_s)  # read all the images of the dataset
         self.h = h
@@ -181,9 +183,9 @@ class ShadowShadowFreeDataset(Dataset):
         sf_img = sf_img.astype(np.float32) / 255 * 2 - 2  # scales to [-1, 1] for tanh output
         img2 = img2.astype(np.float32) / 255
 
-        img1 = torch.from_numpy(img1).permute(2, 0, 1).cuda()
-        sf_img = torch.from_numpy(sf_img).permute(2, 0, 1).cuda()  # not sure if this is needed, but shouldn't matter
-        img2 = torch.from_numpy(img2).permute(2, 0, 1).cuda()
+        img1 = torch.from_numpy(img1).permute(2, 0, 1)
+        sf_img = torch.from_numpy(sf_img).permute(2, 0, 1)  # not sure if this is needed, but shouldn't matter
+        img2 = torch.from_numpy(img2).permute(2, 0, 1)
 
         if self.use_random_affine:
             affine_kwargs = {"min_rot": self.aff_min_rot, "max_rot": self.aff_max_rot,
@@ -206,6 +208,63 @@ class ShadowShadowFreeDataset(Dataset):
         mask_img1 = torch.ones(self.input_sz, self.input_sz).to(torch.uint8) #cuda
 
         return img1, img2, affine2_to_1, mask_img1, sf_img
+
+    # Get items
+    def __len__(self):
+        return self.len
+
+class FullDataset(Dataset):
+    # Constructor
+    def __init__(self, h, w, use_random_scale=False, use_random_affine=False):
+        self.imgs_s, self.mask, self.imgs_sf = read_dataset('../ISTD_Dataset/train/train_A/*.png')  # shadow containing images
+        #self.len = 20
+        self.len = len(self.imgs_s)  # read all the images of the dataset
+        # self.size = int(self.len/2)
+
+        # config parameters
+        self.use_random_scale = use_random_scale
+        self.use_random_affine = use_random_affine
+        self.scale_max = 1.4
+        self.scale_min = 0.6
+        self.input_sz = h
+        self.aff_min_rot = 10.  # not sure value to use
+        self.aff_max_rot = 10.  # not sure value to use
+        self.aff_min_shear = 10.
+        self.aff_max_shear = 10.
+        self.aff_min_scale = 0.8
+        self.aff_max_scale = 1.2
+        self.flip_p = 0.5
+
+        self.jitter_tf = transforms.ColorJitter(brightness=0.4,
+                contrast=0.4,
+                saturation=0.4,
+                hue=0.125)
+
+        # Getter
+    def __getitem__(self, index):
+        # baseline transformations
+
+        image = Image.open(self.imgs_s[index])
+        mask = Image.open(self.mask[index])
+
+        i, j, h, w = transforms.RandomCrop.get_params(image, (self.input_sz, self.input_sz))
+        image = TF.crop(image, i, j, h, w)
+        mask = TF.crop(mask, i, j, h, w)
+
+        image = np.asarray(image).astype(np.float32) / 255
+        mask = np.asarray(mask).astype(np.float32) / 255
+
+        mask_cat = torch.zeros(2, self.input_sz, self.input_sz).to(torch.uint8)
+        image = TF.to_tensor(image)
+
+        mask_cat[1] = TF.to_tensor(mask)
+        mask[mask==1] = 3
+        mask[mask==0] = 1
+        mask[mask==3] = 0
+        mask_cat[0] = TF.to_tensor(mask)
+
+
+        return image, mask_cat
 
     # Get items
     def __len__(self):
