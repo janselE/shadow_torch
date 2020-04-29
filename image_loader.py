@@ -36,9 +36,7 @@ class ShadowDataset(Dataset):
     # Constructor
     def __init__(self, h, w, use_random_scale=False, use_random_affine=True):
         self.imgs, _, _ = read_dataset('../ISTD_Dataset/train/train_A/*.png')  # known name, this is for local
-        #self.len = 20
         self.len = len(self.imgs)  # read all the images of the dataset
-        # self.transform = transform
         self.h = h
         self.w = w
 
@@ -125,11 +123,9 @@ class ShadowShadowFreeDataset(Dataset):
     # Constructor
     def __init__(self, h, w, use_random_scale=False, use_random_affine=False):
         self.imgs_s, _, self.imgs_sf = read_dataset('./ISTD_Dataset/train/train_A/*.png')  # shadow containing images
-        #self.len = 20
         self.len = len(self.imgs_s)  # read all the images of the dataset
         self.h = h
         self.w = w
-        # self.size = int(self.len/2)
 
         # config parameters
         self.use_random_scale = use_random_scale
@@ -217,9 +213,7 @@ class FullDataset(Dataset):
     # Constructor
     def __init__(self, h, w, use_random_scale=False, use_random_affine=False):
         self.imgs_s, self.mask, self.imgs_sf = read_dataset('../ISTD_Dataset/train/train_A/*.png')  # shadow containing images
-        #self.len = 20
         self.len = len(self.imgs_s)  # read all the images of the dataset
-        # self.size = int(self.len/2)
 
         # config parameters
         self.use_random_scale = use_random_scale
@@ -242,22 +236,25 @@ class FullDataset(Dataset):
 
         # Getter
     def __getitem__(self, index):
-        # baseline transformations
-
+        # this reads a random image and its mask
         image = Image.open(self.imgs_s[index])
         mask = Image.open(self.mask[index])
 
+        # performs a crop and repeat the same crop on the mask
         i, j, h, w = transforms.RandomCrop.get_params(image, (self.input_sz, self.input_sz))
         image = TF.crop(image, i, j, h, w)
         mask = TF.crop(mask, i, j, h, w)
 
+        # normalize the values of the image [0, 1]
         image = np.asarray(image).astype(np.float32) / 255
         mask = np.asarray(mask).astype(np.float32) / 255
 
+        # creates the mask that we are going to return as a tensor
         mask_cat = torch.zeros(2, self.input_sz, self.input_sz).to(torch.uint8)
         image = TF.to_tensor(image)
 
         mask_cat[1] = TF.to_tensor(mask)
+        # not the best way but this is to flip the labels
         mask[mask==1] = 3
         mask[mask==0] = 1
         mask[mask==3] = 0
