@@ -43,11 +43,12 @@ net.cuda()
 
 # Initialize IIC objective function
 loss_fn = IID_segmentation_loss
+criterion_ssm =   # supervised shadow mask loss function
 
 # Setup Adam optimizers for both
 optimiser = torch.optim.Adam(net.parameters(), lr=lr, betas=(beta1, 0.1))
 
-# Creates a dataloader for the model
+# Need to change this to return img1, img2, affine2_to_1, mask_img1, shadow_mask1, shadow_mask2
 dataloader = DataLoader(dataset=ShadowDataset(h, w, use_random_scale=True, use_random_affine=True),
                         batch_size=batch_sz, shuffle=True, drop_last=True)  # shuffle is to pick random images and drop last is to drop the last batch so the size does not changes
 
@@ -62,7 +63,7 @@ for epoch in range(0, num_epochs):
         # img1 is image containing shadow, img2 is transformation of img1,
         # affine2_to_1 allows reversing affine transforms to make img2 align pixels with img1,
         # mask_img1 allows zeroing out pixels that are not comparable
-        img1, img2, affine2_to_1, mask_img1 = data
+        img1, img2, affine2_to_1, mask_img1, shadow_mask1, shadow_mask2 = data
 
         # just moving everything to cuda
         img1 = img1.cuda()
@@ -93,6 +94,8 @@ for epoch in range(0, num_epochs):
             else:
                 avg_loss_batch += loss
                 # avg_loss_no_lamb_batch += loss_no_lamb
+
+            ssm_loss = criterion_ssm(x1_outs[i], shadow_mask1) + criterion_ssm(x2_outs, shadow_mask2)
 
         avg_loss_batch /= num_sub_heads
 
