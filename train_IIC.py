@@ -43,7 +43,7 @@ net.cuda()
 
 # Initialize IIC objective function
 loss_fn = IID_segmentation_loss
-criterion_ssm =   # supervised shadow mask loss function
+criterion_ssm = torch.nn.NLLLoss()  # supervised shadow mask loss function
 
 # Setup Adam optimizers for both
 optimiser = torch.optim.Adam(net.parameters(), lr=lr, betas=(beta1, 0.1))
@@ -56,6 +56,7 @@ for epoch in range(0, num_epochs):
     print("Starting epoch: %d " % (epoch))
 
     avg_loss = 0.  # over heads and head_epochs (and sub_heads)
+    avg_ssm_loss = 0.
     # avg_loss_no_lamb = 0.
     avg_loss_count = 0
 
@@ -79,6 +80,7 @@ for epoch in range(0, num_epochs):
         # batch is passed through each subhead to calculate loss, store average loss per sub_head
         avg_loss_batch = None
         avg_loss_no_lamb_batch = None
+        ssm_loss = None
 
         for i in range(num_sub_heads):
             loss, loss_no_lamb = loss_fn(x1_outs[i], x2_outs[i],
@@ -91,27 +93,39 @@ for epoch in range(0, num_epochs):
             if avg_loss_batch is None:
                 avg_loss_batch = loss
                 # avg_loss_no_lamb_batch = loss_no_lamb
+                ssm_loss = criterion_ssm(torch.log(x1_outs[i]), shadow_mask1) + \
+                           criterion_ssm(torch.log(x2_outs[i]), shadow_mask2)
             else:
                 avg_loss_batch += loss
                 # avg_loss_no_lamb_batch += loss_no_lamb
 
-            ssm_loss = criterion_ssm(x1_outs[i], shadow_mask1) + criterion_ssm(x2_outs, shadow_mask2)
+                # assumes shadow_mask1 is tensor of 0s and 1s corresponding to argmax of x1_outs (what NLLLoss expects)
+                ssm_loss += criterion_ssm(torch.log(x1_outs[i]), shadow_mask1) + \
+                            criterion_ssm(torch.log(x2_outs[i]), shadow_mask2)
 
         avg_loss_batch /= num_sub_heads
 
         if idx % 10 == 0:
-            discrete_losses.append(avg_loss_batch.item())  # store for graphing
+            discrete_losses.append([avg_loss_batch.item(), ssm_loss.item()])  # store for graphing
 
         if not np.isfinite(avg_loss_batch.item()):
             print("Loss is not finite... %s:" % str(avg_loss_batch))
             exit(1)
 
         avg_loss += avg_loss_batch.item()
+        avg_ssm_loss += ssm_loss.item()
         # avg_loss_no_lamb += avg_loss_no_lamb_batch.item()
         avg_loss_count += 1
 
-        avg_loss_batch.backward()
+        use_supervised = True  # set to epoch < num or similar condition?
+        if use_supervised:
+            loss_total = avg_loss_batch + ssm_loss
+        else:
+            loss_total = avg_loss_batch
+
+        loss_total.backward()
         optimiser.step()
+
 
         # visualize outputs of first image in dataset every 10 epochs
         if epoch % 10 == 0 and idx == 0:
@@ -136,17 +150,18 @@ for epoch in range(0, num_epochs):
 
 
     avg_loss = float(avg_loss / avg_loss_count)
-    ave_losses.append(avg_loss)
+    avg_ssm_loss = float(avg_ssm_loss / avg_loss_count)
+    ave_losses.append([avg_loss, avg_ssm_loss])
     print("epoch {} average_loss {} ".format(epoch, avg_loss))
     # avg_loss_no_lamb = float(avg_loss_no_lamb / avg_loss_count)
 
     # save lists of losses as csv files for reading and graphing later
-    df1 = pd.DataFrame(list(zip(*[ave_losses]))).add_prefix('Col')
+    df1 = pd.DataFrame(list(zip(*ave_losses))).add_prefix('Col')
     filename = 'loss_csvs/iic_ave_e' + str(epoch) + '_' + time_begin + '.csv'
     print('saving to', filename)
     df1.to_csv(filename, index=False)
 
-    df2 = pd.DataFrame(list(zip(*[discrete_losses]))).add_prefix('Col')
+    df2 = pd.DataFrame(list(zip(*discrete_losses))).add_prefix('Col')
     filename = 'loss_csvs/iic_discrete_e' + str(epoch) + '_' + time_begin + '.csv'
     print('saving to', filename)
     df2.to_csv(filename, index=False)
