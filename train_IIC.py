@@ -83,6 +83,9 @@ for epoch in range(0, num_epochs):
         avg_loss_no_lamb_batch = None
         ssm_loss = None
 
+	
+
+        shadow_mask1_flat = shadow_mask1.argmax(axis=1).long() 
         for i in range(num_sub_heads):
             loss, loss_no_lamb = loss_fn(x1_outs[i], x2_outs[i],
                     all_affine2_to_1=affine2_to_1,
@@ -94,13 +97,13 @@ for epoch in range(0, num_epochs):
             if avg_loss_batch is None:
                 avg_loss_batch = loss
                 # avg_loss_no_lamb_batch = loss_no_lamb
-                ssm_loss = criterion_ssm(torch.log(x1_outs[i]), (shadow_mask1.long()).squeeze(1)) # + criterion_ssm(torch.log(x2_outs[i]), shadow_mask2)
+                ssm_loss = criterion_ssm(torch.log(x1_outs[i]), shadow_mask1_flat) # + criterion_ssm(torch.log(x2_outs[i]), shadow_mask2)
             else:
                 avg_loss_batch += loss
                 # avg_loss_no_lamb_batch += loss_no_lamb
 
                 # assumes shadow_mask1 is tensor of 0s and 1s corresponding to argmax of x1_outs (what NLLLoss expects)
-                ssm_loss += criterion_ssm(torch.log(x1_outs[i]), (shadow_mask1.long()).squeeze(1)) # + criterion_ssm(torch.log(x2_outs[i]), shadow_mask2)
+                ssm_loss += criterion_ssm(torch.log(x1_outs[i]), shadow_mask1_flat) # + criterion_ssm(torch.log(x2_outs[i]), shadow_mask2)
 
         avg_loss_batch /= num_sub_heads
 
