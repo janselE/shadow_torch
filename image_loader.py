@@ -14,7 +14,7 @@ from transforms import *
 
 from PIL import Image
 
-path = '../ISTD_Dataset/train/train_A/*.png'
+path = 'ISTD_Dataset/train/train_A/*.png'
 
 
 # take as parameter the filename that we already know
@@ -270,7 +270,7 @@ class ShadowAndMaskDataset(Dataset):
         img2 = torch.from_numpy(img2).permute(2, 0, 1)
         mask_cat = torch.zeros(2, self.input_sz, self.input_sz).to(torch.uint8)
 
-        #mask = mask.reshape(self.input_sz, self.input_sz, 1)
+        mask = mask.reshape(1, self.input_sz, self.input_sz)
 
         # not the best way but this is to flip the labels
         mask_cat[1] = Variable(torch.Tensor(mask))
