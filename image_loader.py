@@ -215,7 +215,8 @@ class ShadowAndMaskDataset(Dataset):
     # Constructor
     def __init__(self, h, w, use_random_scale=False, use_random_affine=False):
         self.imgs_s, self.mask_s, self.imgs_sf = read_dataset(path)  # shadow containing images
-        self.len = len(self.imgs_s)  # read all the images of the dataset
+        self.len = 20  # read all the images of the dataset
+        #self.len = len(self.imgs_s)  # read all the images of the dataset
 
         # config parameters
         self.use_random_scale = use_random_scale
