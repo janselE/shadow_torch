@@ -34,11 +34,11 @@ half_T_side_sparse_max = 0
 # Defining the learning rate, number of epochs and beta for the optimizers
 lr = 0.001
 beta1 = 0.5
-num_epochs = 100 
+num_epochs = 100
 decay = 0.1
 n_epochs_stop = 10
 epochs_no_improve = 0
-min_val_loss = -10#np.Inf
+min_val_loss = np.Inf
 
 # Create the models
 net = SegmentationNet10a(num_sub_heads)
@@ -169,9 +169,9 @@ for epoch in range(0, num_epochs):
     print('saving to', filename)
     df2.to_csv(filename, index=False)
 
-    if loss_total < min_val_loss:
+    if avg_loss < min_val_loss:
         epochs_no_improve = 0
-        min_val_loss = loss_total
+        min_val_loss = avg_loss
     else:
         epochs_no_improve += 1
     if epochs_no_improve == n_epochs_stop:
