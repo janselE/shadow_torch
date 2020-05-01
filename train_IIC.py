@@ -34,8 +34,11 @@ half_T_side_sparse_max = 0
 # Defining the learning rate, number of epochs and beta for the optimizers
 lr = 0.001
 beta1 = 0.5
-num_epochs = 100
+num_epochs = 300
 decay = 0.1
+n_epochs_stop = 10
+epochs_no_improve = 0
+min_val_loss = np.Inf 
 
 # Create the models
 net = SegmentationNet10a(num_sub_heads)
@@ -124,6 +127,15 @@ for epoch in range(0, num_epochs):
             loss_total = avg_loss_batch + ssm_loss
         else:
             loss_total = avg_loss_batch
+	
+	if loss_total < min_val_loss:
+		epochs_no_improve = 0
+		min_val_loss = total_loss
+	else:
+		epochs_no_improve += 1
+	if epochs_no_improve == n_epochs_stop:
+		print("Early Stopping")
+		break
 
         loss_total.backward()
         optimiser.step()
@@ -132,13 +144,13 @@ for epoch in range(0, num_epochs):
         # visualize outputs of first image in dataset every 10 epochs
         if epoch % 10 == 0 and idx == 0:
             o = transforms.ToPILImage()(img1[0].cpu().detach())
-            o.save("img_visual_checks/"+time_begin+"/test_img1_e{}_{}.png".format(epoch, time_begin))
+            o.save("img_visual_checks/"+time_begin+"/test_img1_e{}.png".format(epoch))
             o = transforms.ToPILImage()(img2[0].cpu().detach())
-            o.save("img_visual_checks/"+time_begin+"/test_img2_e{}_{}.png".format(epoch, time_begin))
+            o.save("img_visual_checks/"+time_begin+"/test_img2_e{}.png".format(epoch))
             shadow_mask1_pred_bw = torch.argmax(x1_outs[0].cpu().detach(), dim=1).numpy()  # gets black and white image
-            cv2.imwrite("img_visual_checks/"+time_begin+"/test_mask1_bw_e{}_{}.png".format(epoch, time_begin), shadow_mask1_pred_bw[0] * 255)
+            cv2.imwrite("img_visual_checks/"+time_begin+"/test_mask1_bw_e{}.png".format(epoch), shadow_mask1_pred_bw[0] * 255)
             shadow_mask1_pred_grey = x1_outs[0][1].cpu().detach().numpy()  # gets probability pixel is black
-            cv2.imwrite("img_visual_checks/"+time_begin+"/test_mask1_grey_e{}_{}.png".format(epoch, time_begin), shadow_mask1_pred_grey[0] * 255)
+            cv2.imwrite("img_visual_checks/"+time_begin+"/test_mask1_grey_e{}.png".format(epoch), shadow_mask1_pred_grey[0] * 255)
 
             # this saves the model
             torch.save(net.state_dict(), "saved_models/iic_e{}_{}.model".format(epoch, time_begin))
