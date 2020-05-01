@@ -126,14 +126,6 @@ for epoch in range(0, num_epochs):
             loss_total = avg_loss_batch + ssm_loss
         else:
             loss_total = avg_loss_batch
-        if loss_total < min_val_loss:
-            epochs_no_improve = 0
-            min_val_loss = total_loss
-        else:
-            epochs_no_improve += 1
-        if epochs_no_improve == n_epochs_stop:
-            print("Early Stopping")
-            break
 
         loss_total.backward()
         optimiser.step()
@@ -160,7 +152,6 @@ for epoch in range(0, num_epochs):
     for param_group in optimiser.param_groups:
         param_group['lr'] = lr
 
-
     avg_loss = float(avg_loss / avg_loss_count)
     avg_ssm_loss = float(avg_ssm_loss / avg_loss_count)
     ave_losses.append([avg_loss, avg_ssm_loss])
@@ -177,3 +168,12 @@ for epoch in range(0, num_epochs):
     filename = 'loss_csvs/iic_discrete_e' + str(epoch) + '_' + time_begin + '.csv'
     print('saving to', filename)
     df2.to_csv(filename, index=False)
+
+    if loss_total < min_val_loss:
+        epochs_no_improve = 0
+        min_val_loss = loss_total
+    else:
+        epochs_no_improve += 1
+    if epochs_no_improve == n_epochs_stop:
+        print("Early Stopping")
+        break
