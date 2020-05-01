@@ -38,7 +38,7 @@ num_epochs = 300
 decay = 0.1
 n_epochs_stop = 10
 epochs_no_improve = 0
-min_val_loss = np.Inf 
+min_val_loss = np.Inf
 
 # Create the models
 net = SegmentationNet10a(num_sub_heads)
@@ -126,15 +126,14 @@ for epoch in range(0, num_epochs):
             loss_total = avg_loss_batch + ssm_loss
         else:
             loss_total = avg_loss_batch
-	
-	if loss_total < min_val_loss:
-		epochs_no_improve = 0
-		min_val_loss = total_loss
-	else:
-		epochs_no_improve += 1
-	if epochs_no_improve == n_epochs_stop:
-		print("Early Stopping")
-		break
+        if loss_total < min_val_loss:
+            epochs_no_improve = 0
+            min_val_loss = total_loss
+        else:
+            epochs_no_improve += 1
+        if epochs_no_improve == n_epochs_stop:
+            print("Early Stopping")
+            break
 
         loss_total.backward()
         optimiser.step()
