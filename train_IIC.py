@@ -12,6 +12,7 @@ import os
 from image_loader import ShadowDataset, ShadowAndMaskDataset
 from net10a_twohead import SegmentationNet10a
 from IIC_Losses import IID_segmentation_loss
+from IIC_Network import net
 
 
 h, w, in_channels = 240, 240, 3
@@ -41,7 +42,8 @@ epochs_no_improve = 0
 min_val_loss = np.Inf
 
 # Create the models
-net = SegmentationNet10a(num_sub_heads)
+#net = SegmentationNet10a(num_sub_heads)
+net = net()
 net.cuda()
 
 # Initialize IIC objective function

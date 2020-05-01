@@ -4,7 +4,7 @@ import torch.nn as nn
 class net(nn.Module):
     def  __init__(self):
         super(net, self).__init__()
-        self.conv0 = nn.Sequential(nn.Conv2d(4, 64, 3, 1, 1), nn.LeakyReLU())
+        self.conv0 = nn.Sequential(nn.Conv2d(3, 64, 3, 1, 1), nn.LeakyReLU())
         self.conv1 = nn.Sequential(nn.Conv2d(64, 128, 3, 1, 1), nn.BatchNorm2d(128), nn.LeakyReLU())
         self.conv2 = nn.Sequential(nn.Conv2d(128, 256, 3, 1, 1), nn.BatchNorm2d(256), nn.LeakyReLU())
         self.conv3 = nn.Sequential(nn.Conv2d(256, 512, 3, 1, 1), nn.BatchNorm2d(512), nn.LeakyReLU())
@@ -15,7 +15,7 @@ class net(nn.Module):
         self.convt8 = nn.Sequential(nn.ConvTranspose2d(1024, 256, 3, 1, 1), nn.BatchNorm2d(256), nn.ReLU())
         self.convt9 = nn.Sequential(nn.ConvTranspose2d(512, 128, 3, 1, 1), nn.BatchNorm2d(128), nn.ReLU())
         self.convt10 = nn.Sequential(nn.ConvTranspose2d(256, 64, 3, 1, 1), nn.BatchNorm2d(64), nn.ReLU())
-        self.convt11 = nn.Sequential(nn.ConvTranspose2d(128, 3, 3, 1, 1), nn.Tanh())
+        self.convt11 = nn.Sequential(nn.ConvTranspose2d(128, 2, 3, 1, 1), nn.Sigmoid())
 
     def forward(self, input):
         conv0 = self.conv0(input)
