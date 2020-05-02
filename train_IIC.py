@@ -24,6 +24,7 @@ ave_losses = []
 # keep track of folders and saved files when model is run multiple times
 time_begin = str(datetime.now()).replace(' ', '-')
 os.mkdir("img_visual_checks/"+time_begin)
+os.mkdir("loss_csvs/"+time_begin)
 
 lamb = 1.0  # will make loss equal to loss_no_lamb
 batch_sz = 8
@@ -126,7 +127,7 @@ for epoch in range(0, num_epochs):
 
         use_supervised = True  # set to epoch < num or similar condition?
         if use_supervised:
-            loss_total = avg_loss_batch + ssm_loss
+            loss_total = - avg_loss_batch + ssm_loss
         else:
             loss_total = avg_loss_batch
 
