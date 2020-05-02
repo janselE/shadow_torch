@@ -43,8 +43,8 @@ epochs_no_improve = 0
 min_val_loss = np.Inf
 
 # Create the models
-net = SegmentationNet10a(num_sub_heads)
-#net = net()
+#net = SegmentationNet10a(num_sub_heads)
+net = net()
 net.cuda()
 
 # Initialize IIC objective function
