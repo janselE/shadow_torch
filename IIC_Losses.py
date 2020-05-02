@@ -129,17 +129,3 @@ def IID_segmentation_loss_uncollapsed(x1_outs, x2_outs, all_affine2_to_1=None, a
                               torch.log(p_j_mat))).sum() / (T_side_dense * T_side_dense)
 
     return loss, loss_no_lamb
-
-
-
-
-
-
-
-
-
-
-
-
-
-

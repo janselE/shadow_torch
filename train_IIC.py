@@ -11,7 +11,7 @@ import os
 # scripts
 from image_loader import ShadowDataset, ShadowAndMaskDataset
 from net10a_twohead import SegmentationNet10a
-from IIC_Losses import IID_segmentation_loss
+from IIC_Losses import IID_segmentation_loss, IID_segmentation_loss_uncollapsed
 from IIC_Network import net
 
 
@@ -42,12 +42,13 @@ epochs_no_improve = 0
 min_val_loss = np.Inf
 
 # Create the models
-#net = SegmentationNet10a(num_sub_heads)
-net = net()
+net = SegmentationNet10a(num_sub_heads)
+#net = net()
 net.cuda()
 
 # Initialize IIC objective function
-loss_fn = IID_segmentation_loss
+#loss_fn = IID_segmentation_loss
+loss_fn = IID_segmentation_loss_uncollapsed
 criterion_ssm = torch.nn.NLLLoss()  # supervised shadow mask loss function
 
 # Setup Adam optimizers for both
@@ -162,20 +163,20 @@ for epoch in range(0, num_epochs):
 
     # save lists of losses as csv files for reading and graphing later
     df1 = pd.DataFrame(list(zip(*ave_losses))).add_prefix('Col')
-    filename = 'loss_csvs/iic_ave_e' + str(epoch) + '_' + time_begin + '.csv'
+    filename = 'loss_csvs/' + time_begin + '/iic_ave_e' + str(epoch) + '_' + time_begin + '.csv'
     print('saving to', filename)
     df1.to_csv(filename, index=False)
 
     df2 = pd.DataFrame(list(zip(*discrete_losses))).add_prefix('Col')
-    filename = 'loss_csvs/iic_discrete_e' + str(epoch) + '_' + time_begin + '.csv'
+    filename = 'loss_csvs/' + time_begin + '/iic_discrete_e' + str(epoch) + '_' + time_begin + '.csv'
     print('saving to', filename)
     df2.to_csv(filename, index=False)
 
-    if avg_loss < min_val_loss:
-        epochs_no_improve = 0
-        min_val_loss = avg_loss
-    else:
-        epochs_no_improve += 1
-    if epochs_no_improve == n_epochs_stop:
-        print("Early Stopping")
-        break
+#    if avg_loss < min_val_loss:
+#        epochs_no_improve = 0
+#        min_val_loss = avg_loss
+#    else:
+#        epochs_no_improve += 1
+#    if epochs_no_improve == n_epochs_stop:
+#        print("Early Stopping")
+#        break
