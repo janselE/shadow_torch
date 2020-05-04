@@ -75,8 +75,6 @@ class CocoDataloader(torch.utils.data.Dataset):
 
         return img, mask
 
-    def display(self, im):
-        im.show()
 
     def __getitem__(self, index):
         img, mask = self.getImgAndMask(index, self.input_sz, self.input_sz)
@@ -84,12 +82,6 @@ class CocoDataloader(torch.utils.data.Dataset):
         if img is None:
             return None
 
-    #    t1=Thread(target=self.display,args=(img,))
-    #    t1.start()
-    #    t2=Thread(target=self.display,args=(mask,))
-    #    t2.start()
-
-    #    time.sleep(100000)
 
         image = np.asarray(img).astype(np.float32)
         mask = np.asarray(mask).astype(np.float32)
@@ -166,25 +158,33 @@ def collate_fn(batch):
     return torch.utils.data.dataloader.default_collate(batch)
 
 # create own Dataset
-my_dataset = CocoDataloader(root=train_data_dir, annotation=train_coco)
-
-# Batch size
-train_batch_size = 32
-data_loader = torch.utils.data.DataLoader(my_dataset,
-                                          batch_size=train_batch_size,
-                                          shuffle=True,
-                                          collate_fn=collate_fn
-                                          )
-
-# select device (whether GPU or CPU)
-device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-
-# DataLoader is iterable over Dataset
-for img1, img2, af, all1, cat in data_loader:
-    print(img1.shape, img2.shape, af.shape, all1.shape, cat.shape)
-#    img = tf.ToPILImage()(img1[0] * 255).convert('RGB')
-#    img.show()
+#my_dataset = CocoDataloader(root=train_data_dir, annotation=train_coco)
+#
+## Batch size
+#train_batch_size = 32
+#data_loader = torch.utils.data.DataLoader(my_dataset,
+#                                          batch_size=train_batch_size,
+#                                          shuffle=True,
+#                                          collate_fn=collate_fn
+#                                          )
+#
+## select device (whether GPU or CPU)
+#device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+#
+## DataLoader is iterable over Dataset
+#for img1, img2, af, all1, cat in data_loader:
+#    print(img1.shape, img2.shape, af.shape, all1.shape, cat.shape)
+#    img = img1[0].numpy()#tf.ToPILImage()(img1[0] * 255).convert('RGB')
+#    img = img.reshape(100, 100, 3)
 #    plt.figure(0)
 #    plt.imshow(img)
+#    img = tf.ToPILImage()(cat[0])
+#    plt.figure(1)
+#    plt.imshow(img)
+#    img = img2[0].numpy()#tf.ToPILImage()(img1[0] * 255).convert('RGB')
+#    img = img.reshape(100, 100, 3)
+#    plt.figure(2)
+#    plt.imshow(img)
 #    plt.show()
-
+#    time.sleep(1000)
+#
