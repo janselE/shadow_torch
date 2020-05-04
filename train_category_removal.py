@@ -11,7 +11,7 @@ from datetime import datetime
 from image_loader import ShadowShadowFreeDataset
 from net10a_twohead import SegmentationNet10a
 from IIC_Losses import IID_segmentation_loss
-from models_for_gan import Discriminator_sf, Generator_sf
+from models_for_gan import Discriminator_inpainted, Generator_inpaint
 
 REAL = 1
 FAKE = 0
@@ -40,8 +40,8 @@ num_epochs = 100
 
 # Create the models
 IIC = SegmentationNet10a(num_sub_heads).cuda()  # produces segmentation maps from images
-Gen = Generator_sf().cuda()  # fills in image with blacked out regions (catX and random area), with L1 loss for non-catX pixels
-Disc = Discriminator_sf().cuda()  # given real image - catX and generated - catX
+Gen = Generator_inpaint().cuda()  # fills in image with blacked out regions (catX and random area), with L1 loss for non-catX pixels
+Disc = Discriminator_inpainted().cuda()  # given real image - catX and generated - catX
 # use another disc? Somehow make sure catX pixels look real
 # would comparing original images and generated encourage regenerating catX? Maybe use after pretraining with others?
 
