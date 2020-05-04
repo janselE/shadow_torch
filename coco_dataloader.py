@@ -141,32 +141,33 @@ class CocoDataloader(torch.utils.data.Dataset):
     def __len__(self):
         return len(self.ids)
 
+    def collate_fn(batch):
+        classes = [0, 1, 2] # these are the selected classes, we can modify which ones we want
+        len_batch = len(batch)
+
+        #batch = list(filter(lambda x:x is not None, batch))
+
+        # this create a new batch of the good samples
+        # the samples are filtered if they are having a bad
+        # segmentation description and if they are not
+        # part of the classes that we are interested
+        new_batch = []
+        for b in batch:
+            if b is not None and torch.max(b[4]) in classes: # the amount of classes that we want
+                new_batch.append(b)
+
+        if len_batch > len(new_batch):
+            diff = len_batch - len(new_batch)
+            for i in range(diff):
+                rand = random.randint(0, len(new_batch) - 1)
+                samp = new_batch[rand]
+                new_batch.append(samp)
+
+        return torch.utils.data.dataloader.default_collate(new_batch)
+
 train_data_dir = '/home/jansel/Documents/Research/coco_dataset/data/val2017'
 train_coco = '/home/jansel/Documents/Research/coco_dataset/data/instances_val2017.json'
 
-def collate_fn(batch):
-    classes = [0, 1, 2] # these are the selected classes, we can modify which ones we want
-    len_batch = len(batch)
-
-    #batch = list(filter(lambda x:x is not None, batch))
-
-    # this create a new batch of the good samples
-    # the samples are filtered if they are having a bad
-    # segmentation description and if they are not
-    # part of the classes that we are interested
-    new_batch = []
-    for b in batch:
-        if b is not None and torch.max(b[4]) in classes: # the amount of classes that we want
-            new_batch.append(b)
-
-    if len_batch > len(new_batch):
-        diff = len_batch - len(new_batch)
-        for i in range(diff):
-            rand = random.randint(0, len(new_batch) - 1)
-            samp = new_batch[rand]
-            new_batch.append(samp)
-
-    return torch.utils.data.dataloader.default_collate(new_batch)
 
 # create own Dataset
 #my_dataset = CocoDataloader(root=train_data_dir, annotation=train_coco)
@@ -176,7 +177,7 @@ def collate_fn(batch):
 #data_loader = torch.utils.data.DataLoader(my_dataset,
 #                                          batch_size=train_batch_size,
 #                                          shuffle=True,
-#                                          collate_fn=collate_fn
+#                                          collate_fn=my_dataset.collate_fn
 #                                          )
 #
 ## select device (whether GPU or CPU)

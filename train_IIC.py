@@ -41,10 +41,11 @@ decay = 0.1
 n_epochs_stop = 10
 epochs_no_improve = 0
 min_val_loss = np.Inf
+use_supervised = False# set to epoch < num or similar condition?
 
 # Create the models
-#net = SegmentationNet10a(num_sub_heads)
-net = net()
+net = SegmentationNet10a(num_sub_heads)
+#net = net()
 net.cuda()
 
 # Initialize IIC objective function
@@ -56,8 +57,13 @@ criterion_ssm = torch.nn.NLLLoss()  # supervised shadow mask loss function
 optimiser = torch.optim.Adam(net.parameters(), lr=lr, betas=(beta1, 0.1))
 
 # Need to change this to return img1, img2, affine2_to_1, mask_img1, shadow_mask1, shadow_mask2
-dataloader = DataLoader(dataset=ShadowAndMaskDataset(h, w, use_random_scale=False, use_random_affine=True),
-                        batch_size=batch_sz, shuffle=True, drop_last=True)
+#dataloader = DataLoader(dataset=ShadowAndMaskDataset(h, w, use_random_scale=False, use_random_affine=True),
+#                        batch_size=batch_sz, shuffle=True, drop_last=True)
+# Dataloader for coco
+train_data_dir = '/home/jansel/Documents/Research/coco_dataset/data/val2017'
+train_coco = '/home/jansel/Documents/Research/coco_dataset/data/instances_val2017.json'
+dataloader = DataLoader(dataset=CocoDataloader(root=train_data_dir, annotation=train_coco),
+                        batch_size=batch_sz, shuffle=True, collate_fn=my_dataset.collate_fn, drop_last=True)
 
 for epoch in range(0, num_epochs):
     print("Starting epoch: %d " % (epoch))
@@ -125,7 +131,6 @@ for epoch in range(0, num_epochs):
         # avg_loss_no_lamb += avg_loss_no_lamb_batch.item()
         avg_loss_count += 1
 
-        use_supervised = True  # set to epoch < num or similar condition?
         if use_supervised:
             loss_total = - avg_loss_batch + ssm_loss
         else:
