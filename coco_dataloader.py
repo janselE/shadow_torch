@@ -145,17 +145,28 @@ train_data_dir = '/home/jansel/Documents/Research/coco_dataset/data/val2017'
 train_coco = '/home/jansel/Documents/Research/coco_dataset/data/instances_val2017.json'
 
 def collate_fn(batch):
+    classes = [0, 1, 2] # these are the selected classes, we can modify which ones we want
     len_batch = len(batch)
-    batch = list(filter (lambda x:x is not None, batch))
 
-    if len_batch > len(batch):
-        diff = len_batch - len(batch)
+    #batch = list(filter(lambda x:x is not None, batch))
+
+    # this create a new batch of the good samples
+    # the samples are filtered if they are having a bad
+    # segmentation description and if they are not
+    # part of the classes that we are interested
+    new_batch = []
+    for b in batch:
+        if b is not None and torch.max(b[4]) in classes: # the amount of classes that we want
+            new_batch.append(b)
+
+    if len_batch > len(new_batch):
+        diff = len_batch - len(new_batch)
         for i in range(diff):
-            rand = random.randint(0, diff)
-            samp = batch[rand]
-            batch.append(samp)
+            rand = random.randint(0, len(new_batch) - 1)
+            samp = new_batch[rand]
+            new_batch.append(samp)
 
-    return torch.utils.data.dataloader.default_collate(batch)
+    return torch.utils.data.dataloader.default_collate(new_batch)
 
 # create own Dataset
 #my_dataset = CocoDataloader(root=train_data_dir, annotation=train_coco)
@@ -173,7 +184,11 @@ def collate_fn(batch):
 #
 ## DataLoader is iterable over Dataset
 #for img1, img2, af, all1, cat in data_loader:
-#    print(img1.shape, img2.shape, af.shape, all1.shape, cat.shape)
+#    x = 0
+##    print(img1.shape, img2.shape, af.shape, all1.shape, cat.shape)
+#    print(cat[0])
+#    print(cat[0].shape, torch.max(cat[0]))
+#
 #    img = img1[0].numpy()#tf.ToPILImage()(img1[0] * 255).convert('RGB')
 #    img = img.reshape(100, 100, 3)
 #    plt.figure(0)
@@ -186,5 +201,4 @@ def collate_fn(batch):
 #    plt.figure(2)
 #    plt.imshow(img)
 #    plt.show()
-#    time.sleep(1000)
-#
+#    time.sleep(1)
