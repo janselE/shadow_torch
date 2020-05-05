@@ -17,6 +17,7 @@ from IIC_Network import net
 
 
 h, w, in_channels = 240, 240, 3
+input_sz = h
 
 # Lists to keep track of progress
 discrete_losses = []
@@ -63,7 +64,7 @@ optimiser = torch.optim.Adam(net.parameters(), lr=lr, betas=(beta1, 0.1))
 # Dataloader for coco
 train_data_dir = 'data/val2017'
 train_coco = 'data/instances_val2017.json'
-dataloader = DataLoader(dataset=CocoDataloader(root=train_data_dir, annotation=train_coco, input_sz=h),
+dataloader = DataLoader(dataset=CocoDataloader(root=train_data_dir, annotation=train_coco, input_sz=input_sz),
                         batch_size=batch_sz, shuffle=True, collate_fn=CocoDataloader.collate_fn, drop_last=True)
 
 for epoch in range(0, num_epochs):
@@ -144,10 +145,14 @@ for epoch in range(0, num_epochs):
 
         # visualize outputs of first image in dataset every 10 epochs
         if epoch % 10 == 0 and idx == 0:
-            o = transforms.ToPILImage()(img1[0].cpu().detach())
-            o.save("img_visual_checks/"+time_begin+"/test_img1_e{}.png".format(epoch))
-            o = transforms.ToPILImage()(img2[0].cpu().detach())
-            o.save("img_visual_checks/"+time_begin+"/test_img2_e{}.png".format(epoch))
+            #o = transforms.ToPILImage()(img1[0].cpu().detach())
+            #o.save("img_visual_checks/"+time_begin+"/test_img1_e{}.png".format(epoch))
+            o = img1[0].cpu().detach().numpy().reshape(input_sz, input_size, 3)
+            cv2.imwrite("img_visual_checks/"+time_begin+"/test_img1_e{}.png".format(epoch), o)
+            o = img2[0].cpu().detach().numpy().reshape(input_sz, input_size, 3)
+            cv2.imwrite("img_visual_checks/"+time_begin+"/test_img2_e{}.png".format(epoch), o)
+#            o = transforms.ToPILImage()(img2[0].cpu().detach())
+#            o.save("img_visual_checks/"+time_begin+"/test_img2_e{}.png".format(epoch))
             shadow_mask1_pred_bw = torch.argmax(x1_outs[0].cpu().detach(), dim=1).numpy()  # gets black and white image
             cv2.imwrite("img_visual_checks/"+time_begin+"/test_mask1_bw_e{}.png".format(epoch), shadow_mask1_pred_bw[0] * 255)
             shadow_mask1_pred_grey = x1_outs[0][1].cpu().detach().numpy()  # gets probability pixel is black
