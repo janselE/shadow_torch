@@ -45,7 +45,7 @@ min_val_loss = np.Inf
 use_supervised = False# set to epoch < num or similar condition?
 
 # Create the models
-net = SegmentationNet10a(num_sub_heads)
+net = SegmentationNet10a(num_sub_heads, 3)
 #net = net()
 net.cuda()
 

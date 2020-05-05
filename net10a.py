@@ -55,17 +55,16 @@ class SegmentationNet10aHead(nn.Module):
 
 class SegmentationNet10a(VGGNet):
 
-    def __init__(self, num_sub_heads):
+    def __init__(self, num_sub_heads, output_k):
         super(SegmentationNet10a, self).__init__()
         # this variable was supposed to be used as a static var
-        self.cfg = [(64, 1), (128, 1), ('M', None), (256, 1), (256, 1), (512, 2), (512, 2)]  # 30x30 recep field
+        self.cfg = [(64, 1), (128, 1), ('M', None), (256, 1), (256, 1), (512, 2), (512, output_k)]  # 30x30 recep field
 
         #self.batchnorm_track = config.batchnorm_track
         self.batchnorm_track = False
-        output_k = 2  # 2 classes predicted, shadow and non-shadow
 
         self.trunk = SegmentationNet10aTrunk(cfg=self.cfg)
-        self.head = SegmentationNet10aHead(output_k=output_k,
+        self.head = SegmentationNet10aHead(output_k=output_k, # this is for the number of classes
                                            cfg=self.cfg,
                                            num_sub_heads=num_sub_heads)
 
