@@ -147,9 +147,9 @@ for epoch in range(0, num_epochs):
         if epoch % 10 == 0 and idx == 0:
             #o = transforms.ToPILImage()(img1[0].cpu().detach())
             #o.save("img_visual_checks/"+time_begin+"/test_img1_e{}.png".format(epoch))
-            o = img1[0].cpu().detach().numpy().reshape(input_sz, input_sz, 3)
+            o = img1[0].cpu().detach().numpy().reshape(input_sz, input_sz, 3) * 255
             cv2.imwrite("img_visual_checks/"+time_begin+"/test_img1_e{}.png".format(epoch), o)
-            o = img2[0].cpu().detach().numpy().reshape(input_sz,  input_sz, 3)
+            o = img2[0].cpu().detach().numpy().reshape(input_sz,  input_sz, 3) * 255
             cv2.imwrite("img_visual_checks/"+time_begin+"/test_img2_e{}.png".format(epoch), o)
 #            o = transforms.ToPILImage()(img2[0].cpu().detach())
 #            o.save("img_visual_checks/"+time_begin+"/test_img2_e{}.png".format(epoch))
