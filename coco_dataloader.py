@@ -21,12 +21,12 @@ import time
 from threading import Thread
 
 class CocoDataloader(torch.utils.data.Dataset):
+    samples = []
     def __init__(self, root, annotation, input_sz, use_random_scale=False, use_random_affine=True, transforms=None):
         self.root = root
         self.transforms = transforms
         self.coco = COCO(annotation)
         self.ids = list(sorted(self.coco.imgs.keys()))
-        self.samples = []
 
         self.jitter_tf = tf.ColorJitter(brightness=0.4,
                         contrast=0.4,
@@ -164,13 +164,10 @@ class CocoDataloader(torch.utils.data.Dataset):
             diff = len_batch - len(new_batch)
 
             for i in range(diff):
-                rand = random.randint(0, abs(len(new_batch) - 1))
-                print("s ", len(new_batch)," r ", rand)
-                samp = new_batch[rand]
-                new_batch.append(samp)
+                rand = 0
                 if len(new_batch) == 0:
-                    rand = random.randint(0, len(self.samples) - 1)
-                    samp = new_batch[rand]
+                    rand = random.randint(0, len(CocoDataloader.samples) - 1)
+                    samp = CocoDataloader.samples[rand]
                     new_batch.append(samp)
 
                 else:
@@ -178,8 +175,9 @@ class CocoDataloader(torch.utils.data.Dataset):
                     samp = new_batch[rand]
                     new_batch.append(samp)
 
-                if np.random.rand() > self.flip_p:
-                    self.samples.append(samp)
+                if np.random.rand() < 0.2:
+                    CocoDataloader.samples.append(samp)
+                print("s ", len(new_batch)," r ", rand)
 
         return torch.utils.data.dataloader.default_collate(new_batch)
 
