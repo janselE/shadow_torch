@@ -166,12 +166,12 @@ class CocoDataloader(torch.utils.data.Dataset):
             for i in range(diff):
                 rand = 0
                 if len(new_batch) == 0:
-                    rand = random.randint(0, len(CocoDataloader.samples) - 1)
+                    rand = random.randint(0, abs(len(CocoDataloader.samples) - 1))
                     samp = CocoDataloader.samples[rand]
                     new_batch.append(samp)
 
                 else:
-                    rand = random.randint(0, len(new_batch) - 1)
+                    rand = random.randint(0, abs(len(new_batch) - 1))
                     samp = new_batch[rand]
                     new_batch.append(samp)
 
