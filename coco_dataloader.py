@@ -105,8 +105,8 @@ class CocoDataloader(torch.utils.data.Dataset):
         img2 = img2.astype(np.float32) / 255
 
 
-        img1 = torch.from_numpy(img1)
-        img2 = torch.from_numpy(img2)
+        img1 = torch.from_numpy(img1).permute(2, 0, 1)
+        img2 = torch.from_numpy(img2).permute(2, 0, 1)
         mask_cat = torch.zeros(1, self.input_sz, self.input_sz).to(torch.uint8)
 
         mask = mask.reshape(1, self.input_sz, self.input_sz)
@@ -133,8 +133,8 @@ class CocoDataloader(torch.utils.data.Dataset):
             img2 = torch.flip(img2, dims=[2])
             affine2_to_1[0, :] *= -1
 
-        img1 = img1.view(3, self.input_sz, self.input_sz)
-        img2 = img2.view(3, self.input_sz, self.input_sz)
+        #img1 = img1.view(3, self.input_sz, self.input_sz)
+        #img2 = img2.view(3, self.input_sz, self.input_sz)
         mask_cat = mask_cat.view(1, self.input_sz, self.input_sz)
         mask_img1 = torch.ones(self.input_sz, self.input_sz).to(torch.uint8) #cuda
 
@@ -158,7 +158,7 @@ class CocoDataloader(torch.utils.data.Dataset):
         for b in batch:
             if b is not None and torch.max(b[4]) in classes: # the amount of classes that we want
                 new_batch.append(b)
-        print("s ", len(new_batch))
+        #print("s ", len(new_batch))
 
         if len_batch > len(new_batch):
             diff = len_batch - len(new_batch)
@@ -178,7 +178,7 @@ class CocoDataloader(torch.utils.data.Dataset):
                 if np.random.rand() < 0.5 and len(CocoDataloader.samples) < 32 or len(CocoDataloader.samples) == 0: # this is just a number to limitate the memory usage
                     CocoDataloader.samples.append(samp)
 
-                print("s ", len(new_batch)," r ", rand)
+                #print("s ", len(new_batch)," r ", rand)
 
         return torch.utils.data.dataloader.default_collate(new_batch)
 
