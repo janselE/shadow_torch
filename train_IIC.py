@@ -145,14 +145,10 @@ for epoch in range(0, num_epochs):
 
         # visualize outputs of first image in dataset every 10 epochs
         if epoch % 10 == 0 and idx == 0:
-            #o = transforms.ToPILImage()(img1[0].cpu().detach())
-            #o.save("img_visual_checks/"+time_begin+"/test_img1_e{}.png".format(epoch))
-            o = img1[0].cpu().detach().numpy().reshape(input_sz, input_sz, 3) * 255
-            cv2.imwrite("img_visual_checks/"+time_begin+"/test_img1_e{}.png".format(epoch), o)
-            o = img2[0].cpu().detach().numpy().reshape(input_sz,  input_sz, 3) * 255
-            cv2.imwrite("img_visual_checks/"+time_begin+"/test_img2_e{}.png".format(epoch), o)
-#            o = transforms.ToPILImage()(img2[0].cpu().detach())
-#            o.save("img_visual_checks/"+time_begin+"/test_img2_e{}.png".format(epoch))
+            o = transforms.ToPILImage()(img1[0].cpu().detach())
+            o.save("img_visual_checks/"+time_begin+"/test_img1_e{}.png".format(epoch))
+            o = transforms.ToPILImage()(img2[0].cpu().detach())
+            o.save("img_visual_checks/"+time_begin+"/test_img2_e{}.png".format(epoch))
             shadow_mask1_pred_bw = torch.argmax(x1_outs[0].cpu().detach(), dim=1).numpy()  # gets black and white image
             cv2.imwrite("img_visual_checks/"+time_begin+"/test_mask1_bw_e{}.png".format(epoch), shadow_mask1_pred_bw[0] * 255)
             shadow_mask1_pred_grey = x1_outs[0][1].cpu().detach().numpy()  # gets probability pixel is black
