@@ -26,6 +26,7 @@ class CocoDataloader(torch.utils.data.Dataset):
         self.transforms = transforms
         self.coco = COCO(annotation)
         self.ids = list(sorted(self.coco.imgs.keys()))
+        self.samples = []
 
         self.jitter_tf = tf.ColorJitter(brightness=0.4,
                         contrast=0.4,
@@ -160,10 +161,20 @@ class CocoDataloader(torch.utils.data.Dataset):
 
         if len_batch > len(new_batch):
             diff = len_batch - len(new_batch)
+
             for i in range(diff):
-                rand = random.randint(0, len(new_batch) - 1)
-                samp = new_batch[rand]
-                new_batch.append(samp)
+                if len(new_batch) == 0:
+                    rand = random.randint(0, len(self.samples) - 1)
+                    samp = new_batch[rand]
+                    new_batch.append(samp)
+
+                else:
+                    rand = random.randint(0, len(new_batch) - 1)
+                    samp = new_batch[rand]
+                    new_batch.append(samp)
+
+                if np.random.rand() > self.flip_p:
+                    self.samples.append(samp)
 
         return torch.utils.data.dataloader.default_collate(new_batch)
 
