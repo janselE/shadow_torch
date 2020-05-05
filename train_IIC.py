@@ -61,9 +61,9 @@ optimiser = torch.optim.Adam(net.parameters(), lr=lr, betas=(beta1, 0.1))
 #dataloader = DataLoader(dataset=ShadowAndMaskDataset(h, w, use_random_scale=False, use_random_affine=True),
 #                        batch_size=batch_sz, shuffle=True, drop_last=True)
 # Dataloader for coco
-train_data_dir = '/home/jansel/Documents/Research/coco_dataset/data/val2017'
-train_coco = '/home/jansel/Documents/Research/coco_dataset/data/instances_val2017.json'
-dataloader = DataLoader(dataset=CocoDataloader(root=train_data_dir, annotation=train_coco),
+train_data_dir = 'data/val2017'
+train_coco = 'data/instances_val2017.json'
+dataloader = DataLoader(dataset=CocoDataloader(root=train_data_dir, annotation=train_coco, input_sz=h),
                         batch_size=batch_sz, shuffle=True, collate_fn=CocoDataloader.collate_fn, drop_last=True)
 
 for epoch in range(0, num_epochs):
