@@ -64,7 +64,7 @@ optimiser = torch.optim.Adam(net.parameters(), lr=lr, betas=(beta1, 0.1))
 train_data_dir = '/home/jansel/Documents/Research/coco_dataset/data/val2017'
 train_coco = '/home/jansel/Documents/Research/coco_dataset/data/instances_val2017.json'
 dataloader = DataLoader(dataset=CocoDataloader(root=train_data_dir, annotation=train_coco),
-                        batch_size=batch_sz, shuffle=True, collate_fn=my_dataset.collate_fn, drop_last=True)
+                        batch_size=batch_sz, shuffle=True, collate_fn=CocoDataloader.collate_fn, drop_last=True)
 
 for epoch in range(0, num_epochs):
     print("Starting epoch: %d " % (epoch))

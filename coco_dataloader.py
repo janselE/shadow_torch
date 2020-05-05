@@ -21,7 +21,7 @@ import time
 from threading import Thread
 
 class CocoDataloader(torch.utils.data.Dataset):
-    def __init__(self, root, annotation, transforms=None):
+    def __init__(self, root, annotation, input_sz, use_random_scale=False, use_random_affine=True, transforms=None):
         self.root = root
         self.transforms = transforms
         self.coco = COCO(annotation)
@@ -39,8 +39,10 @@ class CocoDataloader(torch.utils.data.Dataset):
         self.aff_min_scale = 0.8
         self.aff_max_scale = 1.2
         self.flip_p = 0.5
+        self.use_random_affine = use_random_affine
+        self.use_random_scale = use_random_scale
 
-        self.input_sz = 100
+        self.input_sz = input_sz
 
     def getImg(self, index):
         coco = self.coco
@@ -111,7 +113,7 @@ class CocoDataloader(torch.utils.data.Dataset):
         # not the best way but this is to flip the labels
         mask_cat[0] = Variable(torch.Tensor(mask))
 
-        if False:#self.use_random_affine:
+        if self.use_random_affine:
             affine_kwargs = {"min_rot": self.aff_min_rot, "max_rot": self.aff_max_rot,
                     "min_shear": self.aff_min_shear,
                     "max_shear": self.aff_max_shear,
