@@ -99,7 +99,7 @@ for epoch in range(0, num_epochs):
 
 
         shadow_mask1_flat = shadow_mask1.argmax(axis=1).long()
-        print(shadow_mask1_flat.shape)
+        print(shadow_mask1_flat[0])
         for i in range(num_sub_heads):
             loss, loss_no_lamb = loss_fn(x1_outs[i], x2_outs[i],
                     all_affine2_to_1=affine2_to_1,
