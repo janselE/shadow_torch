@@ -157,11 +157,13 @@ class CocoDataloader(torch.utils.data.Dataset):
         for b in batch:
             if b is not None and torch.max(b[4]) in classes: # the amount of classes that we want
                 new_batch.append(b)
+        print("s ", len(new_batch))
 
         if len_batch > len(new_batch):
             diff = len_batch - len(new_batch)
             for i in range(diff):
-                rand = random.randint(0, len(new_batch) - 1)
+                rand = random.randint(0, abs(len(new_batch) - 1))
+                print("s ", len(new_batch)," r ", rand)
                 samp = new_batch[rand]
                 new_batch.append(samp)
 
