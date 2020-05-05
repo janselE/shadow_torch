@@ -165,6 +165,8 @@ class CocoDataloader(torch.utils.data.Dataset):
 
             for i in range(diff):
                 rand = 0
+                if np.random.rand() < 0.2 and len(CocoDataloader.samples) < 32: # this is just a number to limitate the memory usage
+                    CocoDataloader.samples.append(samp)
                 if len(new_batch) == 0:
                     rand = random.randint(0, abs(len(CocoDataloader.samples) - 1))
                     samp = CocoDataloader.samples[rand]
@@ -175,8 +177,6 @@ class CocoDataloader(torch.utils.data.Dataset):
                     samp = new_batch[rand]
                     new_batch.append(samp)
 
-                if np.random.rand() < 0.2 and len(CocoDataloader.samples) < 32: # this is just a number to limitate the memory usage
-                    CocoDataloader.samples.append(samp)
                 print("s ", len(new_batch)," r ", rand)
 
         return torch.utils.data.dataloader.default_collate(new_batch)
