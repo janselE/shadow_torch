@@ -122,6 +122,12 @@ for epoch in range(0, num_epochs):
 
         avg_loss_batch /= num_sub_heads
 
+        # this is for accuracy
+        _, predicted = torch.max(x1_outs.data, 1)
+        total_train += shadow_mask1.nelements()
+        correct_train += predicted.eq(shadow_mask1.data).sum().item()
+        train_acc = 100 * correct_train / total_train
+
         if idx % 10 == 0:
             discrete_losses.append([avg_loss_batch.item(), ssm_loss.item()])  # store for graphing
 
