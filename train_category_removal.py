@@ -6,15 +6,17 @@ import numpy as np
 import pandas as pd
 import os
 from datetime import datetime
+from random import randint
 
 # scripts
 from image_loader import ShadowShadowFreeDataset
 from net10a_twohead import SegmentationNet10a
 from IIC_Losses import IID_segmentation_loss
 from models_for_gan import Discriminator_inpainted, Generator_inpaint
-from utils import remove_catx, remove_random_region, custom_loss_g, custom_loss_iic
+from utils import remove_catx, remove_random_region, custom_loss_iic
 from coco_dataloader import CocoDataloader
 
+NUM_CLASSES = 15  # number of segmentation classes in dataset
 REAL = 1
 FAKE = 0
 
@@ -49,8 +51,9 @@ Disc = Discriminator_inpainted().cuda()  # given real image - catX and generated
 
 # Initialize IIC objective function
 iic_loss = IID_segmentation_loss
-criterion_g_data = custom_loss_g()  # torch.nn.L1Loss()
+criterion_g_data = torch.nn.L1Loss()
 criterion_d = torch.nn.BCELoss()
+criterion_iic_d = torch.nn.L1Loss()
 
 # Set up Adam optimizers
 optimizer_iic = torch.optim.Adam(IIC.parameters(), lr=lr, betas=(beta1, 0.1))
@@ -129,9 +132,11 @@ for epoch in range(0, num_epochs):
         # assert torch.is_tensor(img1)
         # assert torch.is_tensor(x1_outs[0])  # x1_outs is list of tensors from each subhead
 
+        catx = randint(0, NUM_CLASSES - 1)
+
         # transform img1 and img2 based on segmentation output (black out catx)
-        img1_no_catx = remove_catx(img1)
-        img2_no_catx = remove_catx(img2)
+        img1_no_catx = remove_catx(img1, x1_outs[0], catx)  # only one head is trained, but only one head in network
+        img2_no_catx = remove_catx(img2, x2_outs[0], catx)
 
         # remove additional region from images
         img1_blacked = remove_random_region(img1_no_catx)
@@ -140,13 +145,14 @@ for epoch in range(0, num_epochs):
         # inpaint blacked out regions with Gen
         img1_filled = Gen(img1_blacked)
         img2_filled = Gen(img2_blacked)
-        # need to make sure loss doesn't compare catX pixels (doesn't learn to keep them black)
-        # write custom loss function?
-        filled_data_loss = criterion_g_data(img1_filled, img1_no_catx) + criterion_g_data(img2_filled, img2_no_catx)
 
         # re-blackout catX so discriminator only looks at additional region inpainting
-        img1_filled_rb = remove_catx(img1_filled)
-        img2_filled_rb = remove_catx(img2_filled)
+        img1_filled_rb = remove_catx(img1_filled, x1_outs[0], catx)
+        img2_filled_rb = remove_catx(img2_filled, x2_outs[0], catx)
+
+        # catx is 0s in both, so L1 loss will not consider/effect catx regions
+        filled_data_loss = criterion_g_data(img1_filled_rb, img1_no_catx) + criterion_g_data(img2_filled_rb,
+                                                                                             img2_no_catx)
 
         # use discriminator
         prob_img1_nc_real = Disc(img1_no_catx.detach())
@@ -166,9 +172,11 @@ for epoch in range(0, num_epochs):
         gen_adv_loss = criterion_d(prob_img1_rb_pred_adv, REAL_t) + criterion_d(prob_img2_rb_pred_adv, REAL_t)
 
         # use IIC to enforce that filled images do not contain catX
+        # with torch.no_grad:  # need gradients to be passed backwards, but parameters not updated
         xx1_outs = IIC(img1_filled)
         xx2_outs = IIC(img2_filled)
-        adv_seg_loss = custom_loss_iic(xx1_outs[i], x1_outs[i])
+        adv_seg_loss = custom_loss_iic(xx1_outs[i], catx, criterion_iic_d) + \
+                       custom_loss_iic(xx2_outs[0], catx, criterion_iic_d)
 
         # loss for Gwn only, not IIC
         gen_loss = filled_data_loss + gen_adv_loss + adv_seg_loss
@@ -193,10 +201,10 @@ for epoch in range(0, num_epochs):
         if train_iic_only:
             optimizer_iic.zero_grad()
             avg_loss_batch.backward()
-            optimizer_iic.step()
+            optimizer_iic.step()  # important that this optimizer steps before adv_seg_loss.backward() is called
 
         if train_gen:
-            optimizer_g.zero_grad()  # both IIC params and Gen params
+            optimizer_g.zero_grad()
             gen_loss.backward()
             optimizer_g.step()
 
@@ -232,7 +240,8 @@ for epoch in range(0, num_epochs):
     avg_gen_adv_loss = float(avg_gen_adv_loss / avg_loss_count)
     avg_adv_seg_loss = float(avg_adv_seg_loss / avg_loss_count)
 
-    ave_losses.append([avg_loss, avg_disc_loss, avg_gen_loss, avg_sf_data_loss, avg_gen_adv_loss, avg_adv_seg_loss])  # store for graphing
+    ave_losses.append([avg_loss, avg_disc_loss, avg_gen_loss, avg_sf_data_loss, avg_gen_adv_loss,
+                       avg_adv_seg_loss])  # store for graphing
 
     # save lists of losses as csv files for reading and graphing later
     df1 = pd.DataFrame(list(zip(*ave_losses))).add_prefix('Col')

@@ -14,16 +14,14 @@ def remove_catx(img, seg, category_idx):
 # img is [batch_size, 3, h, w] for batch of RGB images
 def remove_random_region(img):
     # 2 regions 1/32th to 1/8th of image, horizontal and vertical rectangles
-    # h = list(img.size())[2]
-    # w = list(img.size())[3]
     batch_size, k, h, w = img.shape
     region_h = h // 8
     region_w = w // 8
     # print("h, w, rh, rw", h, w, region_h, region_w)
     # define height and width of 2 patches
-    dims1 = [region_h * randrange(1, 2), region_w * randrange(2, 4)]
+    dims1 = [region_h * randrange(1, 3), region_w * randrange(2, 5)]  # 1 or 2 and 2, 3, or 4
     # print('dims1', dims1)
-    dims2 = [region_h * randrange(2, 4), region_w * randrange(1, 2)]
+    dims2 = [region_h * randrange(2, 5), region_w * randrange(1, 3)]
     # print('dims2', dims2)
     # place patch top left corner
     top_left_1 = list((randrange(0, h - dims1[0]), randrange(0, w - dims1[1])))
@@ -54,12 +52,17 @@ def remove_random_region(img):
     return img_b
 
 
-def custom_loss_g():
-    return 0
+# def custom_loss_g():
+#     return 0
 
 
-def custom_loss_iic():
-    return 0
+# seg is [batch_size, cateories, h, w]
+def custom_loss_iic(seg, catx, loss):
+    # calculate L1 loss between catx channel and 0s
+    batch_size, k, h, w = seg.size
+    pred_catx = seg[:, catx, :, :]  # get just catx predictions
+    no_catx = torch.zeros(batch_size, 1, h, w)
+    return loss(pred_catx, no_catx)
 
 
 # test_img = torch.rand([2, 3, 16, 20])
