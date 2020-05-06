@@ -22,6 +22,7 @@ input_sz = h
 # Lists to keep track of progress
 discrete_losses = []
 ave_losses = []
+ave_acc= []
 
 # keep track of folders and saved files when model is run multiple times
 time_begin = str(datetime.now()).replace(' ', '-')
@@ -44,6 +45,8 @@ n_epochs_stop = 10
 epochs_no_improve = 0
 min_val_loss = np.Inf
 use_supervised = False# set to epoch < num or similar condition?
+total_train = 0
+correct_train = 0
 
 # Create the models
 net = SegmentationNet10a(num_sub_heads, 3)
@@ -123,8 +126,8 @@ for epoch in range(0, num_epochs):
         avg_loss_batch /= num_sub_heads
 
         # this is for accuracy
-        _, predicted = torch.max(x1_outs.data, 1)
-        total_train += shadow_mask1.nelements()
+        predicted = torch.argmax(x1_outs[0].cpu().detach(), dim=1)
+        total_train += shadow_mask1.shape[0] * shadow_mask1.shape[1] *shadow_mask1.shape[2] * shadow_mask1.shape[3]
         correct_train += predicted.eq(shadow_mask1.data).sum().item()
         train_acc = 100 * correct_train / total_train
 
@@ -170,11 +173,19 @@ for epoch in range(0, num_epochs):
     for param_group in optimiser.param_groups:
         param_group['lr'] = lr
 
+    ave_acc.append([train_acc])
+
     avg_loss = float(avg_loss / avg_loss_count)
     avg_ssm_loss = float(avg_ssm_loss / avg_loss_count)
     ave_losses.append([avg_loss, avg_ssm_loss])
     print("epoch {} average_loss {} ".format(epoch, avg_loss))
     # avg_loss_no_lamb = float(avg_loss_no_lamb / avg_loss_count)
+
+    # save lists of losses as csv files for reading and graphing later
+    df0 = pd.DataFrame(list(zip(*ave_acc))).add_prefix('Col')
+    filename = 'loss_csvs/' + time_begin + '/iic_acc_e' + str(epoch) + '_' + time_begin + '.csv'
+    print('saving to', filename)
+    df0.to_csv(filename, index=False)
 
     # save lists of losses as csv files for reading and graphing later
     df1 = pd.DataFrame(list(zip(*ave_losses))).add_prefix('Col')
