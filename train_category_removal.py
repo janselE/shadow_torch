@@ -12,6 +12,8 @@ from image_loader import ShadowShadowFreeDataset
 from net10a_twohead import SegmentationNet10a
 from IIC_Losses import IID_segmentation_loss
 from models_for_gan import Discriminator_inpainted, Generator_inpaint
+from utils import remove_catx, remove_random_region, custom_loss_g, custom_loss_iic
+from coco_dataloader import CocoDataloader
 
 REAL = 1
 FAKE = 0
@@ -47,7 +49,7 @@ Disc = Discriminator_inpainted().cuda()  # given real image - catX and generated
 
 # Initialize IIC objective function
 iic_loss = IID_segmentation_loss
-criterion_sf_data = torch.nn.L1Loss()
+criterion_g_data = custom_loss_g()  # torch.nn.L1Loss()
 criterion_d = torch.nn.BCELoss()
 
 # Set up Adam optimizers
@@ -56,8 +58,14 @@ optimizer_g = torch.optim.Adam(Gen.parameters(), lr=lr, betas=(beta1, 0.1))
 optimizer_d = torch.optim.Adam(Disc.parameters(), lr=lr, betas=(beta1, 0.1))
 
 # switch to just load img1, img2, affine2_to_1, mask as is used in IIC paper
-dataloader = DataLoader(dataset=ShadowShadowFreeDataset(h, w, use_random_scale=False, use_random_affine=True),
-                        batch_size=batch_sz, shuffle=True, drop_last=True)
+# dataloader = DataLoader(dataset=ShadowShadowFreeDataset(h, w, use_random_scale=False, use_random_affine=True),
+#                         batch_size=batch_sz, shuffle=True, drop_last=True)
+
+# Dataloader for coco
+train_data_dir = 'data/val2017'
+train_coco = 'data/instances_val2017.json'
+dataloader = DataLoader(dataset=CocoDataloader(root=train_data_dir, annotation=train_coco, input_sz=input_sz),
+                        batch_size=batch_sz, shuffle=True, collate_fn=CocoDataloader.collate_fn, drop_last=True)
 
 for epoch in range(0, num_epochs):
     print("Starting epoch: %d " % (epoch))
@@ -75,7 +83,8 @@ for epoch in range(0, num_epochs):
         # img1 is image containing shadow, img2 is transformation of img1,
         # affine2_to_1 allows reversing affine transforms to make img2 align pixels with img1,
         # mask_img1 allows zeroing out pixels that are not comparable
-        img1, img2, affine2_to_1, mask_img1 = data
+        # img1, img2, affine2_to_1, mask_img1 = data
+        img1, img2, affine2_to_1, mask_img1, shadow_mask1 = data  # why does CocoDataloader return 5th variable?
 
         # just moving everything to cuda
         img1 = img1.cuda()
@@ -133,7 +142,7 @@ for epoch in range(0, num_epochs):
         img2_filled = Gen(img2_blacked)
         # need to make sure loss doesn't compare catX pixels (doesn't learn to keep them black)
         # write custom loss function?
-        filled_data_loss = criterion_sf_data(img1_filled, img1_no_catx) + criterion_sf_data(img2_filled, img2_no_catx)
+        filled_data_loss = criterion_g_data(img1_filled, img1_no_catx) + criterion_g_data(img2_filled, img2_no_catx)
 
         # re-blackout catX so discriminator only looks at additional region inpainting
         img1_filled_rb = remove_catx(img1_filled)
@@ -159,7 +168,7 @@ for epoch in range(0, num_epochs):
         # use IIC to enforce that filled images do not contain catX
         xx1_outs = IIC(img1_filled)
         xx2_outs = IIC(img2_filled)
-        adv_seg_loss = custom_loss(xx1_outs[i], x1_outs[i])
+        adv_seg_loss = custom_loss_iic(xx1_outs[i], x1_outs[i])
 
         # loss for Gwn only, not IIC
         gen_loss = filled_data_loss + gen_adv_loss + adv_seg_loss
