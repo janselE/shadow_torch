@@ -56,7 +56,7 @@ total_train = 0
 correct_train = 0
 
 # Create the models
-IIC = SegmentationNet10a(num_sub_heads).cuda()  # produces segmentation maps from images
+IIC = SegmentationNet10a(num_sub_heads, NUM_CLASSES).cuda()  # produces segmentation maps from images
 Gen = Generator_inpaint().cuda()  # fills in image with blacked out regions (catX and random area), with L1 loss for non-catX pixels
 Disc = Discriminator_inpainted().cuda()  # given real image - catX and generated - catX
 # use another disc? Somehow make sure catX pixels look real
@@ -127,7 +127,7 @@ for epoch in range(0, num_epochs):
         # avg_loss_no_lamb = 0.
         avg_loss_count = 0
 
-        for idx, data in enumerate(train_dataloader):
+        for idx, data in enumerate(dataloader):
             # img1 is image containing shadow, img2 is transformation of img1,
             # affine2_to_1 allows reversing affine transforms to make img2 align pixels with img1,
             # mask_img1 allows zeroing out pixels that are not comparable

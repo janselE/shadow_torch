@@ -133,7 +133,7 @@ class Discriminator_sf(nn.Module):
 # takes image (3 channels) as input and inpaints blacked out regions
 class Generator_inpaint(nn.Module):
     def  __init__(self):
-        super(Generator_sf, self).__init__()
+        super(Generator_inpaint, self).__init__()
         self.conv0 = nn.Sequential(
             nn.Conv2d(3, 64, 3, 1, 1),  # 3 color channels plus 35 seg category channels
             nn.LeakyReLU(),
@@ -231,7 +231,7 @@ class Generator_inpaint(nn.Module):
 # discriminate between (real image - catX) and (inpainted image - catX)
 class Discriminator_inpainted(nn.Module):
     def __init__(self):
-        super(Discriminator_sf, self).__init__()
+        super(Discriminator_inpainted, self).__init__()
         self.feature = nn.Sequential(
             nn.Conv2d(3, 64, 3, 1, 1),
             nn.LeakyReLU(),
