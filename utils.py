@@ -6,7 +6,7 @@ from random import randrange
 def remove_catx(img, seg, category_idx):
     pred_idxs = torch.argmax(seg, dim=1, keepdim=True)
     # mask = torch.ones(img.squeeze(dim=1).size)  # size of batch with one channel per image
-    mask = pred_idxs != category_idx  # zeroes where catx predicted
+    mask = (pred_idxs != category_idx).cuda()  # zeroes where catx predicted
     blacked = img * mask  # all 3 color channels set to 0 at catx indices
     return blacked
 
@@ -45,7 +45,7 @@ def remove_random_region(img):
                 mask[i][j] = 0
 
     mask = mask.view(1, 1, h, w)
-    mask = mask.repeat(batch_size, 1, 1, 1)
+    mask = mask.repeat(batch_size, 1, 1, 1).cuda()
 
     img_b = img * mask
 
@@ -59,9 +59,9 @@ def remove_random_region(img):
 # seg is [batch_size, cateories, h, w]
 def custom_loss_iic(seg, catx, loss):
     # calculate L1 loss between catx channel and 0s
-    batch_size, k, h, w = seg.size
+    batch_size, k, h, w = seg.size()
     pred_catx = seg[:, catx, :, :]  # get just catx predictions
-    no_catx = torch.zeros(batch_size, 1, h, w)
+    no_catx = torch.zeros(batch_size, 1, h, w).cuda()
     return loss(pred_catx, no_catx)
 
 

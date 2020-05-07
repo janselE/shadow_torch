@@ -14,7 +14,7 @@ from net10a_twohead import SegmentationNet10a
 from IIC_Losses import IID_segmentation_loss
 from models_for_gan import Discriminator_inpainted, Generator_inpaint
 from utils import remove_catx, remove_random_region, custom_loss_iic
-from coco_dataloader import CocoDataloader
+# from coco_dataloader import CocoDataloader
 from image_loader_cityscapes import CityscapesLoader
 
 NUM_CLASSES = 20  # number of segmentation classes in dataset
@@ -38,7 +38,7 @@ time_begin = str(datetime.now()).replace(' ', '-')
 os.mkdir("img_visual_checks/" + time_begin)
 
 lamb = 1.0  # will make loss equal to loss_no_lamb
-batch_sz = 2
+batch_sz = 1
 num_sub_heads = 1
 half_T_side_dense = 0
 half_T_side_sparse_min = 0
@@ -196,12 +196,12 @@ for epoch in range(0, num_epochs):
             # use ground truth segmentation in place of both predictions
             else:
                 img, seg = data
-                img1 = img
-                img2 = img.clone()
+                img1 = img.cuda()
+                img2 = img.clone().cuda()
                 x1_outs = [torch.zeros([1, 1, 1, 1])]  # size doesn't matter since will be replaced
                 x2_outs = [torch.zeros([1, 1, 1, 1])]
-                x1_outs[0] = seg
-                x2_outs[0] = seg.clone()
+                x1_outs[0] = seg.cuda()
+                x2_outs[0] = seg.clone().cuda()
 
             catx = randint(0, NUM_CLASSES - 1)
 
@@ -254,7 +254,7 @@ for epoch in range(0, num_epochs):
 
             # calculate average losses
             avg_loss_count += 1
-            avg_loss += avg_loss_batch.item()
+            # avg_loss += avg_loss_batch.item() # not using IIC,so not calculated
             avg_disc_loss += disc_loss.item()
             avg_gen_loss += gen_loss.item()
             avg_sf_data_loss += filled_data_loss.item()  # never used in backward() call since supervised
@@ -264,23 +264,35 @@ for epoch in range(0, num_epochs):
             if mode == 'val':
 
                 if idx % 10 == 0:
+                    # switch back if using iic
+                    # val_discrete_losses.append(
+                    #     [avg_loss_batch.item(), disc_loss.item(), gen_loss.item(), filled_data_loss.item(),
+                    #      gen_adv_loss.item(), adv_seg_loss.item()])  # store for graphing
+
                     val_discrete_losses.append(
-                        [avg_loss_batch.item(), disc_loss.item(), gen_loss.item(), filled_data_loss.item(),
+                        [disc_loss.item(), gen_loss.item(), filled_data_loss.item(),
                          gen_adv_loss.item(), adv_seg_loss.item()])  # store for graphing
 
             elif mode == 'train':
 
                 if idx % 10 == 0:
+                    # switch back if using iic
+                    # discrete_losses.append(
+                    #     [avg_loss_batch.item(), disc_loss.item(), gen_loss.item(), filled_data_loss.item(),
+                    #      gen_adv_loss.item(), adv_seg_loss.item()])  # store for graphing
+
                     discrete_losses.append(
-                        [avg_loss_batch.item(), disc_loss.item(), gen_loss.item(), filled_data_loss.item(),
+                        [disc_loss.item(), gen_loss.item(), filled_data_loss.item(),
                          gen_adv_loss.item(), adv_seg_loss.item()])  # store for graphing
 
-                if epoch < 50:
+                # if epoch < 50:
+                if epoch < 0:  # never train iic since not using
                     train_iic_only = True  # use for pretraining for some # of epochs if necessary
                     train_gen = False
                     train_disc = False
                 else:
-                    train_iic_only = True
+                    # train_iic_only = True
+                    train_iic_only = False  # never train iic since not using
                     train_gen = True
                     train_disc = True
 
@@ -332,6 +344,7 @@ for epoch in range(0, num_epochs):
     avg_adv_seg_loss = float(avg_adv_seg_loss / avg_loss_count)
 
     if mode == 'train':
+        train_acc = 100  # since not using iic
         # keep track of accuracy to plot
         ave_acc.append([train_acc])
 
