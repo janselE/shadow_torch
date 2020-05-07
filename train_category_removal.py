@@ -28,6 +28,10 @@ discrete_losses = []
 ave_losses = []
 ave_acc= []
 
+val_discrete_losses = []
+val_ave_losses = []
+val_ave_acc= []
+
 # keep track of folders and saved files when model is run multiple times
 time_begin = str(datetime.now()).replace(' ', '-')
 os.mkdir("img_visual_checks/" + time_begin)
@@ -86,176 +90,205 @@ val_dataloader = DataLoader(dataset=CocoDataloader(root=train_data_dir, annotati
 for epoch in range(0, num_epochs):
     print("Starting epoch: %d " % (epoch))
 
-    avg_loss = 0.  # over heads and head_epochs (and sub_heads) per epoch
-    avg_disc_loss = 0.
-    avg_gen_loss = 0.
-    avg_sf_data_loss = 0.
-    avg_gen_adv_loss = 0.
-    avg_adv_seg_loss = 0.
-    # avg_loss_no_lamb = 0.
-    avg_loss_count = 0
+    for mode in ['train', 'val']:
+        if mode == 'train':
+            torch.set_grad_enabled(True)
+            dataloader = train_dataloader
+            IIC.train()
+            Gen.train()
+            Disc.train()
+        elif mode == 'val':
+            torch.set_grad_enabled(False)
+            dataloader = val_dataloader
+            IIC.eval()
+            Gen.eval()
+            Disc.eval()
 
-    for idx, data in enumerate(train_dataloader):
-        # img1 is image containing shadow, img2 is transformation of img1,
-        # affine2_to_1 allows reversing affine transforms to make img2 align pixels with img1,
-        # mask_img1 allows zeroing out pixels that are not comparable
-        # img1, img2, affine2_to_1, mask_img1 = data
-        img1, img2, affine2_to_1, mask_img1, shadow_mask1 = data  # why does CocoDataloader return 5th variable?
+        avg_loss = 0.  # over heads and head_epochs (and sub_heads) per epoch
+        avg_disc_loss = 0.
+        avg_gen_loss = 0.
+        avg_sf_data_loss = 0.
+        avg_gen_adv_loss = 0.
+        avg_adv_seg_loss = 0.
+        # avg_loss_no_lamb = 0.
+        avg_loss_count = 0
 
-        # just moving everything to cuda
-        img1 = img1.cuda()
-        img2 = img2.cuda()
-        affine2_to_1 = affine2_to_1.cuda()
-        mask_img1 = mask_img1.cuda()
+        for idx, data in enumerate(train_dataloader):
+            # img1 is image containing shadow, img2 is transformation of img1,
+            # affine2_to_1 allows reversing affine transforms to make img2 align pixels with img1,
+            # mask_img1 allows zeroing out pixels that are not comparable
+            # img1, img2, affine2_to_1, mask_img1 = data
+            img1, img2, affine2_to_1, mask_img1, shadow_mask1 = data  # why does CocoDataloader return 5th variable?
 
-        x1_outs = IIC(img1)
-        x2_outs = IIC(img2)
+            # just moving everything to cuda
+            img1 = img1.cuda()
+            img2 = img2.cuda()
+            affine2_to_1 = affine2_to_1.cuda()
+            mask_img1 = mask_img1.cuda()
 
-        # batch is passed through each subhead to calculate loss, store average loss per sub_head
-        avg_loss_batch = None
-        avg_loss_no_lamb_batch = None
+            x1_outs = IIC(img1)
+            x2_outs = IIC(img2)
 
-        for i in range(num_sub_heads):
-            loss, loss_no_lamb = iic_loss(x1_outs[i], x2_outs[i],
-                                          all_affine2_to_1=affine2_to_1,
-                                          all_mask_img1=mask_img1, lamb=lamb,
-                                          half_T_side_dense=half_T_side_dense,
-                                          half_T_side_sparse_min=half_T_side_sparse_min,
-                                          half_T_side_sparse_max=half_T_side_sparse_max)
+            # batch is passed through each subhead to calculate loss, store average loss per sub_head
+            avg_loss_batch = None
+            avg_loss_no_lamb_batch = None
 
-            if avg_loss_batch is None:
-                avg_loss_batch = loss
-                avg_loss_no_lamb_batch = loss_no_lamb
-            else:
-                avg_loss_batch += loss
-                avg_loss_no_lamb_batch += loss_no_lamb
+            for i in range(num_sub_heads):
+                loss, loss_no_lamb = iic_loss(x1_outs[i], x2_outs[i],
+                                              all_affine2_to_1=affine2_to_1,
+                                              all_mask_img1=mask_img1, lamb=lamb,
+                                              half_T_side_dense=half_T_side_dense,
+                                              half_T_side_sparse_min=half_T_side_sparse_min,
+                                              half_T_side_sparse_max=half_T_side_sparse_max)
 
-        avg_loss_batch /= num_sub_heads
-        # avg_loss_batch *= -1 # this is to make the loss positive, only flip the labels
-        avg_loss_no_lamb_batch /= num_sub_heads
+                if avg_loss_batch is None:
+                    avg_loss_batch = loss
+                    avg_loss_no_lamb_batch = loss_no_lamb
+                else:
+                    avg_loss_batch += loss
+                    avg_loss_no_lamb_batch += loss_no_lamb
 
-        # this is for accuracy
-        predicted = torch.argmax(x1_outs[0].cpu().detach(), dim=1).view(batch_sz, 1, input_sz, input_sz)  # this zero is because we are using a list
-        total_train += shadow_mask1.cpu().shape[0] * shadow_mask1.cpu().shape[1] * shadow_mask1.cpu().shape[2] * shadow_mask1.cpu().shape[3]
-        correct_train += predicted.eq(shadow_mask1.cpu().data).sum().item()
-        train_acc = 100 * correct_train / total_train
-        # print('shape mask', shadow_mask1.shape)
-        # print('shape output', x1_outs[0].shape)
-        # print('shape prediction', predicted.shape)
-        # print('total number', total_train)
-        # print('total correct', correct_train)
-        # print('train', train_acc)
-        # print('max predicted', torch.max(predicted))
-        # print('max mask', torch.max(shadow_mask1))
+            avg_loss_batch /= num_sub_heads
+            # avg_loss_batch *= -1 # this is to make the loss positive, only flip the labels
+            avg_loss_no_lamb_batch /= num_sub_heads
 
-        # track losses
-        # print("epoch {} average_loss {} ave_loss_no_lamb {}".format(epoch, avg_loss_batch.item(),
-        #                                                             avg_loss_no_lamb_batch.item()))
+            # this is for accuracy
+            predicted = torch.argmax(x1_outs[0].cpu().detach(), dim=1).view(batch_sz, 1, input_sz, input_sz)  # this zero is because we are using a list
+            total_train += shadow_mask1.cpu().shape[0] * shadow_mask1.cpu().shape[1] * shadow_mask1.cpu().shape[2] * shadow_mask1.cpu().shape[3]
+            correct_train += predicted.eq(shadow_mask1.cpu().data).sum().item()
+            train_acc = 100 * correct_train / total_train
+            # print('shape mask', shadow_mask1.shape)
+            # print('shape output', x1_outs[0].shape)
+            # print('shape prediction', predicted.shape)
+            # print('total number', total_train)
+            # print('total correct', correct_train)
+            # print('train', train_acc)
+            # print('max predicted', torch.max(predicted))
+            # print('max mask', torch.max(shadow_mask1))
 
-        if not np.isfinite(avg_loss_batch.item()):
-            print("Loss is not finite... %s:" % str(avg_loss_batch))
-            exit(1)
+            # track losses
+            # print("epoch {} average_loss {} ave_loss_no_lamb {}".format(epoch, avg_loss_batch.item(),
+            #                                                             avg_loss_no_lamb_batch.item()))
 
-        # assert torch.is_tensor(img1)
-        # assert torch.is_tensor(x1_outs[0])  # x1_outs is list of tensors from each subhead
+            if not np.isfinite(avg_loss_batch.item()):
+                print("Loss is not finite... %s:" % str(avg_loss_batch))
+                exit(1)
 
-        catx = randint(0, NUM_CLASSES - 1)
+            # assert torch.is_tensor(img1)
+            # assert torch.is_tensor(x1_outs[0])  # x1_outs is list of tensors from each subhead
 
-        # transform img1 and img2 based on segmentation output (black out catx)
-        img1_no_catx = remove_catx(img1, x1_outs[0], catx)  # only one head is trained, but only one head in network
-        img2_no_catx = remove_catx(img2, x2_outs[0], catx)
+            catx = randint(0, NUM_CLASSES - 1)
 
-        # remove additional region from images
-        img1_blacked = remove_random_region(img1_no_catx)
-        img2_blacked = remove_random_region(img2_no_catx)
+            # transform img1 and img2 based on segmentation output (black out catx)
+            img1_no_catx = remove_catx(img1, x1_outs[0], catx)  # only one head is trained, but only one head in network
+            img2_no_catx = remove_catx(img2, x2_outs[0], catx)
 
-        # inpaint blacked out regions with Gen
-        img1_filled = Gen(img1_blacked)
-        img2_filled = Gen(img2_blacked)
+            # remove additional region from images
+            img1_blacked = remove_random_region(img1_no_catx)
+            img2_blacked = remove_random_region(img2_no_catx)
 
-        # re-blackout catX so discriminator only looks at additional region inpainting
-        img1_filled_rb = remove_catx(img1_filled, x1_outs[0], catx)
-        img2_filled_rb = remove_catx(img2_filled, x2_outs[0], catx)
+            # inpaint blacked out regions with Gen
+            img1_filled = Gen(img1_blacked)
+            img2_filled = Gen(img2_blacked)
 
-        # catx is 0s in both, so L1 loss will not consider/effect catx regions
-        filled_data_loss = criterion_g_data(img1_filled_rb, img1_no_catx) + criterion_g_data(img2_filled_rb,
-                                                                                             img2_no_catx)
+            # re-blackout catX so discriminator only looks at additional region inpainting
+            img1_filled_rb = remove_catx(img1_filled, x1_outs[0], catx)
+            img2_filled_rb = remove_catx(img2_filled, x2_outs[0], catx)
 
-        # use discriminator
-        prob_img1_nc_real = Disc(img1_no_catx.detach())
-        prob_img2_nc_real = Disc(img2_no_catx.detach())
-        prob_img1_rb_pred = Disc(img1_filled_rb.detach())
-        prob_img2_rb_pred = Disc(img2_filled_rb.detach())
-        prob_img1_rb_pred_adv = Disc(img1_filled_rb)  # not detached to backprop to Gen and IIC
-        prob_img2_rb_pred_adv = Disc(img2_filled_rb)  # not detached to backprop to Gen and IIC
+            # catx is 0s in both, so L1 loss will not consider/effect catx regions
+            filled_data_loss = criterion_g_data(img1_filled_rb, img1_no_catx) + criterion_g_data(img2_filled_rb,
+                                                                                                 img2_no_catx)
 
-        # get tensors of labels to compute loss for Disc
-        REAL_t = torch.full((prob_img1_nc_real.shape), REAL).cuda()  # tensor of REAL labels
-        FAKE_t = torch.full((prob_img1_nc_real.shape), FAKE).cuda()  # tensor of FAKE labels
+            # use discriminator
+            prob_img1_nc_real = Disc(img1_no_catx.detach())
+            prob_img2_nc_real = Disc(img2_no_catx.detach())
+            prob_img1_rb_pred = Disc(img1_filled_rb.detach())
+            prob_img2_rb_pred = Disc(img2_filled_rb.detach())
+            prob_img1_rb_pred_adv = Disc(img1_filled_rb)  # not detached to backprop to Gen and IIC
+            prob_img2_rb_pred_adv = Disc(img2_filled_rb)  # not detached to backprop to Gen and IIC
 
-        # blacked out regions are the same in both discriminator inputs, so will not backprop or effect generator
-        disc_loss = criterion_d(prob_img1_rb_pred, FAKE_t) + criterion_d(prob_img1_nc_real, REAL_t) + \
-                    criterion_d(prob_img2_rb_pred, FAKE_t) + criterion_d(prob_img2_nc_real, REAL_t)
-        gen_adv_loss = criterion_d(prob_img1_rb_pred_adv, REAL_t) + criterion_d(prob_img2_rb_pred_adv, REAL_t)
+            # get tensors of labels to compute loss for Disc
+            REAL_t = torch.full((prob_img1_nc_real.shape), REAL).cuda()  # tensor of REAL labels
+            FAKE_t = torch.full((prob_img1_nc_real.shape), FAKE).cuda()  # tensor of FAKE labels
 
-        # use IIC to enforce that filled images do not contain catX
-        # with torch.no_grad:  # need gradients to be passed backwards, but parameters not updated
-        xx1_outs = IIC(img1_filled)
-        xx2_outs = IIC(img2_filled)
-        adv_seg_loss = custom_loss_iic(xx1_outs[i], catx, criterion_iic_d) + \
-                       custom_loss_iic(xx2_outs[0], catx, criterion_iic_d)
+            # blacked out regions are the same in both discriminator inputs, so will not backprop or effect generator
+            disc_loss = criterion_d(prob_img1_rb_pred, FAKE_t) + criterion_d(prob_img1_nc_real, REAL_t) + \
+                        criterion_d(prob_img2_rb_pred, FAKE_t) + criterion_d(prob_img2_nc_real, REAL_t)
+            gen_adv_loss = criterion_d(prob_img1_rb_pred_adv, REAL_t) + criterion_d(prob_img2_rb_pred_adv, REAL_t)
 
-        # loss for Gwn only, not IIC
-        gen_loss = filled_data_loss + gen_adv_loss + adv_seg_loss
+            # use IIC to enforce that filled images do not contain catX
+            # with torch.no_grad:  # need gradients to be passed backwards, but parameters not updated
+            xx1_outs = IIC(img1_filled)
+            xx2_outs = IIC(img2_filled)
+            adv_seg_loss = custom_loss_iic(xx1_outs[0], catx, criterion_iic_d) + \
+                           custom_loss_iic(xx2_outs[0], catx, criterion_iic_d)
 
-        if idx % 10 == 0:
-            discrete_losses.append([avg_loss_batch.item(), disc_loss.item(), gen_loss.item(), filled_data_loss.item(),
-                                    gen_adv_loss.item(), adv_seg_loss.item()])  # store for graphing
+            # loss for Gwn only, not IIC
+            gen_loss = filled_data_loss + gen_adv_loss + adv_seg_loss
 
-        # calculate average losses
-        avg_loss_count += 1
-        avg_loss += avg_loss_batch.item()
-        avg_disc_loss += disc_loss.item()
-        avg_gen_loss += gen_loss.item()
-        avg_sf_data_loss += filled_data_loss.item()  # never used in backward() call since supervised
-        avg_gen_adv_loss += gen_adv_loss.item()
-        avg_adv_seg_loss += adv_seg_loss.item()
+            # calculate average losses
+            avg_loss_count += 1
+            avg_loss += avg_loss_batch.item()
+            avg_disc_loss += disc_loss.item()
+            avg_gen_loss += gen_loss.item()
+            avg_sf_data_loss += filled_data_loss.item()  # never used in backward() call since supervised
+            avg_gen_adv_loss += gen_adv_loss.item()
+            avg_adv_seg_loss += adv_seg_loss.item()
 
-        train_iic_only = False  # use for pretraining for some # of epochs if necessary
-        train_gen = True
-        train_disc = True
+            if mode == 'val':
 
-        if train_iic_only:
-            optimizer_iic.zero_grad()
-            avg_loss_batch.backward()
-            optimizer_iic.step()  # important that this optimizer steps before adv_seg_loss.backward() is called
+                if idx % 10 == 0:
+                    val_discrete_losses.append(
+                        [avg_loss_batch.item(), disc_loss.item(), gen_loss.item(), filled_data_loss.item(),
+                         gen_adv_loss.item(), adv_seg_loss.item()])  # store for graphing
 
-        if train_gen:
-            optimizer_g.zero_grad()
-            gen_loss.backward()
-            optimizer_g.step()
+            elif mode == 'train':
 
-        if train_disc:
-            optimizer_d.zero_grad()
-            disc_loss.backward()
-            optimizer_d.step()
+                if idx % 10 == 0:
+                    discrete_losses.append(
+                        [avg_loss_batch.item(), disc_loss.item(), gen_loss.item(), filled_data_loss.item(),
+                         gen_adv_loss.item(), adv_seg_loss.item()])  # store for graphing
 
-        # visualize outputs of first image in dataset every 10 epochs
-        if epoch % 10 == 0 and idx == 0:
-            # o = transforms.ToPILImage()(img1[0].cpu().detach())
-            # o.save("img_visual_checks/" + time_begin + "/test_img1_e{}_{}.png".format(epoch, time_begin))
-            # o = transforms.ToPILImage()(img2[0].cpu().detach())
-            # o.save("img_visual_checks/" + time_begin + "/test_img2_e{}_{}.png".format(epoch, time_begin))
-            # shadow_mask1_pred_bw = torch.argmax(x1_outs[0].cpu().detach(),
-            #                                     dim=1).numpy()  # gets black and white image
-            # cv2.imwrite("img_visual_checks/" + time_begin + "/test_mask1_bw_e{}_{}.png".format(epoch, time_begin),
-            #             shadow_mask1_pred_bw[0] * 255)
-            # shadow_mask1_pred_grey = x1_outs[0][1].cpu().detach().numpy()  # gets probability pixel is black
-            # cv2.imwrite("img_visual_checks/" + time_begin + "/test_mask1_grey_e{}_{}.png".format(epoch, time_begin),
-            #             shadow_mask1_pred_grey[0] * 255)
-            #
-            # # this saves the model
-            torch.save(IIC.state_dict(), "saved_models/baseline_gan_e{}_{}.model".format(epoch, time_begin))
+                if epoch < 50:
+                    train_iic_only = True  # use for pretraining for some # of epochs if necessary
+                    train_gen = False
+                    train_disc = False
+                else:
+                    train_iic_only = True
+                    train_gen = True
+                    train_disc = True
+
+                if train_iic_only:
+                    optimizer_iic.zero_grad()
+                    avg_loss_batch.backward()
+                    optimizer_iic.step()  # important that this optimizer steps before adv_seg_loss.backward() is called
+
+                if train_gen:
+                    optimizer_g.zero_grad()
+                    gen_loss.backward()
+                    optimizer_g.step()  # only includes Gen params, not IIC params
+
+                if train_disc:
+                    optimizer_d.zero_grad()
+                    disc_loss.backward()
+                    optimizer_d.step()
+
+                # visualize outputs of first image in dataset every 10 epochs
+                if epoch % 10 == 0 and idx == 0:
+                    # o = transforms.ToPILImage()(img1[0].cpu().detach())
+                    # o.save("img_visual_checks/" + time_begin + "/test_img1_e{}_{}.png".format(epoch, time_begin))
+                    # o = transforms.ToPILImage()(img2[0].cpu().detach())
+                    # o.save("img_visual_checks/" + time_begin + "/test_img2_e{}_{}.png".format(epoch, time_begin))
+                    # shadow_mask1_pred_bw = torch.argmax(x1_outs[0].cpu().detach(),
+                    #                                     dim=1).numpy()  # gets black and white image
+                    # cv2.imwrite("img_visual_checks/" + time_begin + "/test_mask1_bw_e{}_{}.png".format(epoch, time_begin),
+                    #             shadow_mask1_pred_bw[0] * 255)
+                    # shadow_mask1_pred_grey = x1_outs[0][1].cpu().detach().numpy()  # gets probability pixel is black
+                    # cv2.imwrite("img_visual_checks/" + time_begin + "/test_mask1_grey_e{}_{}.png".format(epoch, time_begin),
+                    #             shadow_mask1_pred_grey[0] * 255)
+                    #
+                    # # this saves the model
+                    torch.save(IIC.state_dict(), "saved_models/baseline_gan_e{}_{}.model".format(epoch, time_begin))
 
         torch.cuda.empty_cache()
 
@@ -263,9 +296,6 @@ for epoch in range(0, num_epochs):
     lr *= (1 / (1 + decay * epoch))
     for param_group in optimizer_iic.param_groups:
         param_group['lr'] = lr
-
-    # keep track of accuracy to plot
-    ave_acc.append([train_acc])
 
     # calculate average over epoch
     avg_loss = float(avg_loss / avg_loss_count)
@@ -275,21 +305,51 @@ for epoch in range(0, num_epochs):
     avg_gen_adv_loss = float(avg_gen_adv_loss / avg_loss_count)
     avg_adv_seg_loss = float(avg_adv_seg_loss / avg_loss_count)
 
-    ave_losses.append([avg_loss, avg_disc_loss, avg_gen_loss, avg_sf_data_loss, avg_gen_adv_loss,
-                       avg_adv_seg_loss])  # store for graphing
+    if mode == 'train':
+        # keep track of accuracy to plot
+        ave_acc.append([train_acc])
 
-    # save lists of losses and accuracy as csv files for reading and graphing later
-    df0 = pd.DataFrame(list(zip(*ave_acc))).add_prefix('Col')
-    filename = 'loss_csvs/' + time_begin + '/iic_acc_e' + str(epoch) + '_' + time_begin + '.csv'
-    print('saving to', filename)
-    df0.to_csv(filename, index=False)
+        ave_losses.append([avg_loss, avg_disc_loss, avg_gen_loss, avg_sf_data_loss, avg_gen_adv_loss,
+                           avg_adv_seg_loss])  # store for graphing
 
-    df1 = pd.DataFrame(list(zip(*ave_losses))).add_prefix('Col')
-    filename = 'loss_csvs/baseline_gan_ave_e' + str(epoch) + '_' + time_begin + '.csv'
-    print('saving to', filename)
-    df1.to_csv(filename, index=False)
+        # save lists of losses and accuracy as csv files for reading and graphing later
+        df0 = pd.DataFrame(list(zip(*ave_acc))).add_prefix('Col')
+        filename = 'loss_csvs/' + time_begin + '/cat_removal_acc_e' + str(epoch) + '_' + time_begin + '.csv'
+        print('saving to', filename)
+        df0.to_csv(filename, index=False)
 
-    df2 = pd.DataFrame(list(zip(*discrete_losses))).add_prefix('Col')
-    filename = 'loss_csvs/baseline_gan_discrete_e' + str(epoch) + '_' + time_begin + '.csv'
-    print('saving to', filename)
-    df2.to_csv(filename, index=False)
+        df1 = pd.DataFrame(list(zip(*ave_losses))).add_prefix('Col')
+        filename = 'loss_csvs/cat_removal_ave_e' + str(epoch) + '_' + time_begin + '.csv'
+        print('saving to', filename)
+        df1.to_csv(filename, index=False)
+
+        df2 = pd.DataFrame(list(zip(*discrete_losses))).add_prefix('Col')
+        filename = 'loss_csvs/cat_removal_discrete_e' + str(epoch) + '_' + time_begin + '.csv'
+        print('saving to', filename)
+        df2.to_csv(filename, index=False)
+
+    elif mode == 'val':
+        # keep track of accuracy to plot
+        val_ave_acc.append([train_acc])
+
+        val_ave_losses.append([avg_loss, avg_disc_loss, avg_gen_loss, avg_sf_data_loss, avg_gen_adv_loss,
+                           avg_adv_seg_loss])  # store for graphing
+
+        # save lists of losses and accuracy as csv files for reading and graphing later
+        df0 = pd.DataFrame(list(zip(*val_ave_acc))).add_prefix('Col')
+        filename = 'loss_csvs/' + time_begin + '/cat_removal_val_acc_e' + str(epoch) + '_' + time_begin + '.csv'
+        print('saving to', filename)
+        df0.to_csv(filename, index=False)
+
+        df1 = pd.DataFrame(list(zip(*val_ave_losses))).add_prefix('Col')
+        filename = 'loss_csvs/cat_removal_val_ave_e' + str(epoch) + '_' + time_begin + '.csv'
+        print('saving to', filename)
+        df1.to_csv(filename, index=False)
+
+        df2 = pd.DataFrame(list(zip(*val_discrete_losses))).add_prefix('Col')
+        filename = 'loss_csvs/cat_removal_val_discrete_e' + str(epoch) + '_' + time_begin + '.csv'
+        print('saving to', filename)
+        df2.to_csv(filename, index=False)
+
+
+
