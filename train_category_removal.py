@@ -21,10 +21,12 @@ REAL = 1
 FAKE = 0
 
 h, w, in_channels = 240, 240, 3
+input_sz = h
 
 # Lists to keep track of progress
 discrete_losses = []
 ave_losses = []
+ave_acc= []
 
 # keep track of folders and saved files when model is run multiple times
 time_begin = str(datetime.now()).replace(' ', '-')
@@ -41,6 +43,12 @@ half_T_side_sparse_max = 0
 lr = 0.001
 beta1 = 0.5
 num_epochs = 100
+decay = 0.1
+n_epochs_stop = 10
+epochs_no_improve = 0
+min_val_loss = np.Inf
+total_train = 0
+correct_train = 0
 
 # Create the models
 IIC = SegmentationNet10a(num_sub_heads).cuda()  # produces segmentation maps from images
@@ -65,9 +73,14 @@ optimizer_d = torch.optim.Adam(Disc.parameters(), lr=lr, betas=(beta1, 0.1))
 #                         batch_size=batch_sz, shuffle=True, drop_last=True)
 
 # Dataloader for coco
-train_data_dir = 'data/val2017'
-train_coco = 'data/instances_val2017.json'
-dataloader = DataLoader(dataset=CocoDataloader(root=train_data_dir, annotation=train_coco, input_sz=input_sz),
+train_data_dir = 'data/train2017'
+train_coco = 'data/instances_train2017.json'
+train_dataloader = DataLoader(dataset=CocoDataloader(root=train_data_dir, annotation=train_coco, input_sz=input_sz),
+                        batch_size=batch_sz, shuffle=True, collate_fn=CocoDataloader.collate_fn, drop_last=True)
+
+val_data_dir = 'data/val2017'
+val_coco = 'data/instances_val2017.json'
+val_dataloader = DataLoader(dataset=CocoDataloader(root=train_data_dir, annotation=train_coco, input_sz=input_sz),
                         batch_size=batch_sz, shuffle=True, collate_fn=CocoDataloader.collate_fn, drop_last=True)
 
 for epoch in range(0, num_epochs):
@@ -82,7 +95,7 @@ for epoch in range(0, num_epochs):
     # avg_loss_no_lamb = 0.
     avg_loss_count = 0
 
-    for idx, data in enumerate(dataloader):
+    for idx, data in enumerate(train_dataloader):
         # img1 is image containing shadow, img2 is transformation of img1,
         # affine2_to_1 allows reversing affine transforms to make img2 align pixels with img1,
         # mask_img1 allows zeroing out pixels that are not comparable
@@ -121,9 +134,23 @@ for epoch in range(0, num_epochs):
         # avg_loss_batch *= -1 # this is to make the loss positive, only flip the labels
         avg_loss_no_lamb_batch /= num_sub_heads
 
+        # this is for accuracy
+        predicted = torch.argmax(x1_outs[0].cpu().detach(), dim=1).view(batch_sz, 1, input_sz, input_sz)  # this zero is because we are using a list
+        total_train += shadow_mask1.cpu().shape[0] * shadow_mask1.cpu().shape[1] * shadow_mask1.cpu().shape[2] * shadow_mask1.cpu().shape[3]
+        correct_train += predicted.eq(shadow_mask1.cpu().data).sum().item()
+        train_acc = 100 * correct_train / total_train
+        # print('shape mask', shadow_mask1.shape)
+        # print('shape output', x1_outs[0].shape)
+        # print('shape prediction', predicted.shape)
+        # print('total number', total_train)
+        # print('total correct', correct_train)
+        # print('train', train_acc)
+        # print('max predicted', torch.max(predicted))
+        # print('max mask', torch.max(shadow_mask1))
+
         # track losses
-        print("epoch {} average_loss {} ave_loss_no_lamb {}".format(epoch, avg_loss_batch.item(),
-                                                                    avg_loss_no_lamb_batch.item()))
+        # print("epoch {} average_loss {} ave_loss_no_lamb {}".format(epoch, avg_loss_batch.item(),
+        #                                                             avg_loss_no_lamb_batch.item()))
 
         if not np.isfinite(avg_loss_batch.item()):
             print("Loss is not finite... %s:" % str(avg_loss_batch))
@@ -232,6 +259,14 @@ for epoch in range(0, num_epochs):
 
         torch.cuda.empty_cache()
 
+    # updates the learning rate
+    lr *= (1 / (1 + decay * epoch))
+    for param_group in optimizer_iic.param_groups:
+        param_group['lr'] = lr
+
+    # keep track of accuracy to plot
+    ave_acc.append([train_acc])
+
     # calculate average over epoch
     avg_loss = float(avg_loss / avg_loss_count)
     avg_disc_loss = float(avg_disc_loss / avg_loss_count)
@@ -243,7 +278,12 @@ for epoch in range(0, num_epochs):
     ave_losses.append([avg_loss, avg_disc_loss, avg_gen_loss, avg_sf_data_loss, avg_gen_adv_loss,
                        avg_adv_seg_loss])  # store for graphing
 
-    # save lists of losses as csv files for reading and graphing later
+    # save lists of losses and accuracy as csv files for reading and graphing later
+    df0 = pd.DataFrame(list(zip(*ave_acc))).add_prefix('Col')
+    filename = 'loss_csvs/' + time_begin + '/iic_acc_e' + str(epoch) + '_' + time_begin + '.csv'
+    print('saving to', filename)
+    df0.to_csv(filename, index=False)
+
     df1 = pd.DataFrame(list(zip(*ave_losses))).add_prefix('Col')
     filename = 'loss_csvs/baseline_gan_ave_e' + str(epoch) + '_' + time_begin + '.csv'
     print('saving to', filename)
