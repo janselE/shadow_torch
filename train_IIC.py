@@ -104,8 +104,8 @@ for epoch in range(0, num_epochs):
 
 
         shadow_mask1_flat = shadow_mask1.view(batch_sz, input_sz, input_sz).long() #shadow_mask1.argmax(axis=1).long() # i need to verify this for coco
-        print('flat', shadow_mask1_flat.shape)
-        print(shadow_mask1[0])
+        #print('flat', shadow_mask1_flat.shape)
+        #print(shadow_mask1[0])
         for i in range(num_sub_heads):
             loss, loss_no_lamb = loss_fn(x1_outs[i], x2_outs[i],
                     all_affine2_to_1=affine2_to_1,
@@ -132,14 +132,15 @@ for epoch in range(0, num_epochs):
         total_train += shadow_mask1.cpu().shape[0] * shadow_mask1.cpu().shape[1] * shadow_mask1.cpu().shape[2] * shadow_mask1.cpu().shape[3]
         correct_train += predicted.eq(shadow_mask1.cpu().data).sum().item()
         train_acc = 100 * correct_train / total_train
-        print('shape mask', shadow_mask1.shape)
-        print('shape output', x1_outs[0].shape)
-        print('shape prediction', predicted.shape)
-        print('total number', total_train)
-        print('total correct', correct_train)
-        print('train', train_acc)
-        print('max predicted', torch.max(predicted))
-        print('max mask', torch.max(shadow_mask1))
+	# this prints are to debugg shapes and outputs
+        #print('shape mask', shadow_mask1.shape)
+        #print('shape output', x1_outs[0].shape)
+        #print('shape prediction', predicted.shape)
+        #print('total number', total_train)
+        #print('total correct', correct_train)
+        #print('train', train_acc)
+        #print('max predicted', torch.max(predicted))
+        #print('max mask', torch.max(shadow_mask1))
 
 
         if idx % 10 == 0:
