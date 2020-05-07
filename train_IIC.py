@@ -39,7 +39,7 @@ half_T_side_sparse_max = 0
 # Defining the learning rate, number of epochs and beta for the optimizers
 lr = 0.001
 beta1 = 0.5
-num_epochs = 1
+num_epochs = 10
 decay = 0.1
 n_epochs_stop = 10
 epochs_no_improve = 0
@@ -65,8 +65,8 @@ optimiser = torch.optim.Adam(net.parameters(), lr=lr, betas=(beta1, 0.1))
 #dataloader = DataLoader(dataset=ShadowAndMaskDataset(h, w, use_random_scale=False, use_random_affine=True),
 #                        batch_size=batch_sz, shuffle=True, drop_last=True)
 # Dataloader for coco
-train_data_dir = 'data/val2017'
-train_coco = 'data/instances_val2017.json'
+train_data_dir = 'data/train2017'
+train_coco = 'data/instances_train2017.json'
 dataloader = DataLoader(dataset=CocoDataloader(root=train_data_dir, annotation=train_coco, input_sz=input_sz),
                         batch_size=batch_sz, shuffle=True, collate_fn=CocoDataloader.collate_fn, drop_last=True)
 
@@ -138,6 +138,8 @@ for epoch in range(0, num_epochs):
         print('total number', total_train)
         print('total correct', correct_train)
         print('train', train_acc)
+        print('max predicted', torch.max(predicted))
+        print('max mask', torch.max(shadow_mask1))
 
 
         if idx % 10 == 0:
