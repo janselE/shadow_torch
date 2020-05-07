@@ -15,8 +15,9 @@ from IIC_Losses import IID_segmentation_loss
 from models_for_gan import Discriminator_inpainted, Generator_inpaint
 from utils import remove_catx, remove_random_region, custom_loss_iic
 from coco_dataloader import CocoDataloader
+from image_loader_cityscapes import CityscapesLoader
 
-NUM_CLASSES = 15  # number of segmentation classes in dataset
+NUM_CLASSES = 20  # number of segmentation classes in dataset
 REAL = 1
 FAKE = 0
 
@@ -37,7 +38,7 @@ time_begin = str(datetime.now()).replace(' ', '-')
 os.mkdir("img_visual_checks/" + time_begin)
 
 lamb = 1.0  # will make loss equal to loss_no_lamb
-batch_sz = 8
+batch_sz = 2
 num_sub_heads = 1
 half_T_side_dense = 0
 half_T_side_sparse_min = 0
@@ -77,15 +78,28 @@ optimizer_d = torch.optim.Adam(Disc.parameters(), lr=lr, betas=(beta1, 0.1))
 #                         batch_size=batch_sz, shuffle=True, drop_last=True)
 
 # Dataloader for coco
-train_data_dir = 'data/train2017'
-train_coco = 'data/instances_train2017.json'
-train_dataloader = DataLoader(dataset=CocoDataloader(root=train_data_dir, annotation=train_coco, input_sz=input_sz),
-                        batch_size=batch_sz, shuffle=True, collate_fn=CocoDataloader.collate_fn, drop_last=True)
+# train_data_dir = 'data/train2017'
+# train_coco = 'data/instances_train2017.json'
+# train_dataloader = DataLoader(dataset=CocoDataloader(root=train_data_dir, annotation=train_coco, input_sz=input_sz),
+#                         batch_size=batch_sz, shuffle=True, collate_fn=CocoDataloader.collate_fn, drop_last=True)
+#
+# val_data_dir = 'data/val2017'
+# val_coco = 'data/instances_val2017.json'
+# val_dataloader = DataLoader(dataset=CocoDataloader(root=train_data_dir, annotation=train_coco, input_sz=input_sz),
+#                         batch_size=batch_sz, shuffle=True, collate_fn=CocoDataloader.collate_fn, drop_last=True)
 
-val_data_dir = 'data/val2017'
-val_coco = 'data/instances_val2017.json'
-val_dataloader = DataLoader(dataset=CocoDataloader(root=train_data_dir, annotation=train_coco, input_sz=input_sz),
-                        batch_size=batch_sz, shuffle=True, collate_fn=CocoDataloader.collate_fn, drop_last=True)
+# Use Cityscapes dataset until coco issues are resolved
+train_dataset = CityscapesLoader('train')
+# train_sampler = torch.utils.data.RandomSampler(train_dataset)
+# train_data_loader = Data.DataLoader(train_dataset, batch_size=BATCH_SIZE, sampler=train_sampler)
+sampler595 = torch.utils.data.SubsetRandomSampler(range(0, 595))  # 1/5 the 2975 train images
+train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_sz, sampler=sampler595)
+
+val_dataset = CityscapesLoader('val')
+# val_sampler = torch.utils.data.RandomSampler(val_dataset)
+# val_data_loader = Data.DataLoader(val_dataset, batch_size=BATCH_SIZE, sampler=val_sampler)
+sampler100 = torch.utils.data.SubsetRandomSampler(range(0, 100))  # 1/5 the 500 val images
+val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_sz, sampler=sampler100)
 
 for epoch in range(0, num_epochs):
     print("Starting epoch: %d " % (epoch))
@@ -118,64 +132,76 @@ for epoch in range(0, num_epochs):
             # affine2_to_1 allows reversing affine transforms to make img2 align pixels with img1,
             # mask_img1 allows zeroing out pixels that are not comparable
             # img1, img2, affine2_to_1, mask_img1 = data
-            img1, img2, affine2_to_1, mask_img1, shadow_mask1 = data  # why does CocoDataloader return 5th variable?
+            predict_seg = False  # just use ground truth segs to test rest of network
+            if predict_seg:
+                img1, img2, affine2_to_1, mask_img1, shadow_mask1 = data  # why does CocoDataloader return 5th variable?
 
-            # just moving everything to cuda
-            img1 = img1.cuda()
-            img2 = img2.cuda()
-            affine2_to_1 = affine2_to_1.cuda()
-            mask_img1 = mask_img1.cuda()
+                # just moving everything to cuda
+                img1 = img1.cuda()
+                img2 = img2.cuda()
+                affine2_to_1 = affine2_to_1.cuda()
+                mask_img1 = mask_img1.cuda()
 
-            x1_outs = IIC(img1)
-            x2_outs = IIC(img2)
+                x1_outs = IIC(img1)
+                x2_outs = IIC(img2)
 
-            # batch is passed through each subhead to calculate loss, store average loss per sub_head
-            avg_loss_batch = None
-            avg_loss_no_lamb_batch = None
+                # batch is passed through each subhead to calculate loss, store average loss per sub_head
+                avg_loss_batch = None
+                avg_loss_no_lamb_batch = None
 
-            for i in range(num_sub_heads):
-                loss, loss_no_lamb = iic_loss(x1_outs[i], x2_outs[i],
-                                              all_affine2_to_1=affine2_to_1,
-                                              all_mask_img1=mask_img1, lamb=lamb,
-                                              half_T_side_dense=half_T_side_dense,
-                                              half_T_side_sparse_min=half_T_side_sparse_min,
-                                              half_T_side_sparse_max=half_T_side_sparse_max)
+                for i in range(num_sub_heads):
+                    loss, loss_no_lamb = iic_loss(x1_outs[i], x2_outs[i],
+                                                  all_affine2_to_1=affine2_to_1,
+                                                  all_mask_img1=mask_img1, lamb=lamb,
+                                                  half_T_side_dense=half_T_side_dense,
+                                                  half_T_side_sparse_min=half_T_side_sparse_min,
+                                                  half_T_side_sparse_max=half_T_side_sparse_max)
 
-                if avg_loss_batch is None:
-                    avg_loss_batch = loss
-                    avg_loss_no_lamb_batch = loss_no_lamb
-                else:
-                    avg_loss_batch += loss
-                    avg_loss_no_lamb_batch += loss_no_lamb
+                    if avg_loss_batch is None:
+                        avg_loss_batch = loss
+                        avg_loss_no_lamb_batch = loss_no_lamb
+                    else:
+                        avg_loss_batch += loss
+                        avg_loss_no_lamb_batch += loss_no_lamb
 
-            avg_loss_batch /= num_sub_heads
-            # avg_loss_batch *= -1 # this is to make the loss positive, only flip the labels
-            avg_loss_no_lamb_batch /= num_sub_heads
+                avg_loss_batch /= num_sub_heads
+                # avg_loss_batch *= -1 # this is to make the loss positive, only flip the labels
+                avg_loss_no_lamb_batch /= num_sub_heads
 
-            # this is for accuracy
-            predicted = torch.argmax(x1_outs[0].cpu().detach(), dim=1).view(batch_sz, 1, input_sz, input_sz)  # this zero is because we are using a list
-            total_train += shadow_mask1.cpu().shape[0] * shadow_mask1.cpu().shape[1] * shadow_mask1.cpu().shape[2] * shadow_mask1.cpu().shape[3]
-            correct_train += predicted.eq(shadow_mask1.cpu().data).sum().item()
-            train_acc = 100 * correct_train / total_train
-            # print('shape mask', shadow_mask1.shape)
-            # print('shape output', x1_outs[0].shape)
-            # print('shape prediction', predicted.shape)
-            # print('total number', total_train)
-            # print('total correct', correct_train)
-            # print('train', train_acc)
-            # print('max predicted', torch.max(predicted))
-            # print('max mask', torch.max(shadow_mask1))
+                # this is for accuracy
+                predicted = torch.argmax(x1_outs[0].cpu().detach(), dim=1).view(batch_sz, 1, input_sz, input_sz)  # this zero is because we are using a list
+                total_train += shadow_mask1.cpu().shape[0] * shadow_mask1.cpu().shape[1] * shadow_mask1.cpu().shape[2] * shadow_mask1.cpu().shape[3]
+                correct_train += predicted.eq(shadow_mask1.cpu().data).sum().item()
+                train_acc = 100 * correct_train / total_train
+                # print('shape mask', shadow_mask1.shape)
+                # print('shape output', x1_outs[0].shape)
+                # print('shape prediction', predicted.shape)
+                # print('total number', total_train)
+                # print('total correct', correct_train)
+                # print('train', train_acc)
+                # print('max predicted', torch.max(predicted))
+                # print('max mask', torch.max(shadow_mask1))
 
-            # track losses
-            # print("epoch {} average_loss {} ave_loss_no_lamb {}".format(epoch, avg_loss_batch.item(),
-            #                                                             avg_loss_no_lamb_batch.item()))
+                # track losses
+                # print("epoch {} average_loss {} ave_loss_no_lamb {}".format(epoch, avg_loss_batch.item(),
+                #                                                             avg_loss_no_lamb_batch.item()))
 
-            if not np.isfinite(avg_loss_batch.item()):
-                print("Loss is not finite... %s:" % str(avg_loss_batch))
-                exit(1)
+                if not np.isfinite(avg_loss_batch.item()):
+                    print("Loss is not finite... %s:" % str(avg_loss_batch))
+                    exit(1)
 
-            # assert torch.is_tensor(img1)
-            # assert torch.is_tensor(x1_outs[0])  # x1_outs is list of tensors from each subhead
+                # assert torch.is_tensor(img1)
+                # assert torch.is_tensor(x1_outs[0])  # x1_outs is list of tensors from each subhead
+
+            # use ground truth segmentation in place of both predictions
+            else:
+                img, seg = data
+                img1 = img
+                img2 = img.clone()
+                x1_outs = [torch.zeros([1, 1, 1, 1])]  # size doesn't matter since will be replaced
+                x2_outs = [torch.zeros([1, 1, 1, 1])]
+                x1_outs[0] = seg
+                x2_outs[0] = seg.clone()
 
             catx = randint(0, NUM_CLASSES - 1)
 

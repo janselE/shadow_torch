@@ -93,7 +93,7 @@ class CityscapesLoader(torch.utils.data.Dataset):
     # split must be 'train', 'test', or 'val'
     def __init__(self, split):
         super(CityscapesLoader, self).__init__()
-        self.tensors_dataset = Cityscapes(root='./data/cityscapes', split=split, mode='fine', target_type='semantic',
+        self.tensors_dataset = Cityscapes(root='./cityscapes', split=split, mode='fine', target_type='semantic',
                                           transform=to_resized_tensor, target_transform=to_resized_tensor)
 
     def __getitem__(self, item):
