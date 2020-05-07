@@ -39,7 +39,7 @@ half_T_side_sparse_max = 0
 # Defining the learning rate, number of epochs and beta for the optimizers
 lr = 0.001
 beta1 = 0.5
-num_epochs = 100
+num_epochs = 1
 decay = 0.1
 n_epochs_stop = 10
 epochs_no_improve = 0
@@ -95,6 +95,7 @@ for epoch in range(0, num_epochs):
 
         x1_outs = net(img1)
         x2_outs = net(img2)
+        print(len(x1_outs))
 
         # batch is passed through each subhead to calculate loss, store average loss per sub_head
         avg_loss_batch = None
@@ -102,8 +103,9 @@ for epoch in range(0, num_epochs):
         ssm_loss = None
 
 
-        shadow_mask1_flat = shadow_mask1.argmax(axis=1).long()
-        print(shadow_mask1_flat[0])
+        shadow_mask1_flat = shadow_mask1.view(batch_sz, input_sz, input_sz).long() #shadow_mask1.argmax(axis=1).long() # i need to verify this for coco
+        print('flat', shadow_mask1_flat.shape)
+        print(shadow_mask1[0])
         for i in range(num_sub_heads):
             loss, loss_no_lamb = loss_fn(x1_outs[i], x2_outs[i],
                     all_affine2_to_1=affine2_to_1,
@@ -126,10 +128,17 @@ for epoch in range(0, num_epochs):
         avg_loss_batch /= num_sub_heads
 
         # this is for accuracy
-        predicted = torch.argmax(x1_outs[0].cpu().detach(), dim=1)
-        total_train += shadow_mask1.shape[0] * shadow_mask1.shape[1] *shadow_mask1.shape[2] * shadow_mask1.shape[3]
-        correct_train += predicted.eq(shadow_mask1.data).sum().item()
+        predicted = torch.argmax(x1_outs[0].cpu().detach(), dim=1).view(batch_sz, 1, input_sz, input_sz) # this zero is because we are using a list
+        total_train += shadow_mask1.cpu().shape[0] * shadow_mask1.cpu().shape[1] * shadow_mask1.cpu().shape[2] * shadow_mask1.cpu().shape[3]
+        correct_train += predicted.eq(shadow_mask1.cpu().data).sum().item()
         train_acc = 100 * correct_train / total_train
+        print('shape mask', shadow_mask1.shape)
+        print('shape output', x1_outs[0].shape)
+        print('shape prediction', predicted.shape)
+        print('total number', total_train)
+        print('total correct', correct_train)
+        print('train', train_acc)
+
 
         if idx % 10 == 0:
             discrete_losses.append([avg_loss_batch.item(), ssm_loss.item()])  # store for graphing
