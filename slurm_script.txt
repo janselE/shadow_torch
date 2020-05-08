@@ -39,18 +39,19 @@ module list
 
 # let's make sure we're where we expect to be in the filesystem tree
 
-cd /work/LAS/jannesar-lab/mburke/shadow_torch
+#cd /work/LAS/jannesar-lab/mburke/shadow_torch
+cd /work/LAS/jannesar-lab/janselh/shadow/repo_torch/shadow_torch
 pwd
 
 # the commands we're running are below
 
-# echo "beginning train_IIC.py"
-# ml-gpu python3 train_IIC.py
-# echo "finished train_IIC.py"
+ echo "beginning train_IIC.py"
+ ml-gpu python3 train_IIC.py
+ echo "finished train_IIC.py"
 
-echo "beginning train_baseline_gan.py"
-ml-gpu python3 train_baseline_gan.py
-echo "finished train_baseline_gan.py"
+#echo "beginning train_baseline_gan.py"
+#ml-gpu python3 train_baseline_gan.py
+#echo "finished train_baseline_gan.py"
 
 # echo "beginning train_unsupervised_gan.py"
 # ml-gpu python3 train_unsupervised_gan.py
