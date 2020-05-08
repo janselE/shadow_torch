@@ -64,7 +64,7 @@ class CocoDataloader(torch.utils.data.Dataset):
                 ann_ids.append(i)
         path = img_id['file_name']
 
-        if path not in CocoDataloader.classes:
+        if path not in CocoDataloader.classes and len(CocoDataloader.classes) > 0:
             return None, None
 
         img = Image.open(os.path.join(self.root, path))
@@ -191,38 +191,3 @@ class CocoDataloader(torch.utils.data.Dataset):
 
         return torch.utils.data.dataloader.default_collate(new_batch)
 
-
-# create own Dataset
-#my_dataset = CocoDataloader(root=train_data_dir, annotation=train_coco)
-#
-## Batch size
-#train_batch_size = 32
-#data_loader = torch.utils.data.DataLoader(my_dataset,
-#                                          batch_size=train_batch_size,
-#                                          shuffle=True,
-#                                          collate_fn=my_dataset.collate_fn
-#                                          )
-#
-## select device (whether GPU or CPU)
-#device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-#
-## DataLoader is iterable over Dataset
-#for img1, img2, af, all1, cat in data_loader:
-#    x = 0
-##    print(img1.shape, img2.shape, af.shape, all1.shape, cat.shape)
-#    print(cat[0])
-#    print(cat[0].shape, torch.max(cat[0]))
-#
-#    img = img1[0].numpy()#tf.ToPILImage()(img1[0] * 255).convert('RGB')
-#    img = img.reshape(100, 100, 3)
-#    plt.figure(0)
-#    plt.imshow(img)
-#    img = tf.ToPILImage()(cat[0])
-#    plt.figure(1)
-#    plt.imshow(img)
-#    img = img2[0].numpy()#tf.ToPILImage()(img1[0] * 255).convert('RGB')
-#    img = img.reshape(100, 100, 3)
-#    plt.figure(2)
-#    plt.imshow(img)
-#    plt.show()
-#    time.sleep(1)
