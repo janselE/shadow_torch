@@ -64,7 +64,7 @@ class CocoDataloader(torch.utils.data.Dataset):
                 ann_ids.append(i)
         path = img_id['file_name']
 
-        if path not in CocoDataloader.classes:
+        if path not in CocoDataloader.classes and len(CocoDataloader.classes ) > 0:
             return None, None
 
         img = Image.open(os.path.join(self.root, path))
