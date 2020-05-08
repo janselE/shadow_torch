@@ -24,11 +24,16 @@ from threading import Thread
 
 class CocoDataloader(torch.utils.data.Dataset):
     samples = []
-    def __init__(self, root, annotation, input_sz, use_random_scale=False, use_random_affine=True, transforms=None):
+    classes = []
+    def __init__(self, root, annotation, input_sz, use_random_scale=False, use_random_affine=True, transforms=None, classes_path=None):
         self.root = root
         self.transforms = transforms
-        #self.coco = COCO(annotation)
-        #self.ids = list(sorted(self.coco.imgs.keys()))
+
+        x = []
+        if classes_path != None:
+            with open(classes_path,'r') as f:
+                x = f.readlines()
+            CocoDataloader.classes = [item.replace('\n', '.jpg') for item in x]
 
         with open(annotation) as f:
             self.data = json.load(f)
@@ -58,6 +63,10 @@ class CocoDataloader(torch.utils.data.Dataset):
             if self.data['annotations'][i]['image_id'] == self.data['images'][index]['id']:
                 ann_ids.append(i)
         path = img_id['file_name']
+
+        if path not in CocoDataloader.classes:
+            return None, None
+
         img = Image.open(os.path.join(self.root, path))
         img = img.convert('RGB')
         num_objs = len(ann_ids)
@@ -145,7 +154,7 @@ class CocoDataloader(torch.utils.data.Dataset):
         return len(self.data['images'])
 
     def collate_fn(batch):
-        classes = [0, 1, 2] # these are the selected classes, we can modify which ones we want
+        #classes = [0, 1, 2] # these are the selected classes, we can modify which ones we want
         len_batch = len(batch)
 
         #batch = list(filter(lambda x:x is not None, batch))
@@ -156,7 +165,7 @@ class CocoDataloader(torch.utils.data.Dataset):
         # part of the classes that we are interested
         new_batch = []
         for b in batch:
-            if b is not None and torch.max(b[4]) in classes: # the amount of classes that we want
+            if b is not None: #and torch.max(b[4]) in classes: # the amount of classes that we want
                 new_batch.append(b)
         #print("s ", len(new_batch))
 
