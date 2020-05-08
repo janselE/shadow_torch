@@ -50,16 +50,6 @@ class CocoDataloader(torch.utils.data.Dataset):
 
         self.input_sz = input_sz
 
-    def getImg(self, index):
-        coco = self.coco
-        img_id = self.ids[index]
-        ann_ids = coco.getAnnIds(imgIds=img_id)
-        coco_annotation = coco.loadAnns(ann_ids)
-        path = coco.loadImgs(img_id)[0]['file_name']
-        img = Image.open(os.path.join(self.root, path))
-
-        return img, coco_annotation
-
     def getImgAndMask(self, index, w, h):
         img_id = self.data['images'][index]
         len_ = len(self.data['annotations'])
@@ -69,6 +59,7 @@ class CocoDataloader(torch.utils.data.Dataset):
                 ann_ids.append(i)
         path = img_id['file_name']
         img = Image.open(os.path.join(self.root, path))
+        img = img.convert('RGB')
         num_objs = len(ann_ids)
         w, h = img.size
 
@@ -87,28 +78,6 @@ class CocoDataloader(torch.utils.data.Dataset):
         del draw
 
         return img, mask
-        #img, coco_annotation = self.getImg(index)
-        #img = img.convert('RGB')
-
-        ## number of objects in the image
-        #num_objs = len(coco_annotation)
-
-        #w, h = img.size
-
-        #mask = Image.new('L', (w, h), 0)
-        #draw = ImageDraw.Draw(mask)
-        #for i in range(num_objs):
-        #    seg = coco_annotation[i]['segmentation']
-        #    cat = coco_annotation[i]['category_id']
-        #    crowd = coco_annotation[i]['iscrowd']
-        #    if crowd == 1:
-        #        return None, None
-        #    for n in range(len(seg)):
-        #        draw.polygon(seg[n], outline=None, fill=cat)
-        #del draw
-
-        #return img, mask
-
 
     def __getitem__(self, index):
         img, mask = self.getImgAndMask(index, self.input_sz, self.input_sz)
