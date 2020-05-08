@@ -69,7 +69,7 @@ train_data_dir = 'data/train2017'
 train_coco = 'data/instances_train2017.json'
 #classes_path = 'data/COCO/CocoStuff164k/curated/train2017/Coco164kFew_Stuff_3.txt'
 
-dataloader = DataLoader(dataset=CocoDataloader(root=train_data_dir, annotation=train_coco, input_sz=input_sz), classes_path=None), batch_size=batch_sz, shuffle=True, collate_fn=CocoDataloader.collate_fn, drop_last=True)
+dataloader = DataLoader(dataset=CocoDataloader(root=train_data_dir, annotation=train_coco, input_sz=input_sz, classes_path=None), batch_size=batch_sz, shuffle=True, collate_fn=CocoDataloader.collate_fn, drop_last=True)
 
 for epoch in range(0, num_epochs):
     print("Starting epoch: %d " % (epoch))
