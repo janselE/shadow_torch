@@ -6,6 +6,8 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 import matplotlib.pyplot as plt
 
+import json
+
 
 import torchvision.transforms as tf
 import torchvision.transforms.functional as TF
@@ -14,7 +16,7 @@ import random
 from transforms import *
 
 from PIL import Image, ImageDraw
-from pycocotools.coco import COCO
+#from pycocotools.coco import COCO
 import os
 
 import time
@@ -25,8 +27,11 @@ class CocoDataloader(torch.utils.data.Dataset):
     def __init__(self, root, annotation, input_sz, use_random_scale=False, use_random_affine=True, transforms=None):
         self.root = root
         self.transforms = transforms
-        self.coco = COCO(annotation)
-        self.ids = list(sorted(self.coco.imgs.keys()))
+        #self.coco = COCO(annotation)
+        #self.ids = list(sorted(self.coco.imgs.keys()))
+
+        with open(annotation) as f:
+            self.data = json.load(f)
 
         self.jitter_tf = tf.ColorJitter(brightness=0.4,
                         contrast=0.4,
@@ -56,27 +61,53 @@ class CocoDataloader(torch.utils.data.Dataset):
         return img, coco_annotation
 
     def getImgAndMask(self, index, w, h):
-        img, coco_annotation = self.getImg(index)
-        img = img.convert('RGB')
-
-        # number of objects in the image
-        num_objs = len(coco_annotation)
-
+        img_id = self.data['images'][index]
+        len_ = len(self.data['annotations'])
+        ann_ids = []
+        for i in range(len_):
+            if self.data['annotations'][i]['image_id'] == self.data['images'][index]['id']:
+                ann_ids.append(i)
+        path = img_id['file_name']
+        img = Image.open(os.path.join(self.root, path))
+        num_objs = len(ann_ids)
         w, h = img.size
 
         mask = Image.new('L', (w, h), 0)
         draw = ImageDraw.Draw(mask)
         for i in range(num_objs):
-            seg = coco_annotation[i]['segmentation']
-            cat = coco_annotation[i]['category_id']
-            crowd = coco_annotation[i]['iscrowd']
+            seg = self.data['annotations'][ann_ids[i]]['segmentation']
+            cat = self.data['annotations'][ann_ids[i]]['category_id']
+            crowd = self.data['annotations'][ann_ids[i]]['iscrowd']
+
             if crowd == 1:
                 return None, None
+
             for n in range(len(seg)):
                 draw.polygon(seg[n], outline=None, fill=cat)
         del draw
 
         return img, mask
+        #img, coco_annotation = self.getImg(index)
+        #img = img.convert('RGB')
+
+        ## number of objects in the image
+        #num_objs = len(coco_annotation)
+
+        #w, h = img.size
+
+        #mask = Image.new('L', (w, h), 0)
+        #draw = ImageDraw.Draw(mask)
+        #for i in range(num_objs):
+        #    seg = coco_annotation[i]['segmentation']
+        #    cat = coco_annotation[i]['category_id']
+        #    crowd = coco_annotation[i]['iscrowd']
+        #    if crowd == 1:
+        #        return None, None
+        #    for n in range(len(seg)):
+        #        draw.polygon(seg[n], outline=None, fill=cat)
+        #del draw
+
+        #return img, mask
 
 
     def __getitem__(self, index):
@@ -142,7 +173,7 @@ class CocoDataloader(torch.utils.data.Dataset):
         return img1, img2, affine2_to_1, mask_img1, mask_cat
 
     def __len__(self):
-        return len(self.ids)
+        return len(self.data['images'])
 
     def collate_fn(batch):
         classes = [0, 1, 2] # these are the selected classes, we can modify which ones we want
