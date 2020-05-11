@@ -7,6 +7,7 @@ from torch.utils.data import Dataset, DataLoader
 import matplotlib.pyplot as plt
 
 import json
+import yaml
 
 
 import torchvision.transforms as tf
@@ -25,9 +26,43 @@ from threading import Thread
 class CocoDataloader(torch.utils.data.Dataset):
     samples = []
     classes = []
+
     def __init__(self, root, annotation, input_sz, use_random_scale=False, use_random_affine=True, transforms=None, classes_path=None):
         self.root = root
         self.transforms = transforms
+        self._sorted_coarse_names = [
+                "electronic-things",  # 0
+                "appliance-things",  # 1
+                "food-things",  # 2
+                "furniture-things",  # 3
+                "indoor-things",  # 4
+                "kitchen-things",  # 5
+                "accessory-things",  # 6
+                "animal-things",  # 7
+                "outdoor-things",  # 8
+                "person-things",  # 9
+                "sports-things",  # 10
+                "vehicle-things",  # 11
+
+                "ceiling-stuff",  # 12
+                "floor-stuff",  # 13
+                "food-stuff",  # 14
+                "furniture-stuff",  # 15
+                "rawmaterial-stuff",  # 16
+                "textile-stuff",  # 17
+                "wall-stuff",  # 18
+                "window-stuff",  # 19
+                "building-stuff",  # 20
+                "ground-stuff",  # 21
+                "plant-stuff",  # 22
+                "sky-stuff",  # 23
+                "solid-stuff",  # 24
+                "structural-stuff",  # 25
+                "water-stuff"  # 26
+                ]
+
+        self._sorted_coarse_name_to_coarse_index = {n: i for i, n in enumerate(self._sorted_coarse_names)}
+        self.fine_index_to_coarse_index, self.fine_name_to_coarse_name = self.generate_fine_to_coarse()
 
         x = []
         if classes_path != None:
@@ -64,8 +99,8 @@ class CocoDataloader(torch.utils.data.Dataset):
                 ann_ids.append(i)
         path = img_id['file_name']
 
-        if path not in CocoDataloader.classes and len(CocoDataloader.classes) > 0:
-            return None, None
+#        if path not in CocoDataloader.classes and len(CocoDataloader.classes) > 0:
+#            return None, None
 
         img = Image.open(os.path.join(self.root, path))
         img = img.convert('RGB')
@@ -82,8 +117,14 @@ class CocoDataloader(torch.utils.data.Dataset):
             if crowd == 1:
                 return None, None
 
+            lab = self.fine_index_to_coarse_index[cat]
+            class_name = self._sorted_coarse_names[lab]
+            if 'stuff' in class_name:
+                print(cat, lab, class_name)
+
             for n in range(len(seg)):
-                draw.polygon(seg[n], outline=None, fill=cat)
+                # add a condition for taking stuff
+                draw.polygon(seg[n], outline=None, fill=lab)
         del draw
 
         return img, mask
@@ -153,12 +194,50 @@ class CocoDataloader(torch.utils.data.Dataset):
     def __len__(self):
         return len(self.data['images'])
 
+
+    def _find_parent(self, name, d):
+        for k, v in d.items():
+            if isinstance(v, list):
+                  if name in v:
+                        yield k
+            else:
+                assert (isinstance(v, dict))
+                for res in self._find_parent(name, v):  # if it returns anything to us
+                    yield res
+    def generate_fine_to_coarse(self):
+        fine_index_to_coarse_index = {}
+        fine_name_to_coarse_name = {}
+    
+        with open("/home/jansel/Documents/Research/coco_dataset/data/cocostuff_fine_raw.txt") as f:
+            l = [tuple(pair.rstrip().split('\t')) for pair in f]
+            l = [(int(ind), name) for ind, name in l]
+    
+        with open("/home/jansel/Documents/Research/coco_dataset/data/cocostuff_hierarchy.y") as f:
+            d = yaml.load(f, Loader=yaml.FullLoader)
+    
+    
+        for fine_ind, fine_name in l:
+            assert (fine_ind >= 0 and fine_ind < 182)
+            parent_name = list(self._find_parent(fine_name, d))
+            # print("parent_name of %d %s: %s"% (fine_ind, fine_name, parent_name))
+            assert (len(parent_name) == 1)
+            parent_name = parent_name[0]
+            parent_ind = self._sorted_coarse_name_to_coarse_index[parent_name]
+            assert (parent_ind >= 0 and parent_ind < 27)
+    
+            fine_index_to_coarse_index[fine_ind] = parent_ind
+            fine_name_to_coarse_name[fine_name] = parent_name
+    
+        assert (len(fine_index_to_coarse_index) == 182)
+    
+        return fine_index_to_coarse_index, fine_name_to_coarse_name
+    
     def collate_fn(batch):
         #classes = [0, 1, 2] # these are the selected classes, we can modify which ones we want
         len_batch = len(batch)
-
+    
         #batch = list(filter(lambda x:x is not None, batch))
-
+    
         # this create a new batch of the good samples
         # the samples are filtered if they are having a bad
         # segmentation description and if they are not
@@ -168,26 +247,25 @@ class CocoDataloader(torch.utils.data.Dataset):
             if b is not None: #and torch.max(b[4]) in classes: # the amount of classes that we want
                 new_batch.append(b)
         #print("s ", len(new_batch))
-
+    
         if len_batch > len(new_batch):
             diff = len_batch - len(new_batch)
-
+    
             for i in range(diff):
                 rand = 0
                 if len(new_batch) == 0:
                     rand = random.randint(0, abs(len(CocoDataloader.samples) - 1))
                     samp = CocoDataloader.samples[rand]
                     new_batch.append(samp)
-
+    
                 else:
                     rand = random.randint(0, abs(len(new_batch) - 1))
                     samp = new_batch[rand]
                     new_batch.append(samp)
-
+    
                 if np.random.rand() < 0.5 and len(CocoDataloader.samples) < 32 or len(CocoDataloader.samples) == 0: # this is just a number to limitate the memory usage
                     CocoDataloader.samples.append(samp)
-
+    
                 #print("s ", len(new_batch)," r ", rand)
-
+    
         return torch.utils.data.dataloader.default_collate(new_batch)
- 
