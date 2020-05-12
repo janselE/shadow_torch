@@ -14,10 +14,10 @@ from net10a_twohead import SegmentationNet10a
 from IIC_Losses import IID_segmentation_loss
 from models_for_gan import Discriminator_inpainted, Generator_inpaint
 from utils import remove_catx, remove_random_region, custom_loss_iic
-# from coco_dataloader import CocoDataloader
+from coco_dataloader import CocoDataloader
 from image_loader_cityscapes import CityscapesLoader
 
-NUM_CLASSES = 20  # number of segmentation classes in dataset
+NUM_CLASSES = 11  # number of segmentation classes in dataset, 11 for cocothings, 20 for cityscapes
 REAL = 1
 FAKE = 0
 
@@ -35,7 +35,7 @@ val_ave_acc= []
 
 # keep track of folders and saved files when model is run multiple times
 time_begin = str(datetime.now()).replace(' ', '-')
-os.mkdir("img_visual_checks/" + time_begin)
+# os.mkdir("img_visual_checks/" + time_begin)  # somehow no permission now
 
 lamb = 1.0  # will make loss equal to loss_no_lamb
 batch_sz = 1
@@ -77,29 +77,37 @@ optimizer_d = torch.optim.Adam(Disc.parameters(), lr=lr, betas=(beta1, 0.1))
 # dataloader = DataLoader(dataset=ShadowShadowFreeDataset(h, w, use_random_scale=False, use_random_affine=True),
 #                         batch_size=batch_sz, shuffle=True, drop_last=True)
 
-# Dataloader for coco
-# train_data_dir = 'data/train2017'
-# train_coco = 'data/instances_train2017.json'
-# train_dataloader = DataLoader(dataset=CocoDataloader(root=train_data_dir, annotation=train_coco, input_sz=input_sz),
-#                         batch_size=batch_sz, shuffle=True, collate_fn=CocoDataloader.collate_fn, drop_last=True)
-#
-# val_data_dir = 'data/val2017'
-# val_coco = 'data/instances_val2017.json'
-# val_dataloader = DataLoader(dataset=CocoDataloader(root=train_data_dir, annotation=train_coco, input_sz=input_sz),
-#                         batch_size=batch_sz, shuffle=True, collate_fn=CocoDataloader.collate_fn, drop_last=True)
+coco = True
+if coco:
+    # Dataloader for coco
+    train_data_dir = 'data/train2017'
+    train_coco = 'data/instances_train2017.json'
+    train_dataloader = DataLoader(dataset=CocoDataloader(root=train_data_dir, annotation=train_coco, input_sz=input_sz, classes_path=None),
+                            batch_size=batch_sz, shuffle=True, collate_fn=CocoDataloader.collate_fn, drop_last=True)
 
-# Use Cityscapes dataset until coco issues are resolved
-train_dataset = CityscapesLoader('train')
-# train_sampler = torch.utils.data.RandomSampler(train_dataset)
-# train_data_loader = Data.DataLoader(train_dataset, batch_size=BATCH_SIZE, sampler=train_sampler)
-sampler595 = torch.utils.data.SubsetRandomSampler(range(0, 595))  # 1/5 the 2975 train images
-train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_sz, sampler=sampler595)
+    val_data_dir = 'data/val2017'
+    val_coco = 'data/instances_val2017.json'
+    val_dataloader = DataLoader(dataset=CocoDataloader(root=train_data_dir, annotation=train_coco, input_sz=input_sz, classes_path=None),
+                            batch_size=batch_sz, shuffle=True, collate_fn=CocoDataloader.collate_fn, drop_last=True)
 
-val_dataset = CityscapesLoader('val')
-# val_sampler = torch.utils.data.RandomSampler(val_dataset)
-# val_data_loader = Data.DataLoader(val_dataset, batch_size=BATCH_SIZE, sampler=val_sampler)
-sampler100 = torch.utils.data.SubsetRandomSampler(range(0, 100))  # 1/5 the 500 val images
-val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_sz, sampler=sampler100)
+    predict_seg = True  # False if just using ground truth segs to test rest of network
+
+cityscapes = False
+if cityscapes:
+    # Use Cityscapes dataset until coco issues are resolved
+    train_dataset = CityscapesLoader('train')
+    # train_sampler = torch.utils.data.RandomSampler(train_dataset)
+    # train_data_loader = Data.DataLoader(train_dataset, batch_size=BATCH_SIZE, sampler=train_sampler)
+    sampler595 = torch.utils.data.SubsetRandomSampler(range(0, 595))  # 1/5 the 2975 train images
+    train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_sz, sampler=sampler595)
+
+    val_dataset = CityscapesLoader('val')
+    # val_sampler = torch.utils.data.RandomSampler(val_dataset)
+    # val_data_loader = Data.DataLoader(val_dataset, batch_size=BATCH_SIZE, sampler=val_sampler)
+    sampler100 = torch.utils.data.SubsetRandomSampler(range(0, 100))  # 1/5 the 500 val images
+    val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_sz, sampler=sampler100)
+
+    predict_seg = False  # False if just using ground truth segs to test rest of network
 
 for epoch in range(0, num_epochs):
     print("Starting epoch: %d " % (epoch))
@@ -126,13 +134,14 @@ for epoch in range(0, num_epochs):
         avg_adv_seg_loss = 0.
         # avg_loss_no_lamb = 0.
         avg_loss_count = 0
+        train_acc = 0
 
         for idx, data in enumerate(dataloader):
             # img1 is image containing shadow, img2 is transformation of img1,
             # affine2_to_1 allows reversing affine transforms to make img2 align pixels with img1,
             # mask_img1 allows zeroing out pixels that are not comparable
             # img1, img2, affine2_to_1, mask_img1 = data
-            predict_seg = False  # just use ground truth segs to test rest of network
+
             if predict_seg:
                 img1, img2, affine2_to_1, mask_img1, shadow_mask1 = data  # why does CocoDataloader return 5th variable?
 
@@ -286,13 +295,16 @@ for epoch in range(0, num_epochs):
                          gen_adv_loss.item(), adv_seg_loss.item()])  # store for graphing
 
                 # if epoch < 50:
-                if epoch < 0:  # never train iic since not using
+                if epoch < 50 and predict_seg:  # never train iic since not using
                     train_iic_only = True  # use for pretraining for some # of epochs if necessary
                     train_gen = False
                     train_disc = False
+                elif predict_seg:
+                    train_iic_only = True
+                    train_gen = True
+                    train_disc = True
                 else:
-                    # train_iic_only = True
-                    train_iic_only = False  # never train iic since not using
+                    train_iic_only = False  # never train iic since not using (no predict_seg)
                     train_gen = True
                     train_disc = True
 
@@ -326,7 +338,7 @@ for epoch in range(0, num_epochs):
                     #             shadow_mask1_pred_grey[0] * 255)
                     #
                     # # this saves the model
-                    torch.save(IIC.state_dict(), "saved_models/baseline_gan_e{}_{}.model".format(epoch, time_begin))
+                    torch.save(IIC.state_dict(), "saved_models/cat_removal_e{}_{}.model".format(epoch, time_begin))
 
         torch.cuda.empty_cache()
 
@@ -344,7 +356,8 @@ for epoch in range(0, num_epochs):
     avg_adv_seg_loss = float(avg_adv_seg_loss / avg_loss_count)
 
     if mode == 'train':
-        train_acc = 100  # since not using iic
+        if not predict_seg:
+            train_acc = 100  # since not using iic
         # keep track of accuracy to plot
         ave_acc.append([train_acc])
 
@@ -368,6 +381,8 @@ for epoch in range(0, num_epochs):
         df2.to_csv(filename, index=False)
 
     elif mode == 'val':
+        if not predict_seg:
+            train_acc = 100  # since not using iic
         # keep track of accuracy to plot
         val_ave_acc.append([train_acc])
 
