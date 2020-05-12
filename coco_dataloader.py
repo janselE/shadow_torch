@@ -208,11 +208,11 @@ class CocoDataloader(torch.utils.data.Dataset):
         fine_index_to_coarse_index = {}
         fine_name_to_coarse_name = {}
     
-        with open("/home/jansel/Documents/Research/coco_dataset/data/cocostuff_fine_raw.txt") as f:
+        with open("data/cocostuff_fine_raw.txt") as f:
             l = [tuple(pair.rstrip().split('\t')) for pair in f]
             l = [(int(ind), name) for ind, name in l]
     
-        with open("/home/jansel/Documents/Research/coco_dataset/data/cocostuff_hierarchy.y") as f:
+        with open("data/cocostuff_hierarchy.y") as f:
             d = yaml.load(f, Loader=yaml.FullLoader)
     
     

@@ -39,7 +39,7 @@ half_T_side_sparse_max = 0
 # Defining the learning rate, number of epochs and beta for the optimizers
 lr = 0.001
 beta1 = 0.5
-num_epochs = 10
+num_epochs = 500
 decay = 0.1
 n_epochs_stop = 10
 epochs_no_improve = 0
@@ -49,14 +49,14 @@ total_train = 0
 correct_train = 0
 
 # Create the models
-net = SegmentationNet10a(num_sub_heads, 3)
+net = SegmentationNet10a(num_sub_heads, 12)
 #net = net()
 net.cuda()
 
 # Initialize IIC objective function
 #loss_fn = IID_segmentation_loss
 loss_fn = IID_segmentation_loss_uncollapsed
-criterion_ssm = torch.nn.NLLLoss()  # supervised shadow mask loss function
+#criterion_ssm = torch.nn.NLLLoss()  # supervised shadow mask loss function
 
 # Setup Adam optimizers for both
 optimiser = torch.optim.Adam(net.parameters(), lr=lr, betas=(beta1, 0.1))
@@ -96,7 +96,6 @@ for epoch in range(0, num_epochs):
 
         x1_outs = net(img1)
         x2_outs = net(img2)
-        print(len(x1_outs))
 
         # batch is passed through each subhead to calculate loss, store average loss per sub_head
         avg_loss_batch = None
@@ -118,13 +117,13 @@ for epoch in range(0, num_epochs):
             if avg_loss_batch is None:
                 avg_loss_batch = loss
                 # avg_loss_no_lamb_batch = loss_no_lamb
-                ssm_loss = criterion_ssm(torch.log(x1_outs[i]), shadow_mask1_flat) # + criterion_ssm(torch.log(x2_outs[i]), shadow_mask2)
+#                ssm_loss = criterion_ssm(torch.log(x1_outs[i]), shadow_mask1_flat) # + criterion_ssm(torch.log(x2_outs[i]), shadow_mask2)
             else:
                 avg_loss_batch += loss
                 # avg_loss_no_lamb_batch += loss_no_lamb
 
                 # assumes shadow_mask1 is tensor of 0s and 1s corresponding to argmax of x1_outs (what NLLLoss expects)
-                ssm_loss += criterion_ssm(torch.log(x1_outs[i]), shadow_mask1_flat) # + criterion_ssm(torch.log(x2_outs[i]), shadow_mask2)
+#                ssm_loss += criterion_ssm(torch.log(x1_outs[i]), shadow_mask1_flat) # + criterion_ssm(torch.log(x2_outs[i]), shadow_mask2)
 
         avg_loss_batch /= num_sub_heads
 
@@ -145,14 +144,15 @@ for epoch in range(0, num_epochs):
 
 
         if idx % 10 == 0:
-            discrete_losses.append([avg_loss_batch.item(), ssm_loss.item()])  # store for graphing
+            discrete_losses.append([avg_loss_batch.item()])  # store for graphing
+#            discrete_losses.append([avg_loss_batch.item(), ssm_loss.item()])  # store for graphing
 
         if not np.isfinite(avg_loss_batch.item()):
             print("Loss is not finite... %s:" % str(avg_loss_batch))
             exit(1)
 
         avg_loss += avg_loss_batch.item()
-        avg_ssm_loss += ssm_loss.item()
+#        avg_ssm_loss += ssm_loss.item()
         # avg_loss_no_lamb += avg_loss_no_lamb_batch.item()
         avg_loss_count += 1
 
