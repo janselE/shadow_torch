@@ -208,11 +208,11 @@ class CocoDataloader(torch.utils.data.Dataset):
         fine_index_to_coarse_index = {}
         fine_name_to_coarse_name = {}
     
-        with open("data/cocostuff_fine_raw.txt") as f:
+        with open("/home/jansel/Documents/Research/coco_dataset/data/cocostuff_fine_raw.txt") as f:
             l = [tuple(pair.rstrip().split('\t')) for pair in f]
             l = [(int(ind), name) for ind, name in l]
     
-        with open("data/cocostuff_hierarchy.y") as f:
+        with open("/home/jansel/Documents/Research/coco_dataset/data/cocostuff_hierarchy.y") as f:
             d = yaml.load(f, Loader=yaml.FullLoader)
     
     
@@ -235,9 +235,9 @@ class CocoDataloader(torch.utils.data.Dataset):
     def collate_fn(batch):
         #classes = [0, 1, 2] # these are the selected classes, we can modify which ones we want
         len_batch = len(batch)
-    
+
         #batch = list(filter(lambda x:x is not None, batch))
-    
+
         # this create a new batch of the good samples
         # the samples are filtered if they are having a bad
         # segmentation description and if they are not
@@ -246,26 +246,22 @@ class CocoDataloader(torch.utils.data.Dataset):
         for b in batch:
             if b is not None: #and torch.max(b[4]) in classes: # the amount of classes that we want
                 new_batch.append(b)
-        #print("s ", len(new_batch))
-    
+
+        if (len(CocoDataloader.samples) < 128 or len(CocoDataloader.samples) == 0) and len(new_batch) != 0: # this is just a number to limitate the memory usage
+            CocoDataloader.samples.append(random.choice(new_batch))
+
         if len_batch > len(new_batch):
             diff = len_batch - len(new_batch)
-    
+
             for i in range(diff):
-                rand = 0
                 if len(new_batch) == 0:
-                    rand = random.randint(0, abs(len(CocoDataloader.samples) - 1))
-                    samp = CocoDataloader.samples[rand]
-                    new_batch.append(samp)
-    
+                    new_batch.append(random.choice(CocoDataloader.samples))
+
                 else:
-                    rand = random.randint(0, abs(len(new_batch) - 1))
-                    samp = new_batch[rand]
-                    new_batch.append(samp)
-    
-                if np.random.rand() < 0.5 and len(CocoDataloader.samples) < 32 or len(CocoDataloader.samples) == 0: # this is just a number to limitate the memory usage
-                    CocoDataloader.samples.append(samp)
-    
-                #print("s ", len(new_batch)," r ", rand)
-    
+                    new_batch.append(random.choice(new_batch))
+
+                if len(CocoDataloader.samples) < 128 or len(CocoDataloader.samples) == 0: # this is just a number to limitate the memory usage
+                    CocoDataloader.samples.append(random.choice(new_batch))
+
+
         return torch.utils.data.dataloader.default_collate(new_batch)
