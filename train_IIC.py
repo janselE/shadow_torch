@@ -30,7 +30,7 @@ os.mkdir("img_visual_checks/"+time_begin)
 os.mkdir("loss_csvs/"+time_begin)
 
 lamb = 1.0  # will make loss equal to loss_no_lamb
-batch_sz = 8
+batch_sz = 16
 num_sub_heads = 1
 half_T_side_dense = 0
 half_T_side_sparse_min = 0
@@ -69,7 +69,9 @@ train_data_dir = 'data/train2017'
 train_coco = 'data/instances_train2017.json'
 #classes_path = 'data/COCO/CocoStuff164k/curated/train2017/Coco164kFew_Stuff_3.txt'
 
-dataloader = DataLoader(dataset=CocoDataloader(root=train_data_dir, annotation=train_coco, input_sz=input_sz, classes_path=None), batch_size=batch_sz, shuffle=True, collate_fn=CocoDataloader.collate_fn, drop_last=True)
+#dataL = CocoDataloader(root=train_data_dir, annotation=train_coco, input_sz=input_sz, classes_path=None)
+dataL = ShadowAndMaskDataset(input_sz, input_sz)
+dataloader = DataLoader(dataset=dataL, batch_size=batch_sz, shuffle=True, drop_last=True) # for coco add collate
 
 for epoch in range(0, num_epochs):
     print("Starting epoch: %d " % (epoch))
@@ -132,16 +134,6 @@ for epoch in range(0, num_epochs):
         total_train += shadow_mask1.cpu().shape[0] * shadow_mask1.cpu().shape[1] * shadow_mask1.cpu().shape[2] * shadow_mask1.cpu().shape[3]
         correct_train += predicted.eq(shadow_mask1.cpu().data).sum().item()
         train_acc = 100 * correct_train / total_train
-	# this prints are to debugg shapes and outputs
-        #print('shape mask', shadow_mask1.shape)
-        #print('shape output', x1_outs[0].shape)
-        #print('shape prediction', predicted.shape)
-        #print('total number', total_train)
-        #print('total correct', correct_train)
-        #print('train', train_acc)
-        #print('max predicted', torch.max(predicted))
-        #print('max mask', torch.max(shadow_mask1))
-
 
         if idx % 10 == 0:
             discrete_losses.append([avg_loss_batch.item()])  # store for graphing
@@ -189,8 +181,10 @@ for epoch in range(0, num_epochs):
     ave_acc.append([train_acc])
 
     avg_loss = float(avg_loss / avg_loss_count)
-    avg_ssm_loss = float(avg_ssm_loss / avg_loss_count)
-    ave_losses.append([avg_loss, avg_ssm_loss])
+#    avg_ssm_loss = float(avg_ssm_loss / avg_loss_count)
+#    ave_losses.append([avg_loss, avg_ssm_loss])
+# this is to only add the unsupervised loss
+    ave_losses.append([avg_loss])
     print("epoch {} average_loss {} ".format(epoch, avg_loss))
     # avg_loss_no_lamb = float(avg_loss_no_lamb / avg_loss_count)
 
