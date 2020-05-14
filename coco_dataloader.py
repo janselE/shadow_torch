@@ -204,6 +204,50 @@ class CocoDataloader(torch.utils.data.Dataset):
                 assert (isinstance(v, dict))
                 for res in self._find_parent(name, v):  # if it returns anything to us
                     yield res
+
+    def getMaps(self, arg1):
+        dic = {}
+        index = 0
+        seg_list = []
+        cat_list = []
+        curr = 0
+        for index in range(len_img):
+            img_id = data['images'][index]
+            path = img_id['file_name']
+            len_ann = len(data['annotations'])
+            ann_ids = []
+            bad = False
+
+            for i in range(len_):
+                if data['annotations'][i]['image_id'] == data['images'][index]['id']:
+                    ann_ids.append(i)
+            num_objs = len(ann_ids)
+            seg_list = []
+            cat_list = []
+            for i in range(num_objs):
+                seg = data['annotations'][ann_ids[i]]['segmentation']
+                cat = data['annotations'][ann_ids[i]]['category_id']
+                crowd = data['annotations'][ann_ids[i]]['iscrowd']
+
+                seg_list.append(seg)
+                cat_list.append(fine_index_to_coarse_index[cat])
+
+                if crowd == 1:
+                    bad = True
+                    break
+                for n in range(len(seg)):
+                    lab = fine_index_to_coarse_index[cat]
+                    class_name = _sorted_coarse_names[lab]
+                    if lab >= 12 or bad:
+                        bad = True
+                        break
+        if bad:
+            continue
+            dic[str(curr)] = [path, seg_list, cat_list]
+            curr += 1
+
+        return dic
+
     def generate_fine_to_coarse(self):
         fine_index_to_coarse_index = {}
         fine_name_to_coarse_name = {}
@@ -214,8 +258,7 @@ class CocoDataloader(torch.utils.data.Dataset):
     
         with open("data/cocostuff_hierarchy.y") as f:
             d = yaml.load(f, Loader=yaml.FullLoader)
-    
-    
+
         for fine_ind, fine_name in l:
             assert (fine_ind >= 0 and fine_ind < 182)
             parent_name = list(self._find_parent(fine_name, d))
@@ -224,14 +267,14 @@ class CocoDataloader(torch.utils.data.Dataset):
             parent_name = parent_name[0]
             parent_ind = self._sorted_coarse_name_to_coarse_index[parent_name]
             assert (parent_ind >= 0 and parent_ind < 27)
-    
+
             fine_index_to_coarse_index[fine_ind] = parent_ind
             fine_name_to_coarse_name[fine_name] = parent_name
-    
+
         assert (len(fine_index_to_coarse_index) == 182)
-    
+
         return fine_index_to_coarse_index, fine_name_to_coarse_name
-    
+
     def collate_fn(batch):
         #classes = [0, 1, 2] # these are the selected classes, we can modify which ones we want
         len_batch = len(batch)
