@@ -73,6 +73,8 @@ class CocoDataloader(torch.utils.data.Dataset):
         with open(annotation) as f:
             self.data = json.load(f)
 
+        self.dic = self.getMaps()
+
         self.jitter_tf = tf.ColorJitter(brightness=0.4,
                         contrast=0.4,
                         saturation=0.4,
@@ -90,47 +92,62 @@ class CocoDataloader(torch.utils.data.Dataset):
 
         self.input_sz = input_sz
 
-    def getImgAndMask(self, index, w, h):
-        img_id = self.data['images'][index]
-        len_ = len(self.data['annotations'])
-        ann_ids = []
-        for i in range(len_):
-            if self.data['annotations'][i]['image_id'] == self.data['images'][index]['id']:
-                ann_ids.append(i)
-        path = img_id['file_name']
-
-#        if path not in CocoDataloader.classes and len(CocoDataloader.classes) > 0:
-#            return None, None
+    def getImgAndMask(self, index):
+        path = self.dic[str(index)][0]
 
         img = Image.open(os.path.join(self.root, path))
         img = img.convert('RGB')
-        num_objs = len(ann_ids)
+        num_objs = len(self.dic[str(index)][1])
         w, h = img.size
 
         mask = Image.new('L', (w, h), 0)
         draw = ImageDraw.Draw(mask)
+
         for i in range(num_objs):
-            seg = self.data['annotations'][ann_ids[i]]['segmentation']
-            cat = self.data['annotations'][ann_ids[i]]['category_id']
-            crowd = self.data['annotations'][ann_ids[i]]['iscrowd']
-
-            if crowd == 1:
-                return None, None
-
-            lab = self.fine_index_to_coarse_index[cat]
-            class_name = self._sorted_coarse_names[lab]
-            if 'stuff' in class_name:
-                print(cat, lab, class_name)
+            seg = self.dic[str(index)][1][i]
+            cat = self.dic[str(index)][2][i]
 
             for n in range(len(seg)):
-                # add a condition for taking stuff
-                draw.polygon(seg[n], outline=None, fill=lab)
-        del draw
+                draw.polygon(seg[n], outline=None, fill=cat)
 
         return img, mask
+#        img_id = self.data['images'][index]
+#        len_ = len(self.data['annotations'])
+#        ann_ids = []
+#        for i in range(len_):
+#            if self.data['annotations'][i]['image_id'] == self.data['images'][index]['id']:
+#                ann_ids.append(i)
+#        path = img_id['file_name']
+#
+#        img = Image.open(os.path.join(self.root, path))
+#        img = img.convert('RGB')
+#        num_objs = len(ann_ids)
+#        w, h = img.size
+#
+#        mask = Image.new('L', (w, h), 0)
+#        draw = ImageDraw.Draw(mask)
+#        for i in range(num_objs):
+#            seg = self.data['annotations'][ann_ids[i]]['segmentation']
+#            cat = self.data['annotations'][ann_ids[i]]['category_id']
+#            crowd = self.data['annotations'][ann_ids[i]]['iscrowd']
+#
+#            if crowd == 1:
+#                return None, None
+#
+#            lab = self.fine_index_to_coarse_index[cat]
+#            class_name = self._sorted_coarse_names[lab]
+#            if 'stuff' in class_name:
+#                print(cat, lab, class_name)
+#
+#            for n in range(len(seg)):
+#                # add a condition for taking stuff
+#                draw.polygon(seg[n], outline=None, fill=lab)
+#        del draw
+#
+#        return img, mask
 
     def __getitem__(self, index):
-        img, mask = self.getImgAndMask(index, self.input_sz, self.input_sz)
+        img, mask = self.getImgAndMask(index)
 
         if img is None:
             return None
@@ -192,7 +209,7 @@ class CocoDataloader(torch.utils.data.Dataset):
         return img1, img2, affine2_to_1, mask_img1, mask_cat
 
     def __len__(self):
-        return len(self.data['images'])
+        return len(self.dic)
 
 
     def _find_parent(self, name, d):
@@ -205,46 +222,51 @@ class CocoDataloader(torch.utils.data.Dataset):
                 for res in self._find_parent(name, v):  # if it returns anything to us
                     yield res
 
-    def getMaps(self, arg1):
+    def getMaps(self):
         dic = {}
         index = 0
         seg_list = []
         cat_list = []
         curr = 0
+        len_img = len(self.data['images'])
         for index in range(len_img):
-            img_id = data['images'][index]
+            img_id = self.data['images'][index]
             path = img_id['file_name']
-            len_ann = len(data['annotations'])
+            len_ann = len(self.data['annotations'])
             ann_ids = []
             bad = False
 
-            for i in range(len_):
-                if data['annotations'][i]['image_id'] == data['images'][index]['id']:
+            for i in range(len_ann):
+                if self.data['annotations'][i]['image_id'] == self.data['images'][index]['id']:
                     ann_ids.append(i)
+
             num_objs = len(ann_ids)
             seg_list = []
             cat_list = []
+
             for i in range(num_objs):
-                seg = data['annotations'][ann_ids[i]]['segmentation']
-                cat = data['annotations'][ann_ids[i]]['category_id']
-                crowd = data['annotations'][ann_ids[i]]['iscrowd']
+                seg = self.data['annotations'][ann_ids[i]]['segmentation']
+                cat = self.data['annotations'][ann_ids[i]]['category_id']
+                crowd = self.data['annotations'][ann_ids[i]]['iscrowd']
 
                 seg_list.append(seg)
-                cat_list.append(fine_index_to_coarse_index[cat])
+                cat_list.append(self.fine_index_to_coarse_index[cat])
 
                 if crowd == 1:
                     bad = True
                     break
                 for n in range(len(seg)):
-                    lab = fine_index_to_coarse_index[cat]
-                    class_name = _sorted_coarse_names[lab]
+                    lab = self.fine_index_to_coarse_index[cat]
+                    class_name = self._sorted_coarse_names[lab]
+
                     if lab >= 12 or bad:
                         bad = True
                         break
-        if bad:
-            continue
+            if bad:
+                continue
             dic[str(curr)] = [path, seg_list, cat_list]
             curr += 1
+        
 
         return dic
 
