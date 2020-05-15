@@ -10,7 +10,7 @@ import os
 
 # scripts
 from image_loader import ShadowDataset, ShadowAndMaskDataset
-from coco_dataloader import CocoDataloader
+from coco_dataloader_no_mask import CocoDataloader
 from net10a import SegmentationNet10a
 from IIC_Losses import IID_segmentation_loss, IID_segmentation_loss_uncollapsed
 # from IIC_Network import net
@@ -68,9 +68,8 @@ optimiser = torch.optim.Adam(net.parameters(), lr=lr, betas=(beta1, 0.1))
 train_data_dir = 'data/train2017'
 train_coco = 'data/instances_train2017.json'
 #classes_path = 'data/COCO/CocoStuff164k/curated/train2017/Coco164kFew_Stuff_3.txt'
-
 #dataL = CocoDataloader(root=train_data_dir, annotation=train_coco, input_sz=input_sz, classes_path=None)
-dataL = ShadowAndMaskDataset(input_sz, input_sz)
+dataL = CocoDataloader(input_sz=input_sz)
 dataloader = DataLoader(dataset=dataL, batch_size=batch_sz, shuffle=True, drop_last=True) # for coco add collate
 
 for epoch in range(0, num_epochs):
@@ -85,14 +84,15 @@ for epoch in range(0, num_epochs):
         # img1 is image containing shadow, img2 is transformation of img1,
         # affine2_to_1 allows reversing affine transforms to make img2 align pixels with img1,
         # mask_img1 allows zeroing out pixels that are not comparable
-        img1, img2, affine2_to_1, mask_img1, shadow_mask1 = data
+        img1, img2, affine2_to_1, mask_img1 = data
+        #img1, img2, affine2_to_1, mask_img1, shadow_mask1 = data
 
         # just moving everything to cuda
         img1 = img1.cuda()
         img2 = img2.cuda()
         affine2_to_1 = affine2_to_1.cuda()
         mask_img1 = mask_img1.cuda()
-        shadow_mask1 = shadow_mask1.cuda()
+        #shadow_mask1 = shadow_mask1.cuda()
 
         net.zero_grad()
 
@@ -105,7 +105,7 @@ for epoch in range(0, num_epochs):
         ssm_loss = None
 
 
-        shadow_mask1_flat = shadow_mask1.view(batch_sz, input_sz, input_sz).long() #shadow_mask1.argmax(axis=1).long() # i need to verify this for coco
+        #shadow_mask1_flat = shadow_mask1.view(batch_sz, input_sz, input_sz).long() #shadow_mask1.argmax(axis=1).long() # i need to verify this for coco
         #print('flat', shadow_mask1_flat.shape)
         #print(shadow_mask1[0])
         for i in range(num_sub_heads):
@@ -130,10 +130,10 @@ for epoch in range(0, num_epochs):
         avg_loss_batch /= num_sub_heads
 
         # this is for accuracy
-        predicted = torch.argmax(x1_outs[0].cpu().detach(), dim=1).view(batch_sz, 1, input_sz, input_sz) # this zero is because we are using a list
-        total_train += shadow_mask1.cpu().shape[0] * shadow_mask1.cpu().shape[1] * shadow_mask1.cpu().shape[2] * shadow_mask1.cpu().shape[3]
-        correct_train += predicted.eq(shadow_mask1.cpu().data).sum().item()
-        train_acc = 100 * correct_train / total_train
+        #predicted = torch.argmax(x1_outs[0].cpu().detach(), dim=1).view(batch_sz, 1, input_sz, input_sz) # this zero is because we are using a list
+        #total_train += shadow_mask1.cpu().shape[0] * shadow_mask1.cpu().shape[1] * shadow_mask1.cpu().shape[2] * shadow_mask1.cpu().shape[3]
+        #correct_train += predicted.eq(shadow_mask1.cpu().data).sum().item()
+        #train_acc = 100 * correct_train / total_train
 
         if idx % 10 == 0:
             discrete_losses.append([avg_loss_batch.item()])  # store for graphing
@@ -178,7 +178,7 @@ for epoch in range(0, num_epochs):
     for param_group in optimiser.param_groups:
         param_group['lr'] = lr
 
-    ave_acc.append([train_acc])
+#    ave_acc.append([train_acc])
 
     avg_loss = float(avg_loss / avg_loss_count)
 #    avg_ssm_loss = float(avg_ssm_loss / avg_loss_count)
@@ -189,10 +189,10 @@ for epoch in range(0, num_epochs):
     # avg_loss_no_lamb = float(avg_loss_no_lamb / avg_loss_count)
 
     # save lists of losses as csv files for reading and graphing later
-    df0 = pd.DataFrame(list(zip(*ave_acc))).add_prefix('Col')
-    filename = 'loss_csvs/' + time_begin + '/iic_acc_e' + str(epoch) + '_' + time_begin + '.csv'
-    print('saving to', filename)
-    df0.to_csv(filename, index=False)
+#    df0 = pd.DataFrame(list(zip(*ave_acc))).add_prefix('Col')
+#    filename = 'loss_csvs/' + time_begin + '/iic_acc_e' + str(epoch) + '_' + time_begin + '.csv'
+#    print('saving to', filename)
+#    df0.to_csv(filename, index=False)
 
     # save lists of losses as csv files for reading and graphing later
     df1 = pd.DataFrame(list(zip(*ave_losses))).add_prefix('Col')
