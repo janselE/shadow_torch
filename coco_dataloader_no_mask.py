@@ -10,7 +10,7 @@ import json
 import yaml
 
 
-import torchvision.transforms as tf
+import torchvision.transforms as transforms
 import torchvision.transforms.functional as TF
 import random
 
@@ -24,6 +24,9 @@ import time
 from threading import Thread
 
 
+path = '/Users/janselherrera/Documents/Projects/Research/Shadow/compressed/val2017/*.jpg'
+
+
 # take as parameter the filename that we already know
 # we are just changing the part of the name that is different
 # this method has to be changed for different datasets
@@ -35,11 +38,11 @@ def read_dataset(filename):
 
 class CocoDataloader(torch.utils.data.Dataset):
     # Constructor
-    def __init__(self, h, w, use_random_scale=False, use_random_affine=True):
-        self.imgs, _, _ = read_dataset(path)  # known name, this is for local
+    def __init__(self, h,  use_random_scale=False, use_random_affine=True):
+        self.imgs = read_dataset(path)  # known name, this is for local
         self.len = len(self.imgs)  # read all the images of the dataset
         self.h = h
-        self.w = w
+        self.w = h
 
         # config parameters
         self.use_random_scale = use_random_scale
@@ -65,6 +68,7 @@ class CocoDataloader(torch.utils.data.Dataset):
         # baseline transformations
 
         image = Image.open(self.imgs[index])
+        image = image.convert('RGB')
         image = np.asarray(image).astype(np.float32)
         target = image
 
