@@ -15,6 +15,8 @@ from net10a import SegmentationNet10a
 from IIC_Losses import IID_segmentation_loss, IID_segmentation_loss_uncollapsed
 # from IIC_Network import net
 
+from torch.utils.tensorboard import SummaryWriter
+
 
 h, w, in_channels = 240, 240, 3
 input_sz = h
@@ -28,6 +30,11 @@ ave_acc= []
 time_begin = str(datetime.now()).replace(' ', '-')
 os.mkdir("img_visual_checks/"+time_begin)
 os.mkdir("loss_csvs/"+time_begin)
+
+board = "boards/" + time_begin
+os.mkdir(board)
+
+writer = SummaryWriter(board)
 
 lamb = 1.0  # will make loss equal to loss_no_lamb
 batch_sz = 16
@@ -71,6 +78,7 @@ train_coco = 'data/instances_train2017.json'
 #dataL = CocoDataloader(root=train_data_dir, annotation=train_coco, input_sz=input_sz, classes_path=None)
 dataL = CocoDataloader(input_sz)
 dataloader = DataLoader(dataset=dataL, batch_size=batch_sz, shuffle=True, drop_last=True) # for coco add collate
+curr = 0
 
 for epoch in range(0, num_epochs):
     print("Starting epoch: %d " % (epoch))
@@ -133,6 +141,8 @@ for epoch in range(0, num_epochs):
         correct_train += predicted.eq(shadow_mask1.cpu().data).sum().item()
         train_acc = 100 * correct_train / total_train
 
+        writer.add_scalar('discrete_loss', avg_loss_batch.item(), curr)
+
         if idx % 10 == 0:
             discrete_losses.append([avg_loss_batch.item()])  # store for graphing
 #            discrete_losses.append([avg_loss_batch.item(), ssm_loss.item()])  # store for graphing
@@ -154,7 +164,6 @@ for epoch in range(0, num_epochs):
         loss_total.backward()
         optimiser.step()
 
-
         # visualize outputs of first image in dataset every 10 epochs
         if epoch % 10 == 0 and idx == 0:
             o = transforms.ToPILImage()(img1[0].cpu().detach())
@@ -170,13 +179,14 @@ for epoch in range(0, num_epochs):
             torch.save(net.state_dict(), "saved_models/iic_e{}_{}.model".format(epoch, time_begin))
 
         torch.cuda.empty_cache()
+        curr += 1
 
     # updates the learning rate
     lr *= (1 / (1 + decay * epoch))
     for param_group in optimiser.param_groups:
         param_group['lr'] = lr
 
-#    ave_acc.append([train_acc])
+    ave_acc.append([train_acc])
 
     avg_loss = float(avg_loss / avg_loss_count)
     avg_ssm_loss = float(avg_ssm_loss / avg_loss_count)
@@ -187,21 +197,26 @@ for epoch in range(0, num_epochs):
     avg_loss_no_lamb = float(avg_loss_no_lamb / avg_loss_count)
 
     # save lists of losses as csv files for reading and graphing later
+    writer.add_scalar('avg_acc', train_acc, epoch)
     df0 = pd.DataFrame(list(zip(*ave_acc))).add_prefix('Col')
     filename = 'loss_csvs/' + time_begin + '/iic_acc_e' + str(epoch) + '_' + time_begin + '.csv'
     print('saving to', filename)
     df0.to_csv(filename, index=False)
 
     # save lists of losses as csv files for reading and graphing later
+    writer.add_scalar('avg_loss', avg_loss, epoch)
     df1 = pd.DataFrame(list(zip(*ave_losses))).add_prefix('Col')
     filename = 'loss_csvs/' + time_begin + '/iic_ave_e' + str(epoch) + '_' + time_begin + '.csv'
     print('saving to', filename)
     df1.to_csv(filename, index=False)
 
+    writer.add_scalar('avg_loss', avg_loss, epoch)
     df2 = pd.DataFrame(list(zip(*discrete_losses))).add_prefix('Col')
     filename = 'loss_csvs/' + time_begin + '/iic_discrete_e' + str(epoch) + '_' + time_begin + '.csv'
     print('saving to', filename)
     df2.to_csv(filename, index=False)
+
+writer.close()
 
 #    if avg_loss < min_val_loss:
 #        epochs_no_improve = 0
