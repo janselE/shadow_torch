@@ -127,7 +127,7 @@ for epoch in range(0, num_epochs):
                 # avg_loss_no_lamb_batch = loss_no_lamb
 #                ssm_loss = criterion_ssm(torch.log(x1_outs[i]), shadow_mask1_flat) # + criterion_ssm(torch.log(x2_outs[i]), shadow_mask2)
             else:
-                avg_loss_batch += loss
+                avg_loss_batch -= loss # i change this to -= to test
                 # avg_loss_no_lamb_batch += loss_no_lamb
 
                 # assumes shadow_mask1 is tensor of 0s and 1s corresponding to argmax of x1_outs (what NLLLoss expects)
