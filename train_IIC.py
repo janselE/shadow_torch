@@ -141,6 +141,9 @@ for epoch in range(0, num_epochs):
         correct_train += predicted.eq(shadow_mask1.cpu().data).sum().item()
         train_acc = 100 * correct_train / total_train
 
+        ave_acc.append(train_acc)
+
+        # saving loss and accuracy
         writer.add_scalar('discrete_loss', avg_loss_batch.item(), curr)
         writer.add_scalar('discrete_acc', train_acc, curr)
 
@@ -187,11 +190,11 @@ for epoch in range(0, num_epochs):
     for param_group in optimiser.param_groups:
         param_group['lr'] = lr
 
-    ave_acc.append([train_acc])
+    writer.add_scalar('avg_acc', float(sum(ave_acc)/len(acc)), epoch)
 
     avg_loss = float(avg_loss / avg_loss_count)
-    avg_ssm_loss = float(avg_ssm_loss / avg_loss_count)
-    ave_losses.append([avg_loss, avg_ssm_loss])
+#    avg_ssm_loss = float(avg_ssm_loss / avg_loss_count)
+#    ave_losses.append([avg_loss, avg_ssm_loss])
 # this is to only add the unsupervised loss
     ave_losses.append([avg_loss])
     print("epoch {} average_loss {} ".format(epoch, avg_loss))
