@@ -113,7 +113,7 @@ for epoch in range(0, num_epochs):
         ssm_loss = None
 
 	#shadow_mask1.argmax(axis=1).long() # i need to verify this for coco
-        shadow_mask1_flat = shadow_mask1.view(batch_sz, input_sz, input_sz).long() 
+        shadow_mask1_flat = shadow_mask1.view(batch_sz, input_sz, input_sz).long()
         for i in range(num_sub_heads):
             loss, loss_no_lamb = loss_fn(x1_outs[i], x2_outs[i],
                     all_affine2_to_1=affine2_to_1,
@@ -142,6 +142,7 @@ for epoch in range(0, num_epochs):
         train_acc = 100 * correct_train / total_train
 
         writer.add_scalar('discrete_loss', avg_loss_batch.item(), curr)
+        writer.add_scalar('discrete_acc', train_acc, curr)
 
         if idx % 10 == 0:
             discrete_losses.append([avg_loss_batch.item()])  # store for graphing
