@@ -17,6 +17,8 @@ from IIC_Losses import IID_segmentation_loss, IID_segmentation_loss_uncollapsed
 
 from torch.utils.tensorboard import SummaryWriter
 
+from eval import *
+
 
 h, w, in_channels = 240, 240, 3
 input_sz = h
@@ -136,10 +138,15 @@ for epoch in range(0, num_epochs):
         avg_loss_batch /= num_sub_heads
 
         # this is for accuracy
-        predicted = torch.argmax(x1_outs[0].cpu().detach(), dim=1).view(batch_sz, 1, input_sz, input_sz) # this zero is because we are using a list
-        total_train += shadow_mask1.cpu().shape[0] * shadow_mask1.cpu().shape[1] * shadow_mask1.cpu().shape[2] * shadow_mask1.cpu().shape[3]
-        correct_train += predicted.eq(shadow_mask1.cpu().data).sum().item()
-        train_acc = 100 * correct_train / total_train
+#        predicted = torch.argmax(x1_outs[0].cpu().detach(), dim=1).view(batch_sz, 1, input_sz, input_sz) # this zero is because we are using a list
+#        total_train += shadow_mask1.cpu().shape[0] * shadow_mask1.cpu().shape[1] * shadow_mask1.cpu().shape[2] * shadow_mask1.cpu().shape[3]
+#        correct_train += predicted.eq(shadow_mask1.cpu().data).sum().item()
+#        train_acc = 100 * correct_train / total_train
+
+        flat_preds = x1_outs.clone().detach().flatten()
+        flat_targets = shadow_mask1.clone().detach().flatten()
+
+        train_acc = eval_acc(flat_preds, flat_targets)
 
         ave_acc.append(train_acc)
 
