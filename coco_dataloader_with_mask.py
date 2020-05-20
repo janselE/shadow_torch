@@ -25,7 +25,8 @@ from threading import Thread
 
 
 #path = '/Users/janselherrera/Documents/Projects/Research/Shadow/compressed/train2017_mask/*.jpg' # mac
-path = '/home/jansel/Documents/Research/coco_dataset/data/train2017_mask/*.jpg' # msi
+#path = '/home/jansel/Documents/Research/coco_dataset/data/train2017_mask/*.jpg' # msi
+path = 'data/train2017_mask/*.jpg' # server 
 
 
 # take as parameter the filename that we already know
@@ -69,6 +70,7 @@ class CocoDataloader(torch.utils.data.Dataset):
 
     def __getitem__(self, index):
         img = Image.open(self.imgs[index])
+        img = img.convert('RGB') 
         mask = Image.open(self.mask[index])
 
         image = np.asarray(img).astype(np.float32)

@@ -26,7 +26,6 @@ input_sz = h
 # Lists to keep track of progress
 discrete_losses = []
 ave_losses = []
-ave_acc= []
 
 # keep track of folders and saved files when model is run multiple times
 time_begin = str(datetime.now()).replace(' ', '-')
@@ -86,9 +85,11 @@ for epoch in range(0, num_epochs):
     print("Starting epoch: %d " % (epoch))
 
     avg_loss = 0.  # over heads and head_epochs (and sub_heads)
+    avg_acc = 0. 
     avg_ssm_loss = 0.
     # avg_loss_no_lamb = 0.
     avg_loss_count = 0
+    avg_acc_count = 0
 
     for idx, data in enumerate(dataloader):
         # img1 is image containing shadow, img2 is transformation of img1,
@@ -138,21 +139,13 @@ for epoch in range(0, num_epochs):
         avg_loss_batch /= num_sub_heads
 
         # this is for accuracy
-#        predicted = torch.argmax(x1_outs[0].cpu().detach(), dim=1).view(batch_sz, 1, input_sz, input_sz) # this zero is because we are using a list
-#        total_train += shadow_mask1.cpu().shape[0] * shadow_mask1.cpu().shape[1] * shadow_mask1.cpu().shape[2] * shadow_mask1.cpu().shape[3]
-#        correct_train += predicted.eq(shadow_mask1.cpu().data).sum().item()
-#        train_acc = 100 * correct_train / total_train
-
-        flat_preds = x1_outs.clone().detach().flatten()
-        flat_targets = shadow_mask1.clone().detach().flatten()
+        flat_preds = torch.argmax(x1_outs[0].cpu().detach(), dim=1).clone().detach().flatten()
+        flat_targets = shadow_mask1.clone().cpu().detach().flatten()
 
         train_acc = eval_acc(flat_preds, flat_targets)
+        avg_acc += train_acc
+        avg_acc_count += 1
 
-        ave_acc.append(train_acc)
-
-        # saving loss and accuracy
-        writer.add_scalar('discrete_loss', avg_loss_batch.item(), curr)
-        writer.add_scalar('discrete_acc', train_acc, curr)
 
         if idx % 10 == 0:
             discrete_losses.append([avg_loss_batch.item()])  # store for graphing
@@ -171,6 +164,10 @@ for epoch in range(0, num_epochs):
             loss_total = - avg_loss_batch + ssm_loss
         else:
             loss_total = avg_loss_batch
+
+        # saving loss and accuracy
+        writer.add_scalar('discrete_loss', avg_loss_batch.item(), curr)
+        writer.add_scalar('discrete_acc', train_acc, curr)
 
         loss_total.backward()
         optimiser.step()
@@ -197,35 +194,11 @@ for epoch in range(0, num_epochs):
     for param_group in optimiser.param_groups:
         param_group['lr'] = lr
 
-    writer.add_scalar('avg_acc', float(sum(ave_acc)/len(acc)), epoch)
-
     avg_loss = float(avg_loss / avg_loss_count)
-#    avg_ssm_loss = float(avg_ssm_loss / avg_loss_count)
-#    ave_losses.append([avg_loss, avg_ssm_loss])
-# this is to only add the unsupervised loss
-    ave_losses.append([avg_loss])
-    print("epoch {} average_loss {} ".format(epoch, avg_loss))
-    avg_loss_no_lamb = float(avg_loss_no_lamb / avg_loss_count)
-
-    # save lists of losses as csv files for reading and graphing later
-    writer.add_scalar('avg_acc', train_acc, epoch)
-    df0 = pd.DataFrame(list(zip(*ave_acc))).add_prefix('Col')
-    filename = 'loss_csvs/' + time_begin + '/iic_acc_e' + str(epoch) + '_' + time_begin + '.csv'
-    print('saving to', filename)
-    df0.to_csv(filename, index=False)
-
-    # save lists of losses as csv files for reading and graphing later
+    avg_acc = float(avg_acc / avg_acc_count)
+    writer.add_scalar('avg_acc', avg_acc, epoch)
     writer.add_scalar('avg_loss', avg_loss, epoch)
-    df1 = pd.DataFrame(list(zip(*ave_losses))).add_prefix('Col')
-    filename = 'loss_csvs/' + time_begin + '/iic_ave_e' + str(epoch) + '_' + time_begin + '.csv'
-    print('saving to', filename)
-    df1.to_csv(filename, index=False)
 
-    writer.add_scalar('avg_loss', avg_loss, epoch)
-    df2 = pd.DataFrame(list(zip(*discrete_losses))).add_prefix('Col')
-    filename = 'loss_csvs/' + time_begin + '/iic_discrete_e' + str(epoch) + '_' + time_begin + '.csv'
-    print('saving to', filename)
-    df2.to_csv(filename, index=False)
 
 writer.close()
 
