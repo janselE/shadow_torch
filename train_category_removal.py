@@ -17,7 +17,7 @@ from utils import remove_catx, remove_random_region, custom_loss_iic
 from coco_dataloader import CocoDataloader
 from image_loader_cityscapes import CityscapesLoader
 
-NUM_CLASSES = 11  # number of segmentation classes in dataset, 11 for cocothings, 20 for cityscapes
+NUM_CLASSES = 12  # number of segmentation classes in dataset, 11 for cocothings, 20 for cityscapes
 REAL = 1
 FAKE = 0
 
