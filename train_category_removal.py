@@ -14,7 +14,8 @@ from net10a_twohead import SegmentationNet10a
 from IIC_Losses import IID_segmentation_loss
 from models_for_gan import Discriminator_inpainted, Generator_inpaint
 from utils import remove_catx, remove_random_region, custom_loss_iic
-from coco_dataloader import CocoDataloader
+# from coco_dataloader import CocoDataloader
+from coco_dataloader_with_mask import CocoDataloader
 from image_loader_cityscapes import CityscapesLoader
 
 NUM_CLASSES = 12  # number of segmentation classes in dataset, 11 for cocothings, 20 for cityscapes
@@ -82,13 +83,16 @@ if coco:
     # Dataloader for coco
     train_data_dir = 'data/train2017'
     train_coco = 'data/instances_train2017.json'
-    train_dataloader = DataLoader(dataset=CocoDataloader(root=train_data_dir, annotation=train_coco, input_sz=input_sz, classes_path=None),
-                            batch_size=batch_sz, shuffle=True, collate_fn=CocoDataloader.collate_fn, drop_last=True)
+    # train_dataloader = DataLoader(dataset=CocoDataloader(root=train_data_dir, annotation=train_coco, input_sz=input_sz, classes_path=None),
+    #                         batch_size=batch_sz, shuffle=True, collate_fn=CocoDataloader.collate_fn, drop_last=True)
+    dataL = CocoDataloader(input_sz)
+    dataloader = DataLoader(dataset=dataL, batch_size=batch_sz, shuffle=True, drop_last=True)  # for coco add collate
 
     val_data_dir = 'data/val2017'
     val_coco = 'data/instances_val2017.json'
-    val_dataloader = DataLoader(dataset=CocoDataloader(root=train_data_dir, annotation=train_coco, input_sz=input_sz, classes_path=None),
-                            batch_size=batch_sz, shuffle=True, collate_fn=CocoDataloader.collate_fn, drop_last=True)
+    # there is no option for using validation set yet
+    # val_dataloader = DataLoader(dataset=CocoDataloader(root=train_data_dir, annotation=train_coco, input_sz=input_sz, classes_path=None),
+    #                         batch_size=batch_sz, shuffle=True, collate_fn=CocoDataloader.collate_fn, drop_last=True)
 
     predict_seg = True  # False if just using ground truth segs to test rest of network
 
@@ -112,7 +116,8 @@ if cityscapes:
 for epoch in range(0, num_epochs):
     print("Starting epoch: %d " % (epoch))
 
-    for mode in ['train', 'val']:
+    # for mode in ['train', 'val']:
+    for mode in ['train']:  # since val set is not loadable yet
         if mode == 'train':
             torch.set_grad_enabled(True)
             dataloader = train_dataloader
@@ -295,7 +300,7 @@ for epoch in range(0, num_epochs):
                          gen_adv_loss.item(), adv_seg_loss.item()])  # store for graphing
 
                 # if epoch < 50:
-                if epoch < 50 and predict_seg:  # never train iic since not using
+                if epoch < 1 and idx < 3000 and predict_seg:  # pretrain just iic (later just load pretrained one instead)
                     train_iic_only = True  # use for pretraining for some # of epochs if necessary
                     train_gen = False
                     train_disc = False
@@ -341,6 +346,8 @@ for epoch in range(0, num_epochs):
                     torch.save(IIC.state_dict(), "saved_models/cat_removal_e{}_{}.model".format(epoch, time_begin))
 
         torch.cuda.empty_cache()
+        # change to make loop only go through portion of dataset since there are so many training files
+        # validation set only needed for after IIC is trained alone (maximizing mutual info will not overfit training data)
 
     # updates the learning rate
     lr *= (1 / (1 + decay * epoch))
