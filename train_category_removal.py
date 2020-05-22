@@ -86,7 +86,7 @@ if coco:
     # train_dataloader = DataLoader(dataset=CocoDataloader(root=train_data_dir, annotation=train_coco, input_sz=input_sz, classes_path=None),
     #                         batch_size=batch_sz, shuffle=True, collate_fn=CocoDataloader.collate_fn, drop_last=True)
     dataL = CocoDataloader(input_sz)
-    dataloader = DataLoader(dataset=dataL, batch_size=batch_sz, shuffle=True, drop_last=True)  # for coco add collate
+    train_dataloader = DataLoader(dataset=dataL, batch_size=batch_sz, shuffle=True, drop_last=True)  # for coco add collate
 
     val_data_dir = 'data/val2017'
     val_coco = 'data/instances_val2017.json'
@@ -328,8 +328,8 @@ for epoch in range(0, num_epochs):
                     disc_loss.backward()
                     optimizer_d.step()
 
-                # visualize outputs of first image in dataset every 10 epochs
-                if epoch % 10 == 0 and idx == 0:
+                # visualize outputs of first image in dataset every 1000 images
+                if idx % 1000 == 0:
                     # o = transforms.ToPILImage()(img1[0].cpu().detach())
                     # o.save("img_visual_checks/" + time_begin + "/test_img1_e{}_{}.png".format(epoch, time_begin))
                     # o = transforms.ToPILImage()(img2[0].cpu().detach())
@@ -343,7 +343,10 @@ for epoch in range(0, num_epochs):
                     #             shadow_mask1_pred_grey[0] * 255)
                     #
                     # # this saves the model
-                    torch.save(IIC.state_dict(), "saved_models/cat_removal_e{}_{}.model".format(epoch, time_begin))
+                    torch.save(IIC.state_dict(), "saved_models/cat_removal_e{}_idx{}_{}.model".format(epoch, idx, time_begin))
+
+            if idx > 2000:  # only train on 2000 to save more ofter - just for initial testing
+                break
 
         torch.cuda.empty_cache()
         # change to make loop only go through portion of dataset since there are so many training files
