@@ -25,7 +25,6 @@ h, w, in_channels = 240, 240, 3
 input_sz = h
 
 # Lists to keep track of progress
-discrete_losses = []
 ave_losses = []
 
 # keep track of folders and saved files when model is run multiple times
@@ -130,38 +129,16 @@ for epoch in range(0, num_epochs):
         else:
             avg_loss_batch -= loss # i change this to -= to test
 
-#        for i in range(num_sub_heads):
-#            loss, loss_no_lamb = loss_fn(x1_outs[i], x2_outs[i],
-#                    all_affine2_to_1=affine2_to_1,
-#                    all_mask_img1=mask_img1, lamb=lamb,
-#                    half_T_side_dense=half_T_side_dense,
-#                    half_T_side_sparse_min=half_T_side_sparse_min,
-#                    half_T_side_sparse_max=half_T_side_sparse_max)
-#
-#            if avg_loss_batch is None:
-#                avg_loss_batch = loss
-#                # avg_loss_no_lamb_batch = loss_no_lamb
-##                ssm_loss = criterion_ssm(torch.log(x1_outs[i]), shadow_mask1_flat) # + criterion_ssm(torch.log(x2_outs[i]), shadow_mask2)
-#            else:
-#                avg_loss_batch -= loss # i change this to -= to test
-#                # avg_loss_no_lamb_batch += loss_no_lamb
-#
-#                # assumes shadow_mask1 is tensor of 0s and 1s corresponding to argmax of x1_outs (what NLLLoss expects)
-##                ssm_loss += criterion_ssm(torch.log(x1_outs[i]), shadow_mask1_flat) # + criterion_ssm(torch.log(x2_outs[i]), shadow_mask2)
-#
-#        avg_loss_batch /= num_sub_heads
-
         # this is for accuracy
-        flat_preds = torch.argmax(x1_outs[0].cpu().detach(), dim=1).clone().detach().flatten()
+        flat_preds = torch.argmax(x1_outs.cpu().detach(), dim=0).flatten()
         flat_targets = shadow_mask1.clone().cpu().detach().flatten()
+
+        print("This are the shapes")
+        print(flat_preds.shape, flat_targets.shape)
 
         train_acc = eval_acc(flat_preds, flat_targets)
         avg_acc += train_acc
         avg_acc_count += 1
-
-
-        if idx % 10 == 0:
-            discrete_losses.append([avg_loss_batch.item()])  # store for graphing
 
         if not np.isfinite(avg_loss_batch.item()):
             print("Loss is not finite... %s:" % str(avg_loss_batch))
@@ -188,9 +165,9 @@ for epoch in range(0, num_epochs):
             o.save("img_visual_checks/"+time_begin+"/test_img1_e{}.png".format(epoch))
             o = transforms.ToPILImage()(img2[0].cpu().detach())
             o.save("img_visual_checks/"+time_begin+"/test_img2_e{}.png".format(epoch))
-            shadow_mask1_pred_bw = torch.argmax(x1_outs[0].cpu().detach(), dim=1).numpy()  # gets black and white image
+            shadow_mask1_pred_bw = torch.argmax(x1_outs.cpu().detach(), dim=0).numpy()  # gets black and white image
             cv2.imwrite("img_visual_checks/"+time_begin+"/test_mask1_bw_e{}.png".format(epoch), shadow_mask1_pred_bw[0] * 255)
-            shadow_mask1_pred_grey = x1_outs[0][0].cpu().detach().numpy()  # gets probability pixel is black
+            shadow_mask1_pred_grey = x1_outs[0].cpu().detach().numpy()  # gets probability pixel is black
             cv2.imwrite("img_visual_checks/"+time_begin+"/test_mask1_grey_e{}.png".format(epoch), shadow_mask1_pred_grey[0] * 255)
 
             # this saves the model
@@ -206,11 +183,9 @@ for epoch in range(0, num_epochs):
 
     avg_loss = float(avg_loss / avg_loss_count)
     avg_acc = float(avg_acc / avg_acc_count)
+
     writer.add_scalar('avg_acc', avg_acc, epoch)
     writer.add_scalar('avg_loss', avg_loss, epoch)
-
-
-writer.close()
 
 #    if avg_loss < min_val_loss:
 #        epochs_no_improve = 0
@@ -220,3 +195,5 @@ writer.close()
 #    if epochs_no_improve == n_epochs_stop:
 #        print("Early Stopping")
 #        break
+
+writer.close()
