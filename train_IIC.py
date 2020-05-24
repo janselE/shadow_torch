@@ -13,7 +13,7 @@ from image_loader import ShadowDataset, ShadowAndMaskDataset
 from coco_dataloader_with_mask import CocoDataloader
 from net10a import SegmentationNet10a
 from IIC_Losses import IID_segmentation_loss, IID_segmentation_loss_uncollapsed
-# from IIC_Network import net
+#from IIC_Network import net
 
 from torch.utils.tensorboard import SummaryWriter
 
@@ -58,7 +58,6 @@ correct_train = 0
 
 # Create the models
 net = SegmentationNet10a(num_sub_heads, 12)
-#net = net()
 net.cuda()
 
 # Initialize IIC objective function
@@ -140,6 +139,7 @@ for epoch in range(0, num_epochs):
 
         # this is for accuracy
         flat_preds = torch.argmax(x1_outs[0].cpu().detach(), dim=1).clone().detach().flatten()
+        #flat_preds = x1_outs[0].cpu().detach().detach().flatten()
         flat_targets = shadow_mask1.clone().cpu().detach().flatten()
 
         train_acc = eval_acc(flat_preds, flat_targets)
@@ -180,7 +180,7 @@ for epoch in range(0, num_epochs):
             o.save("img_visual_checks/"+time_begin+"/test_img2_e{}.png".format(epoch))
             shadow_mask1_pred_bw = torch.argmax(x1_outs[0].cpu().detach(), dim=1).numpy()  # gets black and white image
             cv2.imwrite("img_visual_checks/"+time_begin+"/test_mask1_bw_e{}.png".format(epoch), shadow_mask1_pred_bw[0] * 255)
-            shadow_mask1_pred_grey = x1_outs[0][1].cpu().detach().numpy()  # gets probability pixel is black
+            shadow_mask1_pred_grey = x1_outs[0][0].cpu().detach().numpy()  # gets probability pixel is black
             cv2.imwrite("img_visual_checks/"+time_begin+"/test_mask1_grey_e{}.png".format(epoch), shadow_mask1_pred_grey[0] * 255)
 
             # this saves the model
