@@ -133,7 +133,9 @@ for epoch in range(0, num_epochs):
         flat_preds = torch.argmax(x1_outs.cpu().detach(), dim=0).flatten()
         flat_targets = shadow_mask1.clone().cpu().detach().flatten()
 
-        print("This are the shapes")
+        print("This are the original shapes")
+        print(x1_outs.shape, shadow_mask1.shape)
+        print("This are the flat shapes")
         print(flat_preds.shape, flat_targets.shape)
 
         train_acc = eval_acc(flat_preds, flat_targets)
