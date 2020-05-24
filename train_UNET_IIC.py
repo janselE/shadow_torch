@@ -12,7 +12,7 @@ import os
 from image_loader import ShadowDataset, ShadowAndMaskDataset
 from coco_dataloader_with_mask import CocoDataloader
 
-from net10a import SegmentationNet10a
+#from net10a import SegmentationNet10a
 from IIC_Losses import IID_segmentation_loss, IID_segmentation_loss_uncollapsed
 from IIC_Network import net
 
@@ -39,7 +39,7 @@ os.mkdir(board)
 writer = SummaryWriter(board)
 
 lamb = 1.0  # will make loss equal to loss_no_lamb
-batch_sz = 16
+batch_sz = 1
 num_sub_heads = 1
 half_T_side_dense = 0
 half_T_side_sparse_min = 0
