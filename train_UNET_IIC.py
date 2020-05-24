@@ -162,15 +162,12 @@ for epoch in range(0, num_epochs):
 
         if idx % 10 == 0:
             discrete_losses.append([avg_loss_batch.item()])  # store for graphing
-#            discrete_losses.append([avg_loss_batch.item(), ssm_loss.item()])  # store for graphing
 
         if not np.isfinite(avg_loss_batch.item()):
             print("Loss is not finite... %s:" % str(avg_loss_batch))
             exit(1)
 
         avg_loss += avg_loss_batch.item()
-#        avg_ssm_loss += ssm_loss.item()
-        # avg_loss_no_lamb += avg_loss_no_lamb_batch.item()
         avg_loss_count += 1
 
         if use_supervised:
