@@ -15,7 +15,7 @@ class net(nn.Module):
         self.convt8 = nn.Sequential(nn.ConvTranspose2d(1024, 256, 3, 1, 1), nn.BatchNorm2d(256), nn.ReLU())
         self.convt9 = nn.Sequential(nn.ConvTranspose2d(512, 128, 3, 1, 1), nn.BatchNorm2d(128), nn.ReLU())
         self.convt10 = nn.Sequential(nn.ConvTranspose2d(256, 64, 3, 1, 1), nn.BatchNorm2d(64), nn.ReLU())
-        self.convt11 = nn.Sequential(nn.ConvTranspose2d(128, 2, 3, 1, 1), nn.Sigmoid())
+        self.convt11 = nn.Sequential(nn.ConvTranspose2d(128, 12, 3, 1, 1), nn.Softmax())
 
     def forward(self, input):
         conv0 = self.conv0(input)

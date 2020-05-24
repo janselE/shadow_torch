@@ -4,7 +4,6 @@ import torch
 from torch.utils.data import DataLoader
 import cv2
 import numpy as np
-import pandas as pd
 from datetime import datetime
 import os
 
@@ -130,7 +129,7 @@ for epoch in range(0, num_epochs):
             avg_loss_batch -= loss # i change this to -= to test
 
         # this is for accuracy
-        flat_preds = torch.argmax(x1_outs.cpu().detach(), dim=0).flatten()
+        flat_preds = torch.argmax(x1_outs.cpu().detach(), dim=1).flatten()
         flat_targets = shadow_mask1.clone().cpu().detach().flatten()
 
         print("This are the original shapes")
@@ -167,7 +166,7 @@ for epoch in range(0, num_epochs):
             o.save("img_visual_checks/"+time_begin+"/test_img1_e{}.png".format(epoch))
             o = transforms.ToPILImage()(img2[0].cpu().detach())
             o.save("img_visual_checks/"+time_begin+"/test_img2_e{}.png".format(epoch))
-            shadow_mask1_pred_bw = torch.argmax(x1_outs.cpu().detach(), dim=0).numpy()  # gets black and white image
+            shadow_mask1_pred_bw = torch.argmax(x1_outs.cpu().detach(), dim=1).numpy()  # gets black and white image
             cv2.imwrite("img_visual_checks/"+time_begin+"/test_mask1_bw_e{}.png".format(epoch), shadow_mask1_pred_bw[0] * 255)
             shadow_mask1_pred_grey = x1_outs[0].cpu().detach().numpy()  # gets probability pixel is black
             cv2.imwrite("img_visual_checks/"+time_begin+"/test_mask1_grey_e{}.png".format(epoch), shadow_mask1_pred_grey[0] * 255)
