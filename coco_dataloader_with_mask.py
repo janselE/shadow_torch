@@ -70,7 +70,7 @@ class CocoDataloader(torch.utils.data.Dataset):
 
     def __getitem__(self, index):
         img = Image.open(self.imgs[index])
-        img = img.convert('RGB') 
+        img = img.convert('RGB')
         mask = Image.open(self.mask[index])
 
         image = np.asarray(img).astype(np.float32)
