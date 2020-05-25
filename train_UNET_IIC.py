@@ -37,7 +37,7 @@ os.mkdir(board)
 writer = SummaryWriter(board)
 
 lamb = 1.0  # will make loss equal to loss_no_lamb
-batch_sz = 1
+batch_sz = 2
 num_sub_heads = 1
 half_T_side_dense = 0
 half_T_side_sparse_min = 0
