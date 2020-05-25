@@ -54,7 +54,7 @@ n_epochs_stop = 10
 epochs_no_improve = 0
 min_val_loss = np.Inf
 total_train = 0
-correct_train = 0
+Lcorrect_train = 0
 
 # Create the models
 IIC = SegmentationNet10a(num_sub_heads, NUM_CLASSES).cuda()  # produces segmentation maps from images
