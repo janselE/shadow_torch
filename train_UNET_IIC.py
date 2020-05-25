@@ -17,7 +17,7 @@ from IIC_Network import net
 
 from torch.utils.tensorboard import SummaryWriter
 
-from eval import *
+from eval import eval_acc
 
 
 h, w, in_channels = 240, 240, 3
