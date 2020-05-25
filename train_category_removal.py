@@ -18,6 +18,12 @@ from utils import remove_catx, remove_random_region, custom_loss_iic
 from coco_dataloader_with_mask import CocoDataloader
 from image_loader_cityscapes import CityscapesLoader
 
+from torch.utils.tensorboard import SummaryWriter
+
+from eval import eval_acc
+
+
+
 NUM_CLASSES = 12  # number of segmentation classes in dataset, 11 for cocothings, 20 for cityscapes
 REAL = 1
 FAKE = 0
@@ -28,7 +34,6 @@ input_sz = h
 # Lists to keep track of progress
 discrete_losses = []
 ave_losses = []
-ave_acc= []
 
 val_discrete_losses = []
 val_ave_losses = []
@@ -37,6 +42,11 @@ val_ave_acc= []
 # keep track of folders and saved files when model is run multiple times
 time_begin = str(datetime.now()).replace(' ', '-')
 # os.mkdir("img_visual_checks/" + time_begin)  # somehow no permission now
+
+board = "boards/" + time_begin
+os.mkdir(board)
+
+writer = SummaryWriter(board)
 
 lamb = 1.0  # will make loss equal to loss_no_lamb
 batch_sz = 1
@@ -132,6 +142,8 @@ for epoch in range(0, num_epochs):
             Disc.eval()
 
         avg_loss = 0.  # over heads and head_epochs (and sub_heads) per epoch
+        avg_acc = 0.
+        avg_acc_count = 0.
         avg_disc_loss = 0.
         avg_gen_loss = 0.
         avg_sf_data_loss = 0.
@@ -183,26 +195,19 @@ for epoch in range(0, num_epochs):
                 avg_loss_no_lamb_batch /= num_sub_heads
 
                 # this is for accuracy
-                predicted = torch.argmax(x1_outs[0].cpu().detach(), dim=1).view(batch_sz, 1, input_sz, input_sz)  # this zero is because we are using a list
-                total_train += shadow_mask1.cpu().shape[0] * shadow_mask1.cpu().shape[1] * shadow_mask1.cpu().shape[2] * shadow_mask1.cpu().shape[3]
-                correct_train += predicted.eq(shadow_mask1.cpu().data).sum().item()
-                train_acc = 100 * correct_train / total_train
-                # print('shape mask', shadow_mask1.shape)
-                # print('shape output', x1_outs[0].shape)
-                # print('shape prediction', predicted.shape)
-                # print('total number', total_train)
-                # print('total correct', correct_train)
-                # print('train', train_acc)
-                # print('max predicted', torch.max(predicted))
-                # print('max mask', torch.max(shadow_mask1))
+                flat_preds = torch.argmax(x1_outs[0].cpu().detach(), dim=1).flatten()
+                flat_targets = shadow_mask1.clone().cpu().detach().flatten()
 
-                # track losses
-                # print("epoch {} average_loss {} ave_loss_no_lamb {}".format(epoch, avg_loss_batch.item(),
-                #                                                             avg_loss_no_lamb_batch.item()))
+                train_acc = eval_acc(flat_preds, flat_targets)
+                avg_acc += train_acc
+                avg_acc_count += 1
 
                 if not np.isfinite(avg_loss_batch.item()):
                     print("Loss is not finite... %s:" % str(avg_loss_batch))
                     exit(1)
+
+                avg_loss += avg_loss_batch.item()
+                avg_loss_count += 1
 
                 # assert torch.is_tensor(img1)
                 # assert torch.is_tensor(x1_outs[0])  # x1_outs is list of tensors from each subhead
@@ -298,6 +303,12 @@ for epoch in range(0, num_epochs):
                     discrete_losses.append(
                         [disc_loss.item(), gen_loss.item(), filled_data_loss.item(),
                          gen_adv_loss.item(), adv_seg_loss.item()])  # store for graphing
+                    writer.add_scalar('discrete_loss', disc_loss.item())
+                    writer.add_scalar('discrete_gen_loss', gen_loss.item())
+                    writer.add_scalar('discrete_loss_filled_data', filled_data_loss.item())
+                    writer.add_scalar('discrete_loss_gen_adv', gen_adv_loss.item())
+                    writer.add_scalar('discrete_loss_adv_seg', adv_seg_loss.item())
+
 
                 # if epoch < 50:
                 if epoch < 1 and idx < 3000 and predict_seg:  # pretrain just iic (later just load pretrained one instead)
@@ -359,6 +370,7 @@ for epoch in range(0, num_epochs):
 
     # calculate average over epoch
     avg_loss = float(avg_loss / avg_loss_count)
+    avg_acc = float(avg_acc / avg_loss_count)
     avg_disc_loss = float(avg_disc_loss / avg_loss_count)
     avg_gen_loss = float(avg_gen_loss / avg_loss_count)
     avg_sf_data_loss = float(avg_sf_data_loss / avg_loss_count)
@@ -366,54 +378,72 @@ for epoch in range(0, num_epochs):
     avg_adv_seg_loss = float(avg_adv_seg_loss / avg_loss_count)
 
     if mode == 'train':
-        if not predict_seg:
-            train_acc = 100  # since not using iic
-        # keep track of accuracy to plot
-        ave_acc.append([train_acc])
+        #if not predict_seg:
+        #    train_acc = 100  # since not using iic
+        ## keep track of accuracy to plot
+        #ave_acc.append([train_acc])
 
-        ave_losses.append([avg_loss, avg_disc_loss, avg_gen_loss, avg_sf_data_loss, avg_gen_adv_loss,
-                           avg_adv_seg_loss])  # store for graphing
+
+        writer.add_scalar('avg_acc', avg_acc, epoch)
+        writer.add_scalar('avg_loss', avg_loss, epoch)
+        writer.add_scalar('avg_disc_loss', avg_disc_loss, epoch)
+        writer.add_scalar('avg_gen_loss', avg_gen_loss, epoch)
+        writer.add_scalar('avg_sf_data_loss', avg_sf_data_loss, epoch)
+        writer.add_scalar('avg_gen_adv_loss', avg_gen_adv_loss, epoch)
+        writer.add_scalar('avg_adv_seg_loss', avg_adv_seg_loss, epoch)
+
+        #ave_losses.append([avg_loss, avg_disc_loss, avg_gen_loss, avg_sf_data_loss, avg_gen_adv_loss,
+        #                   avg_adv_seg_loss])  # store for graphing
 
         # save lists of losses and accuracy as csv files for reading and graphing later
-        df0 = pd.DataFrame(list(zip(*ave_acc))).add_prefix('Col')
-        filename = 'loss_csvs/' + time_begin + '/cat_removal_acc_e' + str(epoch) + '_' + time_begin + '.csv'
-        print('saving to', filename)
-        df0.to_csv(filename, index=False)
+        #df0 = pd.DataFrame(list(zip(*ave_acc))).add_prefix('Col')
+        #filename = 'loss_csvs/' + time_begin + '/cat_removal_acc_e' + str(epoch) + '_' + time_begin + '.csv'
+        #print('saving to', filename)
+        #df0.to_csv(filename, index=False)
 
-        df1 = pd.DataFrame(list(zip(*ave_losses))).add_prefix('Col')
-        filename = 'loss_csvs/cat_removal_ave_e' + str(epoch) + '_' + time_begin + '.csv'
-        print('saving to', filename)
-        df1.to_csv(filename, index=False)
+        #df1 = pd.DataFrame(list(zip(*ave_losses))).add_prefix('Col')
+        #filename = 'loss_csvs/cat_removal_ave_e' + str(epoch) + '_' + time_begin + '.csv'
+        #print('saving to', filename)
+        #df1.to_csv(filename, index=False)
 
-        df2 = pd.DataFrame(list(zip(*discrete_losses))).add_prefix('Col')
-        filename = 'loss_csvs/cat_removal_discrete_e' + str(epoch) + '_' + time_begin + '.csv'
-        print('saving to', filename)
-        df2.to_csv(filename, index=False)
+        #df2 = pd.DataFrame(list(zip(*discrete_losses))).add_prefix('Col')
+        #filename = 'loss_csvs/cat_removal_discrete_e' + str(epoch) + '_' + time_begin + '.csv'
+        #print('saving to', filename)
+        #df2.to_csv(filename, index=False)
 
     elif mode == 'val':
-        if not predict_seg:
-            train_acc = 100  # since not using iic
+#        if not predict_seg:
+#            train_acc = 100  # since not using iic
+
+        writer.add_scalar('avg_acc', avg_acc, epoch)
+        writer.add_scalar('avg_loss', avg_loss, epoch)
+        writer.add_scalar('avg_disc_loss', avg_disc_loss, epoch)
+        writer.add_scalar('avg_gen_loss', avg_gen_loss, epoch)
+        writer.add_scalar('avg_sf_data_loss', avg_sf_data_loss, epoch)
+        writer.add_scalar('avg_gen_adv_loss', avg_gen_adv_loss, epoch)
+        writer.add_scalar('avg_adv_seg_loss', avg_adv_seg_loss, epoch)
+
         # keep track of accuracy to plot
-        val_ave_acc.append([train_acc])
+#        val_ave_acc.append([train_acc])
+#
+#        val_ave_losses.append([avg_loss, avg_disc_loss, avg_gen_loss, avg_sf_data_loss, avg_gen_adv_loss,
+#                           avg_adv_seg_loss])  # store for graphing
+#
+#        # save lists of losses and accuracy as csv files for reading and graphing later
+#        df0 = pd.DataFrame(list(zip(*val_ave_acc))).add_prefix('Col')
+#        filename = 'loss_csvs/' + time_begin + '/cat_removal_val_acc_e' + str(epoch) + '_' + time_begin + '.csv'
+#        print('saving to', filename)
+#        df0.to_csv(filename, index=False)
+#
+#        df1 = pd.DataFrame(list(zip(*val_ave_losses))).add_prefix('Col')
+#        filename = 'loss_csvs/cat_removal_val_ave_e' + str(epoch) + '_' + time_begin + '.csv'
+#        print('saving to', filename)
+#        df1.to_csv(filename, index=False)
+#
+#        df2 = pd.DataFrame(list(zip(*val_discrete_losses))).add_prefix('Col')
+#        filename = 'loss_csvs/cat_removal_val_discrete_e' + str(epoch) + '_' + time_begin + '.csv'
+#        print('saving to', filename)
+#        df2.to_csv(filename, index=False)
 
-        val_ave_losses.append([avg_loss, avg_disc_loss, avg_gen_loss, avg_sf_data_loss, avg_gen_adv_loss,
-                           avg_adv_seg_loss])  # store for graphing
 
-        # save lists of losses and accuracy as csv files for reading and graphing later
-        df0 = pd.DataFrame(list(zip(*val_ave_acc))).add_prefix('Col')
-        filename = 'loss_csvs/' + time_begin + '/cat_removal_val_acc_e' + str(epoch) + '_' + time_begin + '.csv'
-        print('saving to', filename)
-        df0.to_csv(filename, index=False)
-
-        df1 = pd.DataFrame(list(zip(*val_ave_losses))).add_prefix('Col')
-        filename = 'loss_csvs/cat_removal_val_ave_e' + str(epoch) + '_' + time_begin + '.csv'
-        print('saving to', filename)
-        df1.to_csv(filename, index=False)
-
-        df2 = pd.DataFrame(list(zip(*val_discrete_losses))).add_prefix('Col')
-        filename = 'loss_csvs/cat_removal_val_discrete_e' + str(epoch) + '_' + time_begin + '.csv'
-        print('saving to', filename)
-        df2.to_csv(filename, index=False)
-
-
-
+writer.close()
