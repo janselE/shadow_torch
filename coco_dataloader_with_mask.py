@@ -45,7 +45,7 @@ class CocoDataloader(torch.utils.data.Dataset):
     # Constructor
     def __init__(self, h,  use_random_scale=False, use_random_affine=True):
         self.imgs, self.mask = read_dataset(path)  # known name, this is for local
-        self.len = len(self.imgs)  # read all the images of the dataset
+        self.len_ = len(self.imgs)  # read all the images of the dataset
         self.h = h
         self.w = h
 
@@ -127,4 +127,4 @@ class CocoDataloader(torch.utils.data.Dataset):
         return img1, img2, affine2_to_1, mask_img1, mask_cat
 
     def __len__(self):
-        return len(self.mask)
+        return len(self.mask) 
