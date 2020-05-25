@@ -55,6 +55,8 @@ half_T_side_dense = 0
 half_T_side_sparse_min = 0
 half_T_side_sparse_max = 0
 
+curr = 0 # this is to correctly store values
+
 # Defining the learning rate, number of epochs and beta for the optimizers
 lr = 0.001
 beta1 = 0.5
@@ -288,11 +290,11 @@ for epoch in range(0, num_epochs):
                     #     [avg_loss_batch.item(), disc_loss.item(), gen_loss.item(), filled_data_loss.item(),
                     #      gen_adv_loss.item(), adv_seg_loss.item()])  # store for graphing
 
-                    writer.add_scalar('discrete_loss_validation', disc_loss.item(), idx)
-                    writer.add_scalar('discrete_gen_loss_validation', gen_loss.item(), idx)
-                    writer.add_scalar('discrete_loss_filled_data_validation', filled_data_loss.item(), idx)
-                    writer.add_scalar('discrete_loss_gen_adv_validation', gen_adv_loss.item(), idx)
-                    writer.add_scalar('discrete_loss_adv_seg_validation', adv_seg_loss.item(), idx)
+                    writer.add_scalar('discrete_loss_validation', disc_loss.item(), curr)
+                    writer.add_scalar('discrete_gen_loss_validation', gen_loss.item(), curr)
+                    writer.add_scalar('discrete_loss_filled_data_validation', filled_data_loss.item(), curr)
+                    writer.add_scalar('discrete_loss_gen_adv_validation', gen_adv_loss.item(), curr)
+                    writer.add_scalar('discrete_loss_adv_seg_validation', adv_seg_loss.item(), curr)
 
             elif mode == 'train':
 
@@ -302,11 +304,11 @@ for epoch in range(0, num_epochs):
                     #     [avg_loss_batch.item(), disc_loss.item(), gen_loss.item(), filled_data_loss.item(),
                     #      gen_adv_loss.item(), adv_seg_loss.item()])  # store for graphing
 
-                    writer.add_scalar('discrete_loss_train', disc_loss.item(), idx)
-                    writer.add_scalar('discrete_gen_loss_train', gen_loss.item(), idx)
-                    writer.add_scalar('discrete_loss_filled_data_train', filled_data_loss.item(), idx)
-                    writer.add_scalar('discrete_loss_gen_adv_train', gen_adv_loss.item(), idx)
-                    writer.add_scalar('discrete_loss_adv_seg_train', adv_seg_loss.item(), idx)
+                    writer.add_scalar('discrete_loss_train', disc_loss.item(), curr)
+                    writer.add_scalar('discrete_gen_loss_train', gen_loss.item(), curr)
+                    writer.add_scalar('discrete_loss_filled_data_train', filled_data_loss.item(), curr)
+                    writer.add_scalar('discrete_loss_gen_adv_train', gen_adv_loss.item(), curr)
+                    writer.add_scalar('discrete_loss_adv_seg_train', adv_seg_loss.item(), curr)
 
 
                 # if epoch < 50:
