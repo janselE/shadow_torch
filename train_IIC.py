@@ -146,11 +146,6 @@ for epoch in range(0, num_epochs):
         avg_acc += train_acc
         avg_acc_count += 1
 
-
-        if idx % 10 == 0:
-            discrete_losses.append([avg_loss_batch.item()])  # store for graphing
-#            discrete_losses.append([avg_loss_batch.item(), ssm_loss.item()])  # store for graphing
-
         if not np.isfinite(avg_loss_batch.item()):
             print("Loss is not finite... %s:" % str(avg_loss_batch))
             exit(1)
@@ -200,7 +195,6 @@ for epoch in range(0, num_epochs):
     writer.add_scalar('avg_loss', avg_loss, epoch)
 
 
-writer.close()
 
 #    if avg_loss < min_val_loss:
 #        epochs_no_improve = 0
@@ -210,3 +204,5 @@ writer.close()
 #    if epochs_no_improve == n_epochs_stop:
 #        print("Early Stopping")
 #        break
+
+writer.close()
