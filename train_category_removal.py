@@ -387,11 +387,11 @@ for epoch in range(0, num_epochs):
 
         writer.add_scalar('avg_acc_train', avg_acc, epoch)
         writer.add_scalar('avg_loss_train', avg_loss, epoch)
-        writer.add_scalar('avg_disc_loss_train', avg_disc_loss, epoch)
-        writer.add_scalar('avg_gen_loss_train', avg_gen_loss, epoch)
-        writer.add_scalar('avg_sf_data_loss_train', avg_sf_data_loss, epoch)
-        writer.add_scalar('avg_gen_adv_loss_train', avg_gen_adv_loss, epoch)
-        writer.add_scalar('avg_adv_seg_loss_train', avg_adv_seg_loss, epoch)
+        writer.add_scalar('avg_loss_disc_train', avg_disc_loss, epoch)
+        writer.add_scalar('avg_loss_gen_train', avg_gen_loss, epoch)
+        writer.add_scalar('avg_loss_sf_data__train', avg_sf_data_loss, epoch)
+        writer.add_scalar('avg_loss_gen_adv_train', avg_gen_adv_loss, epoch)
+        writer.add_scalar('avg_loss_adv_seg_train', avg_adv_seg_loss, epoch)
 
         #ave_losses.append([avg_loss, avg_disc_loss, avg_gen_loss, avg_sf_data_loss, avg_gen_adv_loss,
         #                   avg_adv_seg_loss])  # store for graphing
@@ -418,13 +418,12 @@ for epoch in range(0, num_epochs):
 
         writer.add_scalar('avg_acc_validation', avg_acc, epoch)
         writer.add_scalar('avg_loss_validation', avg_loss, epoch)
-        writer.add_scalar('avg_disc_loss_validation', avg_disc_loss, epoch)
-        writer.add_scalar('avg_gen_loss_validation', avg_gen_loss, epoch)
-        writer.add_scalar('avg_sf_data_loss_validation', avg_sf_data_loss, epoch)
-        writer.add_scalar('avg_gen_adv_loss_validation', avg_gen_adv_loss, epoch)
-        writer.add_scalar('avg_adv_seg_loss_validation', avg_adv_seg_loss, epoch)
+        writer.add_scalar('avg_loss_disc_validation', avg_disc_loss, epoch)
+        writer.add_scalar('avg_loss_gen_validation', avg_gen_loss, epoch)
+        writer.add_scalar('avg_loss_sf_data__validation', avg_sf_data_loss, epoch)
+        writer.add_scalar('avg_loss_gen_adv_validation', avg_gen_adv_loss, epoch)
+        writer.add_scalar('avg_loss_adv_seg_validation', avg_adv_seg_loss, epoch)
     curr += 1
-
 
         # keep track of accuracy to plot
 #        val_ave_acc.append([train_acc])
