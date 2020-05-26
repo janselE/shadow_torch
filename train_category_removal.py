@@ -423,6 +423,8 @@ for epoch in range(0, num_epochs):
         writer.add_scalar('avg_sf_data_loss_validation', avg_sf_data_loss, epoch)
         writer.add_scalar('avg_gen_adv_loss_validation', avg_gen_adv_loss, epoch)
         writer.add_scalar('avg_adv_seg_loss_validation', avg_adv_seg_loss, epoch)
+    curr += 1
+
 
         # keep track of accuracy to plot
 #        val_ave_acc.append([train_acc])
