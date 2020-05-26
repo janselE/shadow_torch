@@ -361,6 +361,7 @@ for epoch in range(0, num_epochs):
                 break
 
         torch.cuda.empty_cache()
+        curr += 1
         # change to make loop only go through portion of dataset since there are so many training files
         # validation set only needed for after IIC is trained alone (maximizing mutual info will not overfit training data)
 
@@ -423,7 +424,6 @@ for epoch in range(0, num_epochs):
         writer.add_scalar('avg_loss_sf_data__validation', avg_sf_data_loss, epoch)
         writer.add_scalar('avg_loss_gen_adv_validation', avg_gen_adv_loss, epoch)
         writer.add_scalar('avg_loss_adv_seg_validation', avg_adv_seg_loss, epoch)
-    curr += 1
 
         # keep track of accuracy to plot
 #        val_ave_acc.append([train_acc])
