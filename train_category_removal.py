@@ -224,6 +224,10 @@ for epoch in range(0, num_epochs):
                 x1_outs[0] = seg.cuda()
                 x2_outs[0] = seg.clone().cuda()
 
+            print(x1_outs)
+            print(x1_outs.shape)
+            exit()
+
             catx = randint(0, NUM_CLASSES - 1)
 
             # transform img1 and img2 based on segmentation output (black out catx)
@@ -357,8 +361,6 @@ for epoch in range(0, num_epochs):
                     # # this saves the model
                     torch.save(IIC.state_dict(), "saved_models/cat_removal_e{}_idx{}_{}.model".format(epoch, idx, time_begin))
 
-            if idx > 2000:  # only train on 2000 to save more ofter - just for initial testing
-                break
 
         torch.cuda.empty_cache()
         curr += 1
