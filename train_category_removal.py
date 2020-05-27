@@ -174,6 +174,7 @@ for epoch in range(0, num_epochs):
                 x1_outs = IIC(img1)
                 x2_outs = IIC(img2)
 
+                with tf.name_scope("input_reshape")
                 tf.summary.image("images", x1_outs[0][0], epoch)
                 exit()
 
