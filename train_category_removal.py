@@ -224,8 +224,9 @@ for epoch in range(0, num_epochs):
                 x1_outs[0] = seg.cuda()
                 x2_outs[0] = seg.clone().cuda()
 
-            print(x1_outs)
-            print(x1_outs.shape)
+            #print(x1_outs)
+            print(x1_outs[0].shape)
+            print(type(x1_outs[0]))
             exit()
 
             catx = randint(0, NUM_CLASSES - 1)
