@@ -201,9 +201,9 @@ for epoch in range(0, num_epochs):
 
 
                 pred = torch.argmax(x1_outs[0].cpu().detach(), dim=1)
-                with tf.name_scope("input_reshape"):
-                    tf.summary.image("images", pred, epoch)
-                exit()
+                #with tf.name_scope("input_reshape"):
+                #    tf.summary.image("images", pred, epoch)
+                #exit()
 
                 # this is for accuracy
                 flat_preds = pred.flatten()
