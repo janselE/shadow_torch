@@ -11,12 +11,12 @@ EPS = float_info.epsilon
 def IID_segmentation_loss(x1_outs, x2_outs, all_affine2_to_1=None, all_mask_img1=None, lamb=1.0,
                           half_T_side_dense=None, half_T_side_sparse_min=None,
                           half_T_side_sparse_max=None):
-    assert (x1_outs.requires_grad)
-    assert (x2_outs.requires_grad)
-    assert (not all_affine2_to_1.requires_grad)
-    assert (not all_mask_img1.requires_grad)
+    #assert (x1_outs.requires_grad)
+    #assert (x2_outs.requires_grad)
+    #assert (not all_affine2_to_1.requires_grad)
+    #assert (not all_mask_img1.requires_grad)
 
-    assert (x1_outs.shape == x2_outs.shape)
+    #assert (x1_outs.shape == x2_outs.shape)
 
     # bring x2 back into x1's spatial frame
     x2_outs_inv = perform_affine_tf(x2_outs, all_affine2_to_1)  # g^(-1) in paper
