@@ -350,22 +350,15 @@ for epoch in range(0, num_epochs):
                     disc_loss.backward()
                     optimizer_d.step()
 
-                # visualize outputs of first image in dataset every 1000 images
                 if idx % 1000 == 0:
-                    # o = transforms.ToPILImage()(img1[0].cpu().detach())
-                    # o.save("img_visual_checks/" + time_begin + "/test_img1_e{}_{}.png".format(epoch, time_begin))
-                    # o = transforms.ToPILImage()(img2[0].cpu().detach())
-                    # o.save("img_visual_checks/" + time_begin + "/test_img2_e{}_{}.png".format(epoch, time_begin))
-                    # shadow_mask1_pred_bw = torch.argmax(x1_outs[0].cpu().detach(),
-                    #                                     dim=1).numpy()  # gets black and white image
-                    # cv2.imwrite("img_visual_checks/" + time_begin + "/test_mask1_bw_e{}_{}.png".format(epoch, time_begin),
-                    #             shadow_mask1_pred_bw[0] * 255)
-                    # shadow_mask1_pred_grey = x1_outs[0][1].cpu().detach().numpy()  # gets probability pixel is black
-                    # cv2.imwrite("img_visual_checks/" + time_begin + "/test_mask1_grey_e{}_{}.png".format(epoch, time_begin),
-                    #             shadow_mask1_pred_grey[0] * 255)
-                    #
-                    # # this saves the model
-                    torch.save(IIC.state_dict(), "saved_models/cat_removal_e{}_idx{}_{}.model".format(epoch, idx, time_begin))
+                    torch.save({
+                        'epoch': epoch,
+                        'idx' : idx,
+                        'time_begin' : time_begin,
+                        'IIC_state_dict': IIC.state_dict(),
+                        'Gen_state_dict': Gen.state_dict(),
+                        'Disc_state_dict': Disc.state_dict(),
+                    }, "saved_models/cat_removal_e{}_idx{}_{}.model".format(epoch, idx, time_begin))
 
 
         torch.cuda.empty_cache()
