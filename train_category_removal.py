@@ -98,7 +98,7 @@ if coco:
     train_coco = 'data/instances_train2017.json'
     # train_dataloader = DataLoader(dataset=CocoDataloader(root=train_data_dir, annotation=train_coco, input_sz=input_sz, classes_path=None),
     #                         batch_size=batch_sz, shuffle=True, collate_fn=CocoDataloader.collate_fn, drop_last=True)
-    dataL = CocoDataloader(input_sz)
+    dataL = CocoDataloader(input_sz, mode="train")
     train_dataloader = DataLoader(dataset=dataL, batch_size=batch_sz, shuffle=True, drop_last=True)  # for coco add collate
 
     val_data_dir = 'data/val2017'
