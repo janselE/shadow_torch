@@ -26,7 +26,8 @@ from threading import Thread
 
 #path = '/Users/janselherrera/Documents/Projects/Research/Shadow/compressed/train2017_mask/*.jpg' # mac
 #path = '/home/jansel/Documents/Research/coco_dataset/data/train2017_mask/*.jpg' # msi
-path = 'data/train2017_mask/*.jpg' # server 
+path_train = 'data/train2017_mask/*.jpg' # server
+path_val = 'data/val2017_mask/*.jpg' # server
 
 
 # take as parameter the filename that we already know
@@ -43,8 +44,11 @@ def read_dataset(filename):
 
 class CocoDataloader(torch.utils.data.Dataset):
     # Constructor
-    def __init__(self, h,  use_random_scale=False, use_random_affine=True):
-        self.imgs, self.mask = read_dataset(path)  # known name, this is for local
+    def __init__(self, h,  use_random_scale=False, use_random_affine=True, mode="train"):
+        if mode == "train":
+            self.imgs, self.mask = read_dataset(path_train)  # known name, this is for local
+        else:
+            self.imgs, self.mask = read_dataset(path_val)  # known name, this is for local
         self.len_ = len(self.imgs)  # read all the images of the dataset
         self.h = h
         self.w = h
