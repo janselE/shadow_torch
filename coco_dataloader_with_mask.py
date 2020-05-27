@@ -49,6 +49,7 @@ class CocoDataloader(torch.utils.data.Dataset):
             self.imgs, self.mask = read_dataset(path_train)  # known name, this is for local
         else:
             self.imgs, self.mask = read_dataset(path_val)  # known name, this is for local
+
         self.len_ = len(self.imgs)  # read all the images of the dataset
         self.h = h
         self.w = h
