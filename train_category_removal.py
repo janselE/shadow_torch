@@ -103,6 +103,9 @@ if coco:
 
     val_data_dir = 'data/val2017'
     val_coco = 'data/instances_val2017.json'
+
+    dataL = CocoDataloader(input_sz, mode="train")
+    val_dataloader = DataLoader(dataset=dataL, batch_size=batch_sz, shuffle=True, drop_last=True)  # for coco add collate
     # there is no option for using validation set yet
     # val_dataloader = DataLoader(dataset=CocoDataloader(root=train_data_dir, annotation=train_coco, input_sz=input_sz, classes_path=None),
     #                         batch_size=batch_sz, shuffle=True, collate_fn=CocoDataloader.collate_fn, drop_last=True)
@@ -130,7 +133,7 @@ for epoch in range(0, num_epochs):
     print("Starting epoch: %d " % (epoch))
 
     # for mode in ['train', 'val']:
-    for mode in ['train']:  # since val set is not loadable yet
+    for mode in ['train', 'val']:  # since val set is not loadable yet
         if mode == 'train':
             torch.set_grad_enabled(True)
             dataloader = train_dataloader
