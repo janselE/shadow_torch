@@ -19,6 +19,7 @@ from coco_dataloader_with_mask import CocoDataloader
 from image_loader_cityscapes import CityscapesLoader
 
 from torch.utils.tensorboard import SummaryWriter
+import tensorflow as tf
 
 from eval import eval_acc
 
@@ -173,6 +174,10 @@ for epoch in range(0, num_epochs):
                 x1_outs = IIC(img1)
                 x2_outs = IIC(img2)
 
+                tf.summary.image("images", x1_outs[0][0], epoch)
+                exit()
+
+
                 # batch is passed through each subhead to calculate loss, store average loss per sub_head
                 avg_loss_batch = None
                 avg_loss_no_lamb_batch = None
@@ -224,9 +229,6 @@ for epoch in range(0, num_epochs):
                 x1_outs[0] = seg.cuda()
                 x2_outs[0] = seg.clone().cuda()
 
-            print(x1_outs)
-            print(x1_outs.shape)
-            exit()
 
             catx = randint(0, NUM_CLASSES - 1)
 
