@@ -174,9 +174,6 @@ for epoch in range(0, num_epochs):
                 x1_outs = IIC(img1)
                 x2_outs = IIC(img2)
 
-                with tf.name_scope("input_reshape"):
-                    tf.summary.image("images", x1_outs[0][0], epoch)
-                exit()
 
 
                 # batch is passed through each subhead to calculate loss, store average loss per sub_head
@@ -202,8 +199,14 @@ for epoch in range(0, num_epochs):
                 # avg_loss_batch *= -1 # this is to make the loss positive, only flip the labels
                 avg_loss_no_lamb_batch /= num_sub_heads
 
+
+                pred = torch.argmax(x1_outs[0].cpu().detach(), dim=1)
+                with tf.name_scope("input_reshape"):
+                    tf.summary.image("images", pred, epoch)
+                exit()
+
                 # this is for accuracy
-                flat_preds = torch.argmax(x1_outs[0].cpu().detach(), dim=1).flatten()
+                flat_preds = pred.flatten()
                 flat_targets = shadow_mask1.clone().cpu().detach().flatten()
 
                 train_acc = eval_acc(flat_preds, flat_targets)
