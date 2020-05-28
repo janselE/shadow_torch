@@ -56,7 +56,7 @@ half_T_side_dense = 0
 half_T_side_sparse_min = 0
 half_T_side_sparse_max = 0
 
-curr = 0 # this is to correctly store values
+curr = -1 # this is to correctly store values
 
 # Defining the learning rate, number of epochs and beta for the optimizers
 lr = 0.001
@@ -176,6 +176,8 @@ for epoch in range(0, num_epochs):
 
                 x1_outs = IIC(img1)
                 x2_outs = IIC(img2)
+            curr += 1
+            print("The curr value is ", curr)
 
 
                 # batch is passed through each subhead to calculate loss, store average loss per sub_head
@@ -379,7 +381,6 @@ for epoch in range(0, num_epochs):
 
 
         torch.cuda.empty_cache()
-        curr += 1
         # change to make loop only go through portion of dataset since there are so many training files
         # validation set only needed for after IIC is trained alone (maximizing mutual info will not overfit training data)
 
