@@ -177,6 +177,16 @@ for epoch in range(0, num_epochs):
                 x1_outs = IIC(img1)
                 x2_outs = IIC(img2)
 
+                # add tensorboard for images here
+                # we can test it in this section
+                # then move it to a better location
+
+                img_to_board = torch.argmax(x1_outs[0].cpu().detach(), dim=1).numpy()  # gets black and white image
+                writer.add_image('images', img_to_board, 0)
+
+
+
+
 
 
                 # batch is passed through each subhead to calculate loss, store average loss per sub_head
@@ -185,11 +195,11 @@ for epoch in range(0, num_epochs):
 
                 for i in range(num_sub_heads):
                     loss, loss_no_lamb = iic_loss(x1_outs[i], x2_outs[i],
-                                                  all_affine2_to_1=affine2_to_1,
-                                                  all_mask_img1=mask_img1, lamb=lamb,
-                                                  half_T_side_dense=half_T_side_dense,
-                                                  half_T_side_sparse_min=half_T_side_sparse_min,
-                                                  half_T_side_sparse_max=half_T_side_sparse_max)
+                            all_affine2_to_1=affine2_to_1,
+                            all_mask_img1=mask_img1, lamb=lamb,
+                            half_T_side_dense=half_T_side_dense,
+                            half_T_side_sparse_min=half_T_side_sparse_min,
+                            half_T_side_sparse_max=half_T_side_sparse_max)
 
                     if avg_loss_batch is None:
                         avg_loss_batch = loss
@@ -227,8 +237,8 @@ for epoch in range(0, num_epochs):
                 # assert torch.is_tensor(x1_outs[0])  # x1_outs is list of tensors from each subhead
 
             # use ground truth segmentation in place of both predictions
-            else:
-                img, seg = data
+        else:
+            img, seg = data
                 img1 = img.cuda()
                 img2 = img.clone().cuda()
                 x1_outs = [torch.zeros([1, 1, 1, 1])]  # size doesn't matter since will be replaced
@@ -257,7 +267,7 @@ for epoch in range(0, num_epochs):
 
             # catx is 0s in both, so L1 loss will not consider/effect catx regions
             filled_data_loss = criterion_g_data(img1_filled_rb, img1_no_catx) + criterion_g_data(img2_filled_rb,
-                                                                                                 img2_no_catx)
+                    img2_no_catx)
 
             # use discriminator
             prob_img1_nc_real = Disc(img1_no_catx.detach())
@@ -273,7 +283,7 @@ for epoch in range(0, num_epochs):
 
             # blacked out regions are the same in both discriminator inputs, so will not backprop or effect generator
             disc_loss = criterion_d(prob_img1_rb_pred, FAKE_t) + criterion_d(prob_img1_nc_real, REAL_t) + \
-                        criterion_d(prob_img2_rb_pred, FAKE_t) + criterion_d(prob_img2_nc_real, REAL_t)
+                    criterion_d(prob_img2_rb_pred, FAKE_t) + criterion_d(prob_img2_nc_real, REAL_t)
             gen_adv_loss = criterion_d(prob_img1_rb_pred_adv, REAL_t) + criterion_d(prob_img2_rb_pred_adv, REAL_t)
 
             # use IIC to enforce that filled images do not contain catX
@@ -281,7 +291,7 @@ for epoch in range(0, num_epochs):
             xx1_outs = IIC(img1_filled)
             xx2_outs = IIC(img2_filled)
             adv_seg_loss = custom_loss_iic(xx1_outs[0], catx, criterion_iic_d) + \
-                           custom_loss_iic(xx2_outs[0], catx, criterion_iic_d)
+                    custom_loss_iic(xx2_outs[0], catx, criterion_iic_d)
 
             # loss for Gwn only, not IIC
             gen_loss = filled_data_loss + gen_adv_loss + adv_seg_loss
@@ -361,10 +371,10 @@ for epoch in range(0, num_epochs):
                         'IIC_state_dict': IIC.state_dict(),
                         'Gen_state_dict': Gen.state_dict(),
                         'Disc_state_dict': Disc.state_dict(),
-                    }, "saved_models/cat_removal_e{}_idx{}_{}.model".format(epoch, idx, time_begin))
+                        }, "saved_models/cat_removal_e{}_idx{}_{}.model".format(epoch, idx, time_begin))
 
 
-        torch.cuda.empty_cache()
+                    torch.cuda.empty_cache()
         curr += 1
         # change to make loop only go through portion of dataset since there are so many training files
         # validation set only needed for after IIC is trained alone (maximizing mutual info will not overfit training data)
@@ -418,7 +428,7 @@ for epoch in range(0, num_epochs):
         #df2.to_csv(filename, index=False)
 
     elif mode == 'val':
-#        if not predict_seg:
+        #        if not predict_seg:
 #            train_acc = 100  # since not using iic
 
         writer.add_scalar('avg_acc_validation', avg_acc, epoch)
