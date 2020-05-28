@@ -179,6 +179,8 @@ for epoch in range(0, num_epochs):
 
                 # here some lines for tensorboard image
                 img_to_board = torch.argmax(x1_outs[0].cpu().detach(), dim=1).numpy()  # gets black and white image
+                o = transforms.ToPILImage()(img1[0].cpu().detach())
+                writer.add_image('original', o, 0)
                 writer.add_image('images', img_to_board, 0)
 
 
