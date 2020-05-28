@@ -318,11 +318,11 @@ for epoch in range(0, num_epochs):
 
             elif mode == 'train':
                 # this consecutive lines are for the image on tensorboard
-                print(x1_outs[0].shape)
-                print(img1[0].shape)
-                exit()
                 if curr % 500 == 0:
                     img_to_board = torch.argmax(x1_outs[0].cpu().detach(), dim=1).numpy()  # gets black and white image
+                    print(img_to_board[0].shape)
+                    print(img1[0].shape)
+                    exit()
                     o = img1[0].cpu().detach()
                     writer.add_image('train_original', o, curr)
                     writer.add_image('train_images', img_to_board, curr)
