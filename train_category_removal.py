@@ -178,8 +178,6 @@ for epoch in range(0, num_epochs):
                 x2_outs = IIC(img2)
 
 
-
-
                 # batch is passed through each subhead to calculate loss, store average loss per sub_head
                 avg_loss_batch = None
                 avg_loss_no_lamb_batch = None
@@ -379,7 +377,7 @@ for epoch in range(0, num_epochs):
 
 
         torch.cuda.empty_cache()
-        curr += 1
+    curr += 1
         # change to make loop only go through portion of dataset since there are so many training files
         # validation set only needed for after IIC is trained alone (maximizing mutual info will not overfit training data)
 
