@@ -301,6 +301,7 @@ for epoch in range(0, num_epochs):
                     o = img1[0].cpu().detach()
                     writer.add_image('val_original', o, curr)
                     writer.add_image('val_images', img_to_board, curr)
+                    print("adding for validation", curr)
 
                 if idx % 10 == 0:
                     # switch back if using iic
@@ -321,6 +322,7 @@ for epoch in range(0, num_epochs):
                     o = img1[0].cpu().detach()
                     writer.add_image('train_original', o, curr)
                     writer.add_image('train_images', img_to_board, curr)
+                    print("adding for training", curr)
 
                 if idx % 10 == 0:
                     # switch back if using iic
@@ -377,7 +379,7 @@ for epoch in range(0, num_epochs):
 
 
         torch.cuda.empty_cache()
-    curr += 1
+        curr += 1
         # change to make loop only go through portion of dataset since there are so many training files
         # validation set only needed for after IIC is trained alone (maximizing mutual info will not overfit training data)
 
