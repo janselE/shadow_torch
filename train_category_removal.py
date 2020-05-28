@@ -178,7 +178,6 @@ for epoch in range(0, num_epochs):
                 x2_outs = IIC(img2)
 
                 curr += 1
-                print("The curr value is ", curr)
 
 
                 # batch is passed through each subhead to calculate loss, store average loss per sub_head
@@ -210,14 +209,6 @@ for epoch in range(0, num_epochs):
                 #    tf.summary.image("images", pred, epoch)
                 #exit()
 
-                # this is for accuracy
-                flat_preds = pred.flatten()
-                flat_targets = shadow_mask1.clone().cpu().detach().flatten()
-
-                train_acc = eval_acc(flat_preds, flat_targets)
-                avg_acc += train_acc
-                avg_acc_count += 1
-
                 if not np.isfinite(avg_loss_batch.item()):
                     print("Loss is not finite... %s:" % str(avg_loss_batch))
                     exit(1)
@@ -237,6 +228,14 @@ for epoch in range(0, num_epochs):
                 x2_outs = [torch.zeros([1, 1, 1, 1])]
                 x1_outs[0] = seg.cuda()
                 x2_outs[0] = seg.clone().cuda()
+
+            # this is for accuracy
+            flat_preds = torch.argmax(x1_outs[0].cpu().detach(), dim=1).flatten()
+            flat_targets = shadow_mask1.clone().cpu().detach().flatten()
+
+            train_acc = eval_acc(flat_preds, flat_targets)
+            avg_acc += train_acc
+            avg_acc_count += 1
 
 
             catx = randint(0, NUM_CLASSES - 1)
@@ -307,7 +306,6 @@ for epoch in range(0, num_epochs):
                     writer.add_image('val_images', img_to_board, curr)
                     writer.add_image('val_mask', img_to_board, curr)
                     writer.add_image('val_images_filled', img2_to_board, curr)
-                    print("adding for validation", curr)
 
                 if idx % 10 == 0:
                     # switch back if using iic
@@ -315,6 +313,7 @@ for epoch in range(0, num_epochs):
                     #     [avg_loss_batch.item(), disc_loss.item(), gen_loss.item(), filled_data_loss.item(),
                     #      gen_adv_loss.item(), adv_seg_loss.item()])  # store for graphing
 
+                    writer.add_scalar('discrete_acc_validation', train_acc, curr)
                     writer.add_scalar('discrete_loss_validation', disc_loss.item(), curr)
                     writer.add_scalar('discrete_loss_gen_validation', gen_loss.item(), curr)
                     writer.add_scalar('discrete_loss_filled_data_validation', filled_data_loss.item(), curr)
@@ -330,7 +329,6 @@ for epoch in range(0, num_epochs):
                     writer.add_image('train_original', o, curr)
                     writer.add_image('train_images', img_to_board, curr)
                     writer.add_image('train_images_filled', img2_to_board, curr)
-                    print("adding for training", curr)
 
                 if idx % 10 == 0:
                     # switch back if using iic
@@ -339,6 +337,7 @@ for epoch in range(0, num_epochs):
                     #      gen_adv_loss.item(), adv_seg_loss.item()])  # store for graphing
 
 
+                    writer.add_scalar('discrete_acc_train', train_acc, curr)
                     writer.add_scalar('discrete_loss_train', disc_loss.item(), curr)
                     writer.add_scalar('discrete_loss_gen_train', gen_loss.item(), curr)
                     writer.add_scalar('discrete_loss_filled_data_train', filled_data_loss.item(), curr)
