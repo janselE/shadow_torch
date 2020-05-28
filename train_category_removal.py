@@ -177,11 +177,6 @@ for epoch in range(0, num_epochs):
                 x1_outs = IIC(img1)
                 x2_outs = IIC(img2)
 
-                # here some lines for tensorboard image
-                img_to_board = torch.argmax(x1_outs[0].cpu().detach(), dim=1).numpy()  # gets black and white image
-                o = img1[0].cpu().detach()
-                writer.add_image('original', o, 0)
-                writer.add_image('images', img_to_board, 0)
 
 
 
@@ -302,6 +297,12 @@ for epoch in range(0, num_epochs):
             avg_adv_seg_loss += adv_seg_loss.item()
 
             if mode == 'val':
+                # this consecutive lines are for the image on tensorboard
+                if curr % 500 == 0:
+                    img_to_board = torch.argmax(x1_outs[0].cpu().detach(), dim=1).numpy()  # gets black and white image
+                    o = img1[0].cpu().detach()
+                    writer.add_image('val_original', o, curr)
+                    writer.add_image('val_images', img_to_board, curr)
 
                 if idx % 10 == 0:
                     # switch back if using iic
@@ -316,12 +317,19 @@ for epoch in range(0, num_epochs):
                     writer.add_scalar('discrete_loss_adv_seg_validation', adv_seg_loss.item(), curr)
 
             elif mode == 'train':
+                # this consecutive lines are for the image on tensorboard
+                if curr % 500 == 0:
+                    img_to_board = torch.argmax(x1_outs[0].cpu().detach(), dim=1).numpy()  # gets black and white image
+                    o = img1[0].cpu().detach()
+                    writer.add_image('train_original', o, curr)
+                    writer.add_image('train_images', img_to_board, curr)
 
                 if idx % 10 == 0:
                     # switch back if using iic
                     # discrete_losses.append(
                     #     [avg_loss_batch.item(), disc_loss.item(), gen_loss.item(), filled_data_loss.item(),
                     #      gen_adv_loss.item(), adv_seg_loss.item()])  # store for graphing
+
 
                     writer.add_scalar('discrete_loss_train', disc_loss.item(), curr)
                     writer.add_scalar('discrete_loss_gen_train', gen_loss.item(), curr)
