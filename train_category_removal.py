@@ -176,8 +176,9 @@ for epoch in range(0, num_epochs):
 
                 x1_outs = IIC(img1)
                 x2_outs = IIC(img2)
-            curr += 1
-            print("The curr value is ", curr)
+
+                curr += 1
+                print("The curr value is ", curr)
 
 
                 # batch is passed through each subhead to calculate loss, store average loss per sub_head
