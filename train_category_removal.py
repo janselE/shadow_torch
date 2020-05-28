@@ -301,7 +301,7 @@ for epoch in range(0, num_epochs):
                 # this consecutive lines are for the image on tensorboard
                 if curr % 500 == 0:
                     img_to_board = torch.argmax(x1_outs[0].cpu().detach(), dim=1).numpy()  # gets black and white image
-                    img2_to_board = img2_filled[0].cpu().detach()
+                    img2_to_board = img1_filled[0].cpu().detach()
                     o = img1[0].cpu().detach()
                     writer.add_image('val_original', o, curr)
                     writer.add_image('val_images', img_to_board, curr)
@@ -325,7 +325,7 @@ for epoch in range(0, num_epochs):
                 # this consecutive lines are for the image on tensorboard
                 if curr % 500 == 0:
                     img_to_board = torch.argmax(x1_outs[0].cpu().detach(), dim=1).numpy()  # gets black and white image
-                    img2_to_board = img2_filled[0].cpu().detach()
+                    img2_to_board = img1_filled[0].cpu().detach()
                     o = img1[0].cpu().detach()
                     writer.add_image('train_original', o, curr)
                     writer.add_image('train_images', img_to_board, curr)
