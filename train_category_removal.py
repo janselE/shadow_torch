@@ -301,9 +301,12 @@ for epoch in range(0, num_epochs):
                 # this consecutive lines are for the image on tensorboard
                 if curr % 500 == 0:
                     img_to_board = torch.argmax(x1_outs[0].cpu().detach(), dim=1).numpy()  # gets black and white image
+                    img2_to_board = img2_filled[0].cpu().detach()
                     o = img1[0].cpu().detach()
                     writer.add_image('val_original', o, curr)
                     writer.add_image('val_images', img_to_board, curr)
+                    writer.add_image('val_mask', img_to_board, curr)
+                    writer.add_image('val_images_filled', img2_to_board, curr)
                     print("adding for validation", curr)
 
                 if idx % 10 == 0:
@@ -322,9 +325,11 @@ for epoch in range(0, num_epochs):
                 # this consecutive lines are for the image on tensorboard
                 if curr % 500 == 0:
                     img_to_board = torch.argmax(x1_outs[0].cpu().detach(), dim=1).numpy()  # gets black and white image
+                    img2_to_board = img2_filled[0].cpu().detach()
                     o = img1[0].cpu().detach()
                     writer.add_image('train_original', o, curr)
                     writer.add_image('train_images', img_to_board, curr)
+                    writer.add_image('train_images_filled', img2_to_board, curr)
                     print("adding for training", curr)
 
                 if idx % 10 == 0:
