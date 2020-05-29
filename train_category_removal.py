@@ -51,6 +51,7 @@ writer = SummaryWriter(board)
 
 lamb = 1.0  # will make loss equal to loss_no_lamb
 batch_sz = 1
+ACCUMULATION_STEPS = 10  # effectively makes batch size ACCUMULATION_STEPS * batch_sz
 num_sub_heads = 1
 half_T_side_dense = 0
 half_T_side_sparse_min = 0
@@ -360,19 +361,25 @@ for epoch in range(0, num_epochs):
                     train_disc = True
 
                 if train_iic_only:
-                    optimizer_iic.zero_grad()
+                    # optimizer_iic.zero_grad()
                     avg_loss_batch.backward()
-                    optimizer_iic.step()  # important that this optimizer steps before adv_seg_loss.backward() is called
+                    if (idx + 1) % ACCUMULATION_STEPS == 0:
+                        optimizer_iic.step()  # important that this optimizer steps before adv_seg_loss.backward() is called
+                        optimizer_iic.zero_grad()
 
                 if train_gen:
-                    optimizer_g.zero_grad()
+                    # optimizer_g.zero_grad()
                     gen_loss.backward()
-                    optimizer_g.step()  # only includes Gen params, not IIC params
+                    if (idx + 1) % ACCUMULATION_STEPS == 0:
+                        optimizer_g.step()  # only includes Gen params, not IIC params
+                        optimizer_g.zero_grad()
 
                 if train_disc:
-                    optimizer_d.zero_grad()
+                    # optimizer_d.zero_grad()
                     disc_loss.backward()
-                    optimizer_d.step()
+                    if (idx + 1) % ACCUMULATION_STEPS == 0:
+                        optimizer_d.step()
+                        optimizer_d.zero_grad()
 
                 if idx % 1000 == 0:
                     torch.save({
