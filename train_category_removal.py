@@ -22,6 +22,7 @@ from torch.utils.tensorboard import SummaryWriter
 import tensorflow as tf
 
 from eval import eval_acc
+from color_segmentation import Color_Mask
 
 
 
@@ -86,6 +87,10 @@ criterion_iic_d = torch.nn.L1Loss()
 optimizer_iic = torch.optim.Adam(IIC.parameters(), lr=lr, betas=(beta1, 0.1))
 optimizer_g = torch.optim.Adam(Gen.parameters(), lr=lr, betas=(beta1, 0.1))
 optimizer_d = torch.optim.Adam(Disc.parameters(), lr=lr, betas=(beta1, 0.1))
+
+
+# this creates an object of that would color the mask
+color_mapper = Color_Mask(NUM_CLASSES)
 
 # switch to just load img1, img2, affine2_to_1, mask as is used in IIC paper
 # dataloader = DataLoader(dataset=ShadowShadowFreeDataset(h, w, use_random_scale=False, use_random_affine=True),
@@ -302,10 +307,10 @@ for epoch in range(0, num_epochs):
                     img_to_board = torch.argmax(x1_outs[0].cpu().detach(), dim=1).numpy()  # gets black and white image
                     img2_to_board = img1_filled[0].cpu().detach()
                     o = img1[0].cpu().detach()
-                    writer.add_image('val_original', o, curr)
-                    writer.add_image('val_images', img_to_board, curr)
-                    writer.add_image('val_mask', img_to_board, curr)
-                    writer.add_image('val_images_filled', img2_to_board, curr)
+                    writer.add_image('images/val_original', o, curr)
+                    writer.add_image('images/val_images', img_to_board, curr)
+                    writer.add_image('images/val_mask', img_to_board, curr)
+                    writer.add_image('images/val_images_filled', img2_to_board, curr)
 
                 if idx % 10 == 0:
                     # switch back if using iic
@@ -313,22 +318,23 @@ for epoch in range(0, num_epochs):
                     #     [avg_loss_batch.item(), disc_loss.item(), gen_loss.item(), filled_data_loss.item(),
                     #      gen_adv_loss.item(), adv_seg_loss.item()])  # store for graphing
 
-                    writer.add_scalar('discrete_acc_validation', train_acc, curr)
-                    writer.add_scalar('discrete_loss_validation', disc_loss.item(), curr)
-                    writer.add_scalar('discrete_loss_gen_validation', gen_loss.item(), curr)
-                    writer.add_scalar('discrete_loss_filled_data_validation', filled_data_loss.item(), curr)
-                    writer.add_scalar('discrete_loss_gen_adv_validation', gen_adv_loss.item(), curr)
-                    writer.add_scalar('discrete_loss_adv_seg_validation', adv_seg_loss.item(), curr)
+                    writer.add_scalar('accuracy/discrete_acc_validation', train_acc, curr)
+                    writer.add_scalar('loss/discrete_loss_validation', disc_loss.item(), curr)
+                    writer.add_scalar('loss/discrete_loss_gen_validation', gen_loss.item(), curr)
+                    writer.add_scalar('loss/discrete_loss_filled_data_validation', filled_data_loss.item(), curr)
+                    writer.add_scalar('loss/discrete_loss_gen_adv_validation', gen_adv_loss.item(), curr)
+                    writer.add_scalar('loss/discrete_loss_adv_seg_validation', adv_seg_loss.item(), curr)
 
             elif mode == 'train':
                 # this consecutive lines are for the image on tensorboard
                 if curr % 500 == 0:
                     img_to_board = torch.argmax(x1_outs[0].cpu().detach(), dim=1).numpy()  # gets black and white image
+                    color_mapper.add_color(img_to_board) # here is stopped for today, pull first pull from the server and merge both versions
                     img2_to_board = img1_filled[0].cpu().detach()
                     o = img1[0].cpu().detach()
-                    writer.add_image('train_original', o, curr)
-                    writer.add_image('train_images', img_to_board, curr)
-                    writer.add_image('train_images_filled', img2_to_board, curr)
+                    writer.add_image('images/train_original', o, curr)
+                    writer.add_image('images/train_images', img_to_board, curr)
+                    writer.add_image('images/train_images_filled', img_to_board, curr)
 
                 if idx % 10 == 0:
                     # switch back if using iic
@@ -337,12 +343,12 @@ for epoch in range(0, num_epochs):
                     #      gen_adv_loss.item(), adv_seg_loss.item()])  # store for graphing
 
 
-                    writer.add_scalar('discrete_acc_train', train_acc, curr)
-                    writer.add_scalar('discrete_loss_train', disc_loss.item(), curr)
-                    writer.add_scalar('discrete_loss_gen_train', gen_loss.item(), curr)
-                    writer.add_scalar('discrete_loss_filled_data_train', filled_data_loss.item(), curr)
-                    writer.add_scalar('discrete_loss_gen_adv_train', gen_adv_loss.item(), curr)
-                    writer.add_scalar('discrete_loss_adv_seg_train', adv_seg_loss.item(), curr)
+                    writer.add_scalar('accuracy/discrete_acc_train', train_acc, curr)
+                    writer.add_scalar('loss/discrete_loss_train', disc_loss.item(), curr)
+                    writer.add_scalar('loss/discrete_loss_gen_train', gen_loss.item(), curr)
+                    writer.add_scalar('loss/discrete_loss_filled_data_train', filled_data_loss.item(), curr)
+                    writer.add_scalar('loss/discrete_loss_gen_adv_train', gen_adv_loss.item(), curr)
+                    writer.add_scalar('loss/discrete_loss_adv_seg_train', adv_seg_loss.item(), curr)
 
 
                 # if epoch < 50:
@@ -410,13 +416,13 @@ for epoch in range(0, num_epochs):
         #ave_acc.append([train_acc])
 
 
-        writer.add_scalar('avg_acc_train', avg_acc, epoch)
-        writer.add_scalar('avg_loss_train', avg_loss, epoch)
-        writer.add_scalar('avg_loss_disc_train', avg_disc_loss, epoch)
-        writer.add_scalar('avg_loss_gen_train', avg_gen_loss, epoch)
-        writer.add_scalar('avg_loss_sf_data__train', avg_sf_data_loss, epoch)
-        writer.add_scalar('avg_loss_gen_adv_train', avg_gen_adv_loss, epoch)
-        writer.add_scalar('avg_loss_adv_seg_train', avg_adv_seg_loss, epoch)
+        writer.add_scalar('accuracy/avg_acc_train', avg_acc, epoch)
+        writer.add_scalar('loss/avg_loss_train', avg_loss, epoch)
+        writer.add_scalar('loss/avg_loss_disc_train', avg_disc_loss, epoch)
+        writer.add_scalar('loss/avg_loss_gen_train', avg_gen_loss, epoch)
+        writer.add_scalar('loss/avg_loss_sf_data__train', avg_sf_data_loss, epoch)
+        writer.add_scalar('loss/avg_loss_gen_adv_train', avg_gen_adv_loss, epoch)
+        writer.add_scalar('loss/avg_loss_adv_seg_train', avg_adv_seg_loss, epoch)
 
         #ave_losses.append([avg_loss, avg_disc_loss, avg_gen_loss, avg_sf_data_loss, avg_gen_adv_loss,
         #                   avg_adv_seg_loss])  # store for graphing
@@ -441,13 +447,13 @@ for epoch in range(0, num_epochs):
 #        if not predict_seg:
 #            train_acc = 100  # since not using iic
 
-        writer.add_scalar('avg_acc_validation', avg_acc, epoch)
-        writer.add_scalar('avg_loss_validation', avg_loss, epoch)
-        writer.add_scalar('avg_loss_disc_validation', avg_disc_loss, epoch)
-        writer.add_scalar('avg_loss_gen_validation', avg_gen_loss, epoch)
-        writer.add_scalar('avg_loss_sf_data__validation', avg_sf_data_loss, epoch)
-        writer.add_scalar('avg_loss_gen_adv_validation', avg_gen_adv_loss, epoch)
-        writer.add_scalar('avg_loss_adv_seg_validation', avg_adv_seg_loss, epoch)
+        writer.add_scalar('accuracy/avg_acc_validation', avg_acc, epoch)
+        writer.add_scalar('loss/avg_loss_validation', avg_loss, epoch)
+        writer.add_scalar('loss/avg_loss_disc_validation', avg_disc_loss, epoch)
+        writer.add_scalar('loss/avg_loss_gen_validation', avg_gen_loss, epoch)
+        writer.add_scalar('loss/avg_loss_sf_data__validation', avg_sf_data_loss, epoch)
+        writer.add_scalar('loss/avg_loss_gen_adv_validation', avg_gen_adv_loss, epoch)
+        writer.add_scalar('loss/avg_loss_adv_seg_validation', avg_adv_seg_loss, epoch)
 
         # keep track of accuracy to plot
 #        val_ave_acc.append([train_acc])
