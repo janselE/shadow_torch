@@ -10,9 +10,9 @@ class Color_Mask:
         self.blue  = []
 
         for i in range(0, self.output):
-            self.red.append(random.randint(0, 256))
-            self.green.append(random.randint(0, 256))
-            self.blue.append(random.randint(0, 256))
+            self.red.append(random.randint(0, 255))
+            self.green.append(random.randint(0, 255))
+            self.blue.append(random.randint(0, 255))
 
     def add_color(self, tensor):
         tensor = tensor.squeeze()
