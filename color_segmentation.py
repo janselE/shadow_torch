@@ -19,9 +19,15 @@ class Color_Mask:
         segmentation = torch.zeros(3, tensor.shape[0], tensor.shape[1]).to(torch.uint8)
 
         for category in range(0, self.output):
-            segmentation[0, tensor == category] = self.red[category]
-            segmentation[1, tensor == category] = self.green[category]
-            segmentation[2, tensor == category] = self.blue[category]
+            if category == 0:
+                segmentation[0, tensor == category] = 0
+                segmentation[1, tensor == category] = 0
+                segmentation[2, tensor == category] = 0
+
+            else:
+                segmentation[0, tensor == category] = self.red[category]
+                segmentation[1, tensor == category] = self.green[category]
+                segmentation[2, tensor == category] = self.blue[category]
 
         return segmentation
 

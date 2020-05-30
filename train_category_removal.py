@@ -306,10 +306,11 @@ for epoch in range(0, num_epochs):
                 # this consecutive lines are for the image on tensorboard
                 if curr % 500 == 0:
                     img_to_board = torch.argmax(x1_outs[0].cpu().detach(), dim=1).numpy()  # gets black and white image
+                    color = color_mapper.add_color(img_to_board) # this is where we send the mask to the scrip
                     img2_to_board = img1_filled[0].cpu().detach()
                     o = img1[0].cpu().detach()
                     writer.add_image('images/val_original', o, curr)
-                    writer.add_image('images/val_images', img_to_board, curr)
+                    writer.add_image('images/val_images', color, curr)
                     writer.add_image('images/val_mask', img_to_board, curr)
                     writer.add_image('images/val_images_filled', img2_to_board, curr)
 
