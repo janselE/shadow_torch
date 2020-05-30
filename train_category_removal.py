@@ -336,7 +336,7 @@ for epoch in range(0, num_epochs):
                     o = img1[0].cpu().detach()
                     writer.add_image('images/train_original', o, curr)
                     writer.add_image('images/train_images', color, curr)
-                    writer.add_image('images/train_images_filled', img_to_board, curr)
+                    writer.add_image('images/train_images_filled', img2_to_board, curr)
 
                 if idx % 10 == 0:
                     # switch back if using iic
