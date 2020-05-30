@@ -15,15 +15,12 @@ class Color_Mask:
             self.blue.append(random.randint(0, 256))
 
     def add_color(self, tensor):
-        width = tensor.shape[0]
-        heigth = tensor.shape[1]
-        channels = 3
-        segmentation = torch.zeros(width, heigth, 3).to(torch.uint8) # this might be an error becuase the way im giving the shape
+        segmentation = torch.zeros( tensor.shape[0], tensor.shape[1], 3).to(torch.uint8) # this might be an error becuase the way im giving the shape
 
         for category in range(0, self.output):
-            segmentation[tensor == category, 0] = self.red[category]
-            segmentation[tensor == category, 1] = self.green[category]
-            segmentation[tensor == category, 2] = self.blue[category]
+            segmentation[0, tensor == category] = self.red[category]
+            segmentation[1, tensor == category] = self.green[category]
+            segmentation[2, tensor == category] = self.blue[category]
 
         return segmentation
 
