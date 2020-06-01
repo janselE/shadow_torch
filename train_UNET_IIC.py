@@ -18,6 +18,7 @@ from IIC_Network import net
 from torch.utils.tensorboard import SummaryWriter
 
 from eval import eval_acc
+from color_segmentation import Color_Mask
 
 
 h, w, in_channels = 240, 240, 3
@@ -67,6 +68,9 @@ loss_fn = IID_segmentation_loss_uncollapsed
 
 # Setup Adam optimizers for both
 optimiser = torch.optim.Adam(net.parameters(), lr=lr, betas=(beta1, 0.1))
+
+# this creates an object of that would color the mask
+color_mapper = Color_Mask(NUM_CLASSES)
 
 # Need to change this to return img1, img2, affine2_to_1, mask_img1, shadow_mask1, shadow_mask2
 #dataloader = DataLoader(dataset=ShadowAndMaskDataset(h, w, use_random_scale=False, use_random_affine=True),
@@ -163,7 +167,8 @@ for epoch in range(0, num_epochs):
         # visualize outputs of first image in dataset every 10 epochs
         if curr % 500 == 0:
             img_to_board = torch.argmax(x1_outs[0].cpu().detach(), dim=1).numpy()  # gets black and white image
-            writer.add_image('image/val_mask', img_to_board, curr)
+            color = color_mapper.add_color(img_to_board) # this is where we send the mask to the scrip
+            writer.add_image('image/val_mask', color, curr)
             writer.add_image('image/original', img1[0], curr)
             writer.add_image('image/transformed', img2[0], curr)
 
