@@ -169,11 +169,11 @@ for epoch in range(0, num_epochs):
             print('x shape', x1_outs.shape)
             img_to_board = torch.argmax(x1_outs.cpu().detach(), dim=1).numpy()  # gets black and white image
             print('img to board shape', img_to_board.shape)
+            exit()
             color = color_mapper.add_color(img_to_board) # this is where we send the mask to the scrip
             writer.add_image('image/val_mask', color, curr)
             writer.add_image('image/original', img1[0], curr)
             writer.add_image('image/transformed', img2[0], curr)
-            exit()
 
             # this saves the model
             torch.save(net.state_dict(), "saved_models/iic_e{}_{}.model".format(epoch, time_begin))
