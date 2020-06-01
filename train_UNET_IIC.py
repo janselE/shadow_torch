@@ -154,22 +154,18 @@ for epoch in range(0, num_epochs):
             loss_total = avg_loss_batch
 
         # saving loss and accuracy
-        writer.add_scalar('discrete_loss', avg_loss_batch.item(), curr)
-        writer.add_scalar('discrete_acc', train_acc, curr)
+        writer.add_scalar('loss/discrete_loss', avg_loss_batch.item(), curr)
+        writer.add_scalar('accuracy/discrete_acc', train_acc, curr)
 
         loss_total.backward()
         optimiser.step()
 
         # visualize outputs of first image in dataset every 10 epochs
-        if epoch % 10 == 0 and idx == 0:
-            o = transforms.ToPILImage()(img1[0].cpu().detach())
-            o.save("img_visual_checks/"+time_begin+"/test_img1_e{}.png".format(epoch))
-            o = transforms.ToPILImage()(img2[0].cpu().detach())
-            o.save("img_visual_checks/"+time_begin+"/test_img2_e{}.png".format(epoch))
-            shadow_mask1_pred_bw = torch.argmax(x1_outs.cpu().detach(), dim=1).numpy()  # gets black and white image
-            cv2.imwrite("img_visual_checks/"+time_begin+"/test_mask1_bw_e{}.png".format(epoch), shadow_mask1_pred_bw[0] * 255)
-            shadow_mask1_pred_grey = x1_outs[0].cpu().detach().numpy()  # gets probability pixel is black
-            cv2.imwrite("img_visual_checks/"+time_begin+"/test_mask1_grey_e{}.png".format(epoch), shadow_mask1_pred_grey[0] * 255)
+        if curr % 500 == 0:
+            img_to_board = torch.argmax(x1_outs[0].cpu().detach(), dim=1).numpy()  # gets black and white image
+            writer.add_image('image/val_mask', img_to_board, curr)
+            writer.add_image('image/original', img1[0], curr)
+            writer.add_image('image/transformed', img2[0], curr)
 
             # this saves the model
             torch.save(net.state_dict(), "saved_models/iic_e{}_{}.model".format(epoch, time_begin))
@@ -185,8 +181,8 @@ for epoch in range(0, num_epochs):
     avg_loss = float(avg_loss / avg_loss_count)
     avg_acc = float(avg_acc / avg_acc_count)
 
-    writer.add_scalar('avg_acc', avg_acc, epoch)
-    writer.add_scalar('avg_loss', avg_loss, epoch)
+    writer.add_scalar('accuracy/avg_acc', avg_acc, epoch)
+    writer.add_scalar('loss/avg_loss', avg_loss, epoch)
 
 #    if avg_loss < min_val_loss:
 #        epochs_no_improve = 0
