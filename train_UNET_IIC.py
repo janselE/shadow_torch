@@ -167,7 +167,7 @@ for epoch in range(0, num_epochs):
         # visualize outputs of first image in dataset every 10 epochs
         if curr % 500 == 0:
             print('x shape', x1_outs.shape)
-            img_to_board = torch.argmax(x1_outs[0].cpu().detach(), dim=1).numpy()  # gets black and white image
+            img_to_board = torch.argmax(x1_outs.cpu().detach(), dim=1).numpy()  # gets black and white image
             print('img to board shape', img_to_board.shape)
             color = color_mapper.add_color(img_to_board) # this is where we send the mask to the scrip
             writer.add_image('image/val_mask', color, curr)
