@@ -140,6 +140,7 @@ for epoch in range(0, num_epochs):
         print(x1_outs.shape, shadow_mask1.shape)
         print("This are the flat shapes")
         print(flat_preds.shape, flat_targets.shape)
+        exit()
 
         train_acc = eval_acc(flat_preds, flat_targets)
         avg_acc += train_acc
