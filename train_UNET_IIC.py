@@ -140,7 +140,6 @@ for epoch in range(0, num_epochs):
         print(x1_outs.shape, shadow_mask1.shape)
         print("This are the flat shapes")
         print(flat_preds.shape, flat_targets.shape)
-        exit()
 
         train_acc = eval_acc(flat_preds, flat_targets)
         avg_acc += train_acc
@@ -172,6 +171,8 @@ for epoch in range(0, num_epochs):
             writer.add_image('image/val_mask', color, curr)
             writer.add_image('image/original', img1[0], curr)
             writer.add_image('image/transformed', img2[0], curr)
+            print('img to board shape', img_to_board.shape)
+            exit()
 
             # this saves the model
             torch.save(net.state_dict(), "saved_models/iic_e{}_{}.model".format(epoch, time_begin))
