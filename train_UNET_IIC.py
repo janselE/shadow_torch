@@ -70,7 +70,7 @@ loss_fn = IID_segmentation_loss_uncollapsed
 optimiser = torch.optim.Adam(net.parameters(), lr=lr, betas=(beta1, 0.1))
 
 # this creates an object of that would color the mask
-color_mapper = Color_Mask(NUM_CLASSES)
+color_mapper = Color_Mask(12)
 
 # Need to change this to return img1, img2, affine2_to_1, mask_img1, shadow_mask1, shadow_mask2
 #dataloader = DataLoader(dataset=ShadowAndMaskDataset(h, w, use_random_scale=False, use_random_affine=True),
