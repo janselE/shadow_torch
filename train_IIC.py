@@ -18,6 +18,7 @@ from IIC_Losses import IID_segmentation_loss, IID_segmentation_loss_uncollapsed
 from torch.utils.tensorboard import SummaryWriter
 
 from eval import *
+from color_segmentation import Color_Mask
 
 
 h, w, in_channels = 240, 240, 3
@@ -67,6 +68,9 @@ loss_fn = IID_segmentation_loss_uncollapsed
 
 # Setup Adam optimizers for both
 optimiser = torch.optim.Adam(net.parameters(), lr=lr, betas=(beta1, 0.1))
+
+# this creates an object of that would color the mask
+color_mapper = Color_Mask(12)
 
 # Need to change this to return img1, img2, affine2_to_1, mask_img1, shadow_mask1, shadow_mask2
 #dataloader = DataLoader(dataset=ShadowAndMaskDataset(h, w, use_random_scale=False, use_random_affine=True),
@@ -161,22 +165,21 @@ for epoch in range(0, num_epochs):
             loss_total = avg_loss_batch
 
         # saving loss and accuracy
-        writer.add_scalar('discrete_loss', avg_loss_batch.item(), curr)
-        writer.add_scalar('discrete_acc', train_acc, curr)
+        writer.add_scalar('loss/discrete_loss', avg_loss_batch.item(), curr)
+        writer.add_scalar('accuracy/discrete_acc', train_acc, curr)
 
         loss_total.backward()
         optimiser.step()
 
         # visualize outputs of first image in dataset every 10 epochs
-        if epoch % 10 == 0 and idx == 0:
-            o = transforms.ToPILImage()(img1[0].cpu().detach())
-            o.save("img_visual_checks/"+time_begin+"/test_img1_e{}.png".format(epoch))
-            o = transforms.ToPILImage()(img2[0].cpu().detach())
-            o.save("img_visual_checks/"+time_begin+"/test_img2_e{}.png".format(epoch))
-            shadow_mask1_pred_bw = torch.argmax(x1_outs[0].cpu().detach(), dim=1).numpy()  # gets black and white image
-            cv2.imwrite("img_visual_checks/"+time_begin+"/test_mask1_bw_e{}.png".format(epoch), shadow_mask1_pred_bw[0] * 255)
-            shadow_mask1_pred_grey = x1_outs[0][0].cpu().detach().numpy()  # gets probability pixel is black
-            cv2.imwrite("img_visual_checks/"+time_begin+"/test_mask1_grey_e{}.png".format(epoch), shadow_mask1_pred_grey[0] * 255)
+        if curr % 500 == 0:
+            o = img1[0].cpu().detach()
+            img_to_board = torch.argmax(x1_outs[0].cpu().detach(), dim=1).numpy()  # gets black and white image
+            color = color_mapper.add_color(img_to_board) # this is where we send the mask to the scrip
+
+            # here we add the images to the writer
+            writer.add_image('images/train_original', o, curr)
+            writer.add_image('images/train_images', color, curr)
 
             # this saves the model
             torch.save(net.state_dict(), "saved_models/iic_e{}_{}.model".format(epoch, time_begin))
@@ -191,8 +194,8 @@ for epoch in range(0, num_epochs):
 
     avg_loss = float(avg_loss / avg_loss_count)
     avg_acc = float(avg_acc / avg_acc_count)
-    writer.add_scalar('avg_acc', avg_acc, epoch)
-    writer.add_scalar('avg_loss', avg_loss, epoch)
+    writer.add_scalar('accuracy/avg_acc', avg_acc, epoch)
+    writer.add_scalar('loss/avg_loss', avg_loss, epoch)
 
 
 
