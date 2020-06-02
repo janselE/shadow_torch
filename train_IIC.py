@@ -175,7 +175,7 @@ for epoch in range(0, num_epochs):
         if curr % 500 == 0:
             o = img1[0].cpu().detach()
             img_to_board = torch.argmax(x1_outs[0].cpu().detach(), dim=1).numpy()  # gets black and white image
-            print(x1_outs[0].shape)
+            print(x1_outs.shape)
             print(img_to_board.shape)
             exit()
             color = color_mapper.add_color(img_to_board) # this is where we send the mask to the scrip
