@@ -160,12 +160,12 @@ class CocoDataloader(torch.utils.data.Dataset):
 
 
         labels[labels == 255] = -1
-        new_labels = np.zeros(labels.shape, dtype=labels.dtype)
 
 
         img, coords = pad_and_or_crop(img, self.input_sz, mode="random")
         labels, _ = pad_and_or_crop(labels, self.input_sz, mode="fixed",coords=coords)
 
+        new_labels = np.zeros(labels.shape, dtype=labels.dtype)
         for c in range(0, 182):
             new_labels[labels == c] = self._fine_to_coarse_dict[c]
         labels = new_labels
