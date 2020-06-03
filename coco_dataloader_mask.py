@@ -58,7 +58,7 @@ class CocoDataloader(torch.utils.data.Dataset):
 
         for i in self.mask:
             image = cv2.imread(i)
-            print(type(image))
+            print(np.max(image))
             exit()
 
         self.len_ = len(self.imgs)  # read all the images of the dataset
