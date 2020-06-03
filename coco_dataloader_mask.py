@@ -185,15 +185,12 @@ class CocoDataloader(torch.utils.data.Dataset):
            new_labels[labels == c] = self._fine_to_coarse_index[c]
         labels = new_labels
 
-        print(new_labels)
-        new_labels = torch.from_numpy(new_labels)
-        print(new_labels)
 
         first_allowed_index = 12
         mask_img = (labels >= first_allowed_index)
-        #labels -= first_allowed_index
 
-        labels = torch.from_numpy(labels.astype(np.int32)) # i might have to add the astype part
+        labels = torch.from_numpy(new_labels)
+        print(labels)
 
         mask_img = torch.from_numpy(mask_img.astype(np.uint8))
 
@@ -232,25 +229,15 @@ class CocoDataloader(torch.utils.data.Dataset):
             img2 = torch.flip(img2, dims=[2])
             affine2_to_1[0, :] *= -1
 
-        print(type(img1))
-        print(type(img2))
-        print(type(labels))
-        print(type(mask_img))
-
         print(img1.shape)
         print(img2.shape)
-        print(labels.shape)
+        print(affine2_to_1.shape)
         print(mask_img.shape)
-        print(torch.max(mask_img))
-        print(mask_img)
+        print(labels.shape)
         print(labels)
 
 
-
-        print('done')
         exit()
-
-
 
 
 
