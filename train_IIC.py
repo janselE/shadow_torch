@@ -88,7 +88,7 @@ for epoch in range(0, num_epochs):
     print("Starting epoch: %d " % (epoch))
 
     avg_loss = 0.  # over heads and head_epochs (and sub_heads)
-    avg_acc = 0. 
+    avg_acc = 0.0
     avg_ssm_loss = 0.
     # avg_loss_no_lamb = 0.
     avg_loss_count = 0

@@ -7,12 +7,11 @@ class VGGTrunk(nn.Module):
         self.cfg = [(64, 1), (128, 1), ('M', None), (256, 1), (256, 1), (512, 2), (512, 12)]  # 30x30 recep field
         self.conv_size = 3
         self.pad = 1
-        self.in_channels = 3 #config.in_channels if hasattr(config, 'in_channels') else 3
+        self.in_channels = 4 #config.in_channels if hasattr(config, 'in_channels') else 3
         self.batchnorm_track = False
 
         layers = self._make_layers()
         self.layers = nn.Sequential(*layers)
-        return self.layers
 
     def _make_layers(self, batch_norm=True):
         layers = []
