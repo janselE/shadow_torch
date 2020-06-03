@@ -35,6 +35,22 @@ def read_dataset(filename):
 
     return imgs_names
 
+
+def custom_greyscale_numpy(img, include_rgb=True):
+    # Takes and returns a channel-last numpy array, uint8
+
+    # use channels last for cvtColor
+    h, w, c = img.shape
+    grey_img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY).reshape(h, w,
+                                                             1)  # new memory
+    if include_rgb:
+      img = np.concatenate([img, grey_img], axis=2)
+    else:
+      img = grey_img
+
+    return img
+
+# this is to generate the new labels
 _sorted_coarse_names = [
         "electronic-things",  # 0
         "appliance-things",  # 1
@@ -182,7 +198,24 @@ class CocoDataloader(torch.utils.data.Dataset):
         img1 = np.array(img)
         img2 = np.array(img2)
 
-        # next step is to maybe add the custom greyscale numpy method from the repo
+        img1 = custom_greyscale_numpy(img1, True)
+        img2 = custom_greyscale_numpy(img2, True)
+
+        img1 = img1.astype(np.float32) / 255
+        img2 = img2.astype(np.float32) / 255
+
+        img1 = torch.from_numpy(img1).permute(2, 0, 1)
+        img2 = torch.from_numpy(img2).permute(2, 0, 1)
+
+        print(type(img1))
+        print(type(img2))
+        print(type(labels))
+        print(type(mask_img))
+
+        print(img1.shape)
+        print(img2.shape)
+        print(labels.shape)
+        print(mask_img.shape)
 
 
 
@@ -198,8 +231,8 @@ class CocoDataloader(torch.utils.data.Dataset):
         img2 = np.asarray(img2)
 
         img1 = img1.astype(np.float32) / 255
-        mask = mask.astype(np.float32)
         img2 = img2.astype(np.float32) / 255
+        mask = mask.astype(np.float32)
 
 
         img1 = torch.from_numpy(img1).permute(2, 0, 1)
