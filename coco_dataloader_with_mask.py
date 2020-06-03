@@ -129,20 +129,6 @@ class CocoDataloader(torch.utils.data.Dataset):
         mask_img1 = torch.ones(self.input_sz, self.input_sz).to(torch.uint8) #cuda
 
 
-        print(type(img1))
-        print(type(img2))
-
-        print(img1.shape)
-        print(img2.shape)
-        print(mask_cat.shape)
-        print(affine2_to_1.shape)
-        print(mask_img1.shape)
-
-        print(type(mask_cat))
-        print(mask_cat)
-        print(torch.max(mask_cat))
-        exit()
-
         return img1, img2, affine2_to_1, mask_img1, mask_cat
 
     def __len__(self):
