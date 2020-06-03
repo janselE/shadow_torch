@@ -131,7 +131,6 @@ for epoch in range(0, num_epochs):
                     half_T_side_sparse_min=half_T_side_sparse_min,
                     half_T_side_sparse_max=half_T_side_sparse_max)
 
-            exit()
 
             if avg_loss_batch is None:
                 avg_loss_batch = loss
