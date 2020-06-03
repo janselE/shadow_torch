@@ -21,6 +21,7 @@ from transforms import *
 from PIL import Image, ImageDraw
 #from pycocotools.coco import COCO
 import os.path as os
+import yaml
 
 root = 'data3'
 
@@ -33,6 +34,77 @@ def read_dataset(filename):
         imgs_names.append(fn)
 
     return imgs_names
+
+_sorted_coarse_names = [
+        "electronic-things",  # 0
+        "appliance-things",  # 1
+        "food-things",  # 2
+        "furniture-things",  # 3
+        "indoor-things",  # 4
+        "kitchen-things",  # 5
+        "accessory-things",  # 6
+        "animal-things",  # 7
+        "outdoor-things",  # 8
+        "person-things",  # 9
+        "sports-things",  # 10
+        "vehicle-things",  # 11
+
+        "ceiling-stuff",  # 12
+        "floor-stuff",  # 13
+        "food-stuff",  # 14
+        "furniture-stuff",  # 15
+        "rawmaterial-stuff",  # 16
+        "textile-stuff",  # 17
+        "wall-stuff",  # 18
+        "window-stuff",  # 19
+        "building-stuff",  # 20
+        "ground-stuff",  # 21
+        "plant-stuff",  # 22
+        "sky-stuff",  # 23
+        "solid-stuff",  # 24
+        "structural-stuff",  # 25
+        "water-stuff"  # 26
+        ]
+
+_sorted_coarse_name_to_coarse_index = \
+  {n: i for i, n in enumerate(_sorted_coarse_names)}
+
+def _find_parent(name, d):
+    for k, v in d.items():
+        if isinstance(v, list):
+              if name in v:
+                    yield k
+        else:
+            assert (isinstance(v, dict))
+            for res in _find_parent(name, v):  # if it returns anything to us
+                yield res
+
+def generate_fine_to_coarse():
+    fine_index_to_coarse_index = {}
+    fine_name_to_coarse_name = {}
+
+    with open(root + "/cocostuff_fine_raw.txt") as f:
+        l = [tuple(pair.rstrip().split('\t')) for pair in f]
+        l = [(int(ind), name) for ind, name in l]
+
+    with open(root + "/cocostuff_hierarchy.y") as f:
+        d = yaml.load(f, Loader=yaml.FullLoader)
+
+    for fine_ind, fine_name in l:
+        assert (fine_ind >= 0 and fine_ind < 182)
+        parent_name = list(_find_parent(fine_name, d))
+        # print("parent_name of %d %s: %s"% (fine_ind, fine_name, parent_name))
+        assert (len(parent_name) == 1)
+        parent_name = parent_name[0]
+        parent_ind = _sorted_coarse_name_to_coarse_index[parent_name]
+        assert (parent_ind >= 0 and parent_ind < 27)
+
+        fine_index_to_coarse_index[fine_ind] = parent_ind
+        fine_name_to_coarse_name[fine_name] = parent_name
+
+    assert (len(fine_index_to_coarse_index) == 182)
+
+    return fine_index_to_coarse_index, fine_name_to_coarse_name
 
 class CocoDataloader(torch.utils.data.Dataset):
     # Constructor
@@ -79,23 +151,31 @@ class CocoDataloader(torch.utils.data.Dataset):
                 saturation=0.4,
                 hue=0.125)
 
+        self._fine_to_coarse_dict = generate_fine_to_coarse()
+
+
     def __getitem__(self, index):
         img = cv2.imread(self.imgs[index], cv2.IMREAD_COLOR).astype(np.uint8)
-        mask = cv2.imread(self.imgs[index], cv2.IMREAD_GRAYSCALE).astype(np.int32)
+        labels = cv2.imread(self.imgs[index], cv2.IMREAD_GRAYSCALE).astype(np.int32)
+
+
+        labels[labels == 255] = -1
+        new_labels = np.zeros(labels.shape, dtype=labels.dtype)
+
 
         img, coords = pad_and_or_crop(img, self.input_sz, mode="random")
-        mask, _ = pad_and_or_crop(mask, self.input_sz, mode="fixed",coords=coords)
+        labels, _ = pad_and_or_crop(labels, self.input_sz, mode="fixed",coords=coords)
         print(type(img))
-        print(type(mask))
+        print(type(labels))
 
         print(img.shape)
-        print(mask.shape)
+        print(labels.shape)
 
         print(type(img))
-        print(type(mask))
+        print(type(labels))
 
         print(np.max(img))
-        print(np.max(mask))
+        print(np.max(labels))
 
 
 
