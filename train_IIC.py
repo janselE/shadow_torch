@@ -110,8 +110,11 @@ for epoch in range(0, num_epochs):
 
         net.zero_grad()
 
+        print(img1.shape)
+        print(img2.shape)
         x1_outs = net(img1)
         x2_outs = net(img2)
+        exit()
 
         # batch is passed through each subhead to calculate loss, store average loss per sub_head
         avg_loss_batch = None
