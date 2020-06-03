@@ -171,43 +171,19 @@ class CocoDataloader(torch.utils.data.Dataset):
         labels = new_labels
 
         first_allowed_index = 12
-        mask = (labels >= first_allowed_index)
-        assert(mask.dtype == np.bool)
+        mask_img = (labels >= first_allowed_index)
         labels -= first_allowed_index
 
-        mask = torch.from_numpy(mask.astype(np.uint8))
-        print(mask)
+        mask_img = torch.from_numpy(mask_img.astype(np.uint8))
 
-        print(type(img))
-        print(type(labels))
-
-        print(img.shape)
-        print(labels.shape)
-
-        print(type(img))
-        print(type(labels))
-
-        print(np.max(img))
-        print(np.max(labels))
-        print(np.max(new_labels))
-
-
-
+        img = Image.fromarray(img.astype(np.uint8))
+        img2 = self.jitter_tf(img)
+        print('done')
         exit()
 
-        img = Image.open(self.imgs[index])
-        img = img.convert('RGB')
-        mask = Image.open(self.mask[index])
 
-        image = np.asarray(img).astype(np.float32)
-        mask = np.asarray(mask).astype(np.float32)
 
-        img, coords = pad_and_or_crop(image, self.input_sz, mode="random")
-        mask, _ = pad_and_or_crop(mask, self.input_sz, mode="fixed",coords=coords)
 
-        img1 = Image.fromarray(img.astype(np.uint8))
-        mask = Image.fromarray(mask.astype(np.uint8))
-        img2 = self.jitter_tf(img1)
 
         img1 = np.asarray(img1)
         mask = np.asarray(mask)
