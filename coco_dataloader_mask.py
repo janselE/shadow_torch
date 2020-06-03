@@ -56,11 +56,6 @@ class CocoDataloader(torch.utils.data.Dataset):
             path = path + '/*.png'
             self.mask = read_dataset(path)
 
-        for i in self.mask:
-            image = cv2.imread(i)
-            print(np.max(image))
-            exit()
-
         self.len_ = len(self.imgs)  # read all the images of the dataset
         self.h = h
         self.w = h
@@ -85,6 +80,24 @@ class CocoDataloader(torch.utils.data.Dataset):
                 hue=0.125)
 
     def __getitem__(self, index):
+        img = cv2.imread(self.imgs[index], cv2.IMREAD_COLOR).astype(np.uint8)
+        mask = cv2.imread(self.imgs[index], cv2.IMREAD_GRAYSCALE).astype(np.int32)
+        print(type(img))
+        print(type(mask))
+
+        print(img.shape)
+        print(mask.shape)
+
+        print(type(img))
+        print(type(mask))
+
+        print(np.max(img))
+        print(np.max(mask))
+
+
+
+        exit()
+
         img = Image.open(self.imgs[index])
         img = img.convert('RGB')
         mask = Image.open(self.mask[index])
