@@ -114,12 +114,12 @@ for epoch in range(0, num_epochs):
         print(img2.shape)
         x1_outs = net(img1)
         x2_outs = net(img2)
-        exit()
 
         # batch is passed through each subhead to calculate loss, store average loss per sub_head
         avg_loss_batch = None
         avg_loss_no_lamb_batch = None
         ssm_loss = None
+
 
 	#shadow_mask1.argmax(axis=1).long() # i need to verify this for coco
         shadow_mask1_flat = shadow_mask1.view(batch_sz, input_sz, input_sz).long()
@@ -130,6 +130,8 @@ for epoch in range(0, num_epochs):
                     half_T_side_dense=half_T_side_dense,
                     half_T_side_sparse_min=half_T_side_sparse_min,
                     half_T_side_sparse_max=half_T_side_sparse_max)
+
+            exit()
 
             if avg_loss_batch is None:
                 avg_loss_batch = loss

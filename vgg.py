@@ -15,7 +15,7 @@ class VGGTrunk(nn.Module):
 
     def _make_layers(self, batch_norm=True):
         layers = []
-        in_channels = 3 #self.in_channels
+        in_channels = 4 #self.in_channels
         for tup in self.cfg:
             assert (len(tup) == 2)
 
