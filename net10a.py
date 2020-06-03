@@ -35,6 +35,7 @@ class SegmentationNet10aHead(nn.Module):
 
         self.cfg = cfg
         num_features = self.cfg[-1][0]
+        print(num_features)
 
         self.num_sub_heads = num_sub_heads #config.num_sub_heads
 
