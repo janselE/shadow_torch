@@ -207,6 +207,26 @@ class CocoDataloader(torch.utils.data.Dataset):
         img1 = torch.from_numpy(img1).permute(2, 0, 1)
         img2 = torch.from_numpy(img2).permute(2, 0, 1)
 
+
+        if self.use_random_affine:
+            affine_kwargs = {"min_rot": self.aff_min_rot, "max_rot": self.aff_max_rot,
+                    "min_shear": self.aff_min_shear,
+                    "max_shear": self.aff_max_shear,
+                    "min_scale": self.aff_min_scale,
+                    "max_scale": self.aff_max_scale}
+
+
+            img2, affine1_to_2, affine2_to_1 = random_affine(img2, **affine_kwargs)  #
+
+        else:
+            affine2_to_1 = torch.zeros([2, 3]).to(torch.float32) # cuda
+            affine2_to_1[0, 0] = 1
+            affine2_to_1[1, 1] = 1
+
+        if np.random.rand() > self.flip_p:
+            img2 = torch.flip(img2, dims=[2])
+            affine2_to_1[0, :] *= -1
+
         print(type(img1))
         print(type(img2))
         print(type(labels))
