@@ -182,6 +182,8 @@ class CocoDataloader(torch.utils.data.Dataset):
         img1 = np.array(img)
         img2 = np.array(img2)
 
+        # next step is to maybe add the custom greyscale numpy method from the repo
+
 
 
         print('done')
