@@ -167,8 +167,7 @@ class CocoDataloader(torch.utils.data.Dataset):
 
         new_labels = np.zeros(labels.shape, dtype=labels.dtype)
         for c in range(0, 182):
-           print(self._fine_to_coarse_index[c])
-        #    new_labels[labels == c] = self._fine_to_coarse_dict[c]
+           new_labels[labels == c] = self._fine_to_coarse_dict[c]
         labels = new_labels
 
         print(type(img))
