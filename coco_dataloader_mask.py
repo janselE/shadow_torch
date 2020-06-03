@@ -186,6 +186,8 @@ class CocoDataloader(torch.utils.data.Dataset):
         labels = new_labels
 
         print(new_labels)
+        new_labels = torch.from_numpy(new_labels)
+        print(new_labels)
 
         first_allowed_index = 12
         mask_img = (labels >= first_allowed_index)
