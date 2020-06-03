@@ -178,6 +178,12 @@ class CocoDataloader(torch.utils.data.Dataset):
 
         img = Image.fromarray(img.astype(np.uint8))
         img2 = self.jitter_tf(img)
+
+        img1 = np.array(img)
+        img2 = np.array(img2)
+
+
+
         print('done')
         exit()
 
