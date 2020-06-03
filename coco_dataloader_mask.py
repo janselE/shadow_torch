@@ -18,7 +18,7 @@ from transforms import *
 
 from PIL import Image, ImageDraw
 #from pycocotools.coco import COCO
-import os
+import os.path as os
 
 path = 'data3'
 
@@ -41,17 +41,17 @@ class CocoDataloader(torch.utils.data.Dataset):
         if mode == "train":
             # this is for the normal images
             path = os.join(path, "images", "train2017")
-            self.imgs = read_dataset(path)  # known name, this is for local
+            self.imgs = read_dataset(path)
 
             path = os.join(path, "annotations", "train2017")
-            self.mask = read_dataset(path)  # known name, this is for local
+            self.mask = read_dataset(path)
         else:
             # this is for the normal images
             path = os.join(path, "images", "val2017")
-            self.imgs = read_dataset(path)  # known name, this is for local
+            self.imgs = read_dataset(path)
 
             path = os.join(path, "annotations", "val2017")
-            self.mask = read_dataset(path)  # known name, this is for local
+            self.mask = read_dataset(path)
 
         self.len_ = len(self.imgs)  # read all the images of the dataset
         self.h = h
