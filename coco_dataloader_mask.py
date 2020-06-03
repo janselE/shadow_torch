@@ -20,7 +20,6 @@ from PIL import Image, ImageDraw
 #from pycocotools.coco import COCO
 import os.path as os
 
-path = 'data3'
 
 
 # take as parameter the filename that we already know
@@ -40,17 +39,17 @@ class CocoDataloader(torch.utils.data.Dataset):
     def __init__(self, h,  use_random_scale=False, use_random_affine=True, mode="train"):
         if mode == "train":
             # this is for the normal images
-            path = os.join(path, "images", "train2017")
+            path = os.join('data3', "images", "train2017")
             self.imgs = read_dataset(path)
 
-            path = os.join(path, "annotations", "train2017")
+            path = os.join('data3', "annotations", "train2017")
             self.mask = read_dataset(path)
         else:
             # this is for the normal images
-            path = os.join(path, "images", "val2017")
+            path = os.join('data3', "images", "val2017")
             self.imgs = read_dataset(path)
 
-            path = os.join(path, "annotations", "val2017")
+            path = os.join('data3', "annotations", "val2017")
             self.mask = read_dataset(path)
 
         self.len_ = len(self.imgs)  # read all the images of the dataset
