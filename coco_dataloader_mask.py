@@ -167,7 +167,8 @@ class CocoDataloader(torch.utils.data.Dataset):
         labels, _ = pad_and_or_crop(labels, self.input_sz, mode="fixed",coords=coords)
 
         for c in range(0, 182):
-            new_labels[labels == c] = c
+            new_labels[labels == c] = self._fine_to_coarse_dict[c]
+        labels = new_labels
 
         print(type(img))
         print(type(labels))
