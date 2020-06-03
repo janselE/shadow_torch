@@ -132,6 +132,12 @@ class CocoDataloader(torch.utils.data.Dataset):
         print(type(img1))
         print(type(img2))
 
+        print(img1.shape)
+        print(img2.shape)
+        print(mask_cat.shape)
+        print(affine2_to_1.shape)
+        print(mask_img1.shape)
+
         print(type(mask_cat))
         print(mask_cat)
         print(torch.max(mask_cat))
