@@ -82,6 +82,9 @@ class CocoDataloader(torch.utils.data.Dataset):
     def __getitem__(self, index):
         img = cv2.imread(self.imgs[index], cv2.IMREAD_COLOR).astype(np.uint8)
         mask = cv2.imread(self.imgs[index], cv2.IMREAD_GRAYSCALE).astype(np.int32)
+
+        img, coords = pad_and_or_crop(img, self.input_sz, mode="random")
+        mask, _ = pad_and_or_crop(mask, self.input_sz, mode="fixed",coords=coords)
         print(type(img))
         print(type(mask))
 
