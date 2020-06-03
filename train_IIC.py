@@ -10,7 +10,7 @@ import os
 
 # scripts
 from image_loader import ShadowDataset, ShadowAndMaskDataset
-from coco_dataloader_with_mask import CocoDataloader
+from coco_dataloader_mask import CocoDataloader
 from net10a import SegmentationNet10a
 from IIC_Losses import IID_segmentation_loss, IID_segmentation_loss_uncollapsed
 #from IIC_Network import net
