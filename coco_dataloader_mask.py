@@ -20,7 +20,7 @@ from PIL import Image, ImageDraw
 #from pycocotools.coco import COCO
 import os.path as os
 
-
+root = 'data3'
 
 # take as parameter the filename that we already know
 # we are just changing the part of the name that is different
@@ -31,7 +31,6 @@ def read_dataset(filename):
         imgs_names.append(fn)
         print(fn)
     print('done')
-    exit()
 
     return imgs_names
 
@@ -40,23 +39,24 @@ class CocoDataloader(torch.utils.data.Dataset):
     def __init__(self, h,  use_random_scale=False, use_random_affine=True, mode="train"):
         if mode == "train":
             # this is for the normal images
-            path = os.join('data3', "images", "train2017")
+            path = os.join(root, "images", "train2017")
             path = path + '/*.jpg'
             print(path)
             self.imgs = read_dataset(path)
 
-            path = os.join('data3', "annotations", "train2017")
+            path = os.join(root, "annotations", "train2017")
             path = path + '/*.png'
             print(path)
             self.mask = read_dataset(path)
+            exit()
         else:
             # this is for the normal images
-            path = os.join('data3', "images", "val2017")
+            path = os.join(root, "images", "val2017")
             path = path + '/*.jpg'
             print(path)
             self.imgs = read_dataset(path)
 
-            path = os.join('data3', "annotations", "val2017")
+            path = os.join(root, "annotations", "val2017")
             path = path + '/*.png'
             print(path)
             self.mask = read_dataset(path)
