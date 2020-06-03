@@ -151,7 +151,7 @@ class CocoDataloader(torch.utils.data.Dataset):
                 saturation=0.4,
                 hue=0.125)
 
-        self._fine_to_coarse_dict = generate_fine_to_coarse()
+        self._fine_to_coarse_index, self.fine_tor_coarse_name = generate_fine_to_coarse()
 
 
     def __getitem__(self, index):
@@ -167,7 +167,7 @@ class CocoDataloader(torch.utils.data.Dataset):
 
         new_labels = np.zeros(labels.shape, dtype=labels.dtype)
         for c in range(0, 182):
-           print(self._fine_to_coarse_dict[c])
+           print(self._fine_to_coarse_index[c])
         #    new_labels[labels == c] = self._fine_to_coarse_dict[c]
         labels = new_labels
 
