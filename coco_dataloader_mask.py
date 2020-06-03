@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 import json
 import yaml
 
+import cv2
+
 
 import torchvision.transforms as transforms
 import torchvision.transforms.functional as TF
@@ -29,8 +31,6 @@ def read_dataset(filename):
     imgs_names = []
     for fn in glob.glob(filename):
         imgs_names.append(fn)
-        print(fn)
-    print('done')
 
     return imgs_names
 
@@ -41,25 +41,25 @@ class CocoDataloader(torch.utils.data.Dataset):
             # this is for the normal images
             path = os.join(root, "images", "train2017")
             path = path + '/*.jpg'
-            print(path)
             self.imgs = read_dataset(path)
 
             path = os.join(root, "annotations", "train2017")
             path = path + '/*.png'
-            print(path)
             self.mask = read_dataset(path)
-            exit()
         else:
             # this is for the normal images
             path = os.join(root, "images", "val2017")
             path = path + '/*.jpg'
-            print(path)
             self.imgs = read_dataset(path)
 
             path = os.join(root, "annotations", "val2017")
             path = path + '/*.png'
-            print(path)
             self.mask = read_dataset(path)
+
+        for i in self.mask:
+            image = cv2.imread(i)
+            print(type(image))
+        exit()
 
         self.len_ = len(self.imgs)  # read all the images of the dataset
         self.h = h
