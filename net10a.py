@@ -18,7 +18,7 @@ class SegmentationNet10aTrunk(VGGTrunk):
         self.conv_size = 3
         self.pad = 1
         self.cfg = cfg
-        self.in_channels = 3 #config.in_channels if hasattr(config, 'in_channels') else 3
+        self.in_channels = 4 #config.in_channels if hasattr(config, 'in_channels') else 3
 
         self.features = self.layers #self._make_layers()
 
@@ -59,7 +59,7 @@ class SegmentationNet10a(VGGNet):
     def __init__(self, num_sub_heads, output_k):
         super(SegmentationNet10a, self).__init__()
         # this variable was supposed to be used as a static var
-        self.cfg = [(64, 1), (128, 1), ('M', None), (256, 1), (256, 1), (512, 2), (512, 12)]  # 30x30 recep field
+        self.cfg = [(64, 1), (128, 1), ('M', None), (256, 1), (256, 1), (512, 2), (512, output_k)]  # 30x30 recep field
 
         #self.batchnorm_track = config.batchnorm_track
         self.batchnorm_track = False
