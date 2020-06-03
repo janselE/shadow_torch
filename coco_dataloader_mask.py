@@ -165,6 +165,10 @@ class CocoDataloader(torch.utils.data.Dataset):
 
         img, coords = pad_and_or_crop(img, self.input_sz, mode="random")
         labels, _ = pad_and_or_crop(labels, self.input_sz, mode="fixed",coords=coords)
+
+        for c in range(0, 182):
+            new_labels[labels == c] = c
+
         print(type(img))
         print(type(labels))
 
@@ -176,6 +180,7 @@ class CocoDataloader(torch.utils.data.Dataset):
 
         print(np.max(img))
         print(np.max(labels))
+        print(np.max(new_labels))
 
 
 
