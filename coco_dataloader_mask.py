@@ -27,9 +27,9 @@ import os.path as os
 # this method has to be changed for different datasets
 def read_dataset(filename):
     imgs_names = []
-    for filename in glob.glob(filename):
-        imgs_names.append(filename)
-        print(filename)
+    for fn in glob.glob(filename):
+        imgs_names.append(fn)
+        print(fn)
     print('done')
     exit()
 
@@ -41,19 +41,23 @@ class CocoDataloader(torch.utils.data.Dataset):
         if mode == "train":
             # this is for the normal images
             path = os.join('data3', "images", "train2017")
+            path = path + '/*.jpg'
             print(path)
             self.imgs = read_dataset(path)
 
             path = os.join('data3', "annotations", "train2017")
+            path = path + '/*.png'
             print(path)
             self.mask = read_dataset(path)
         else:
             # this is for the normal images
             path = os.join('data3', "images", "val2017")
+            path = path + '/*.jpg'
             print(path)
             self.imgs = read_dataset(path)
 
             path = os.join('data3', "annotations", "val2017")
+            path = path + '/*.png'
             print(path)
             self.mask = read_dataset(path)
 
