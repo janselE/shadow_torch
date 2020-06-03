@@ -132,4 +132,4 @@ class CocoDataloader(torch.utils.data.Dataset):
         return img1, img2, affine2_to_1, mask_img1, mask_cat
 
     def __len__(self):
-        return len(self.mask)
+        return 	len(self.mask)
