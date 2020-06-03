@@ -170,6 +170,11 @@ class CocoDataloader(torch.utils.data.Dataset):
            new_labels[labels == c] = self._fine_to_coarse_index[c]
         labels = new_labels
 
+        first_allowed_index = 12
+        mask = (labels >= first_allowed_index)
+        assert(mask.dtype == np.bool)
+        labels -= first_allowed_index
+
         print(type(img))
         print(type(labels))
 
