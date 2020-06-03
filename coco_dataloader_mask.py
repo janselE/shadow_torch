@@ -175,6 +175,9 @@ class CocoDataloader(torch.utils.data.Dataset):
         assert(mask.dtype == np.bool)
         labels -= first_allowed_index
 
+        mask = torch.from_numpy(mask.astype(np.uint8))
+        print(mask)
+
         print(type(img))
         print(type(labels))
 
