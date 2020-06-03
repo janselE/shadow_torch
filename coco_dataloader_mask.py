@@ -216,6 +216,7 @@ class CocoDataloader(torch.utils.data.Dataset):
         print(img2.shape)
         print(labels.shape)
         print(mask_img.shape)
+        print(torch.max(mask_img))
         print(mask_img)
 
 
