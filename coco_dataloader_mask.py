@@ -177,7 +177,6 @@ class CocoDataloader(torch.utils.data.Dataset):
 
         labels[labels == 255] = -1
 
-
         img, coords = pad_and_or_crop(img, self.input_sz, mode="random")
         labels, _ = pad_and_or_crop(labels, self.input_sz, mode="fixed",coords=coords)
 
@@ -185,6 +184,8 @@ class CocoDataloader(torch.utils.data.Dataset):
         for c in range(0, 182):
            new_labels[labels == c] = self._fine_to_coarse_index[c]
         labels = new_labels
+
+        print(new_labels)
 
         first_allowed_index = 12
         mask_img = (labels >= first_allowed_index)
