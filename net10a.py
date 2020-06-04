@@ -10,25 +10,23 @@ __all__ = ["SegmentationNet10a"]
 class SegmentationNet10aTrunk(VGGTrunk):
     def __init__(self, cfg):
 
-        #self.batchnorm_track = config.batchnorm_track
-
-        #assert (config.input_sz % 2 == 0)
-
         self.conv_size = 3
         self.pad = 1
         self.cfg = cfg
         self.in_channels = 3 #config.in_channels if hasattr(config, 'in_channels') else 3
 
+        # on the self parameter we send all of this
+        # to the super class
         super(SegmentationNet10aTrunk, self).__init__()
 
-        self.features = self.layers #self._make_layers()
+        self.features = self.layers
 
     def forward(self, x):
         x = self.features(x)  # do not flatten
         return x
 
 class SegmentationNet10aHead(nn.Module):
-    def __init__(self, output_k, cfg, num_sub_heads):
+    def __init__(self, input_sz, output_k, cfg, num_sub_heads):
         super(SegmentationNet10aHead, self).__init__()
 
         #self.batchnorm_track = config.batchnorm_track
@@ -36,9 +34,8 @@ class SegmentationNet10aHead(nn.Module):
 
         self.cfg = cfg
         num_features = self.cfg[-1][0]
-        print(num_features)
 
-        self.num_sub_heads = num_sub_heads #config.num_sub_heads
+        self.num_sub_heads = num_sub_heads
 
         self.heads = nn.ModuleList([nn.Sequential(nn.Conv2d(num_features, output_k, kernel_size=1,
                                                             stride=1, dilation=1, padding=1, bias=False),
@@ -56,17 +53,19 @@ class SegmentationNet10aHead(nn.Module):
         return results
 
 class SegmentationNet10a(VGGNet):
-
-    def __init__(self, num_sub_heads, output_k):
+    def __init__(self, num_sub_heads, input_sz, output_k):
         super(SegmentationNet10a, self).__init__()
+
         # this variable was supposed to be used as a static var
+        # here they defined the structure of the network
         self.cfg = [(64, 1), (128, 1), ('M', None), (256, 1), (256, 1), (512, 2), (512, output_k)]  # 30x30 recep field
 
         #self.batchnorm_track = config.batchnorm_track
         self.batchnorm_track = False
 
         self.trunk = SegmentationNet10aTrunk(cfg=self.cfg)
-        self.head = SegmentationNet10aHead(output_k=output_k, # this is for the number of classes
+        self.head = SegmentationNet10aHead(input_sz=input_sz,
+                                           output_k=output_k,
                                            cfg=self.cfg,
                                            num_sub_heads=num_sub_heads)
 
