@@ -32,4 +32,6 @@ def eval_acc(flat_preds, flat_targets, output_k):
         found[pred_i] = 1
 
     acc = _acc(reordered_preds, flat_targets, output_k)
+    print(acc)
+    exit()
     return acc
