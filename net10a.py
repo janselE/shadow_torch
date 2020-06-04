@@ -10,9 +10,7 @@ __all__ = ["SegmentationNet10a"]
 class SegmentationNet10aTrunk(VGGTrunk):
     def __init__(self, cfg):
         self.cfg = cfg
-
         super(SegmentationNet10aTrunk, self).__init__()
-
 
         #self.batchnorm_track = config.batchnorm_track
 
@@ -21,7 +19,7 @@ class SegmentationNet10aTrunk(VGGTrunk):
         self.conv_size = 3
         self.pad = 1
         self.cfg = cfg
-        self.in_channels = 4 #config.in_channels if hasattr(config, 'in_channels') else 3
+        self.in_channels = 3 #config.in_channels if hasattr(config, 'in_channels') else 3
 
         self.features = self.layers #self._make_layers()
 
