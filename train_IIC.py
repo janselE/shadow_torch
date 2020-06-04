@@ -21,7 +21,7 @@ from eval import *
 from color_segmentation import Color_Mask
 
 
-h, w, in_channels = 240, 240, 3
+h, w, in_channels = 240, 240, 4
 input_sz = h
 
 # Lists to keep track of progress
@@ -58,7 +58,7 @@ total_train = 0
 correct_train = 0
 
 # Create the models
-net = SegmentationNet10a(num_sub_heads, 12)
+net = SegmentationNet10a(num_sub_heads, input_sz, 26)
 net.cuda()
 
 # Initialize IIC objective function
