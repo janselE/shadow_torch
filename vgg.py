@@ -10,8 +10,8 @@ class VGGTrunk(nn.Module):
         #self.in_channels = 4 #config.in_channels if hasattr(config, 'in_channels') else 3
         self.batchnorm_track = False
 
-        #layers = self._make_layers()
-        #self.layers = nn.Sequential(*layers)
+        layers = self._make_layers()
+        self.layers = nn.Sequential(*layers)
 
     def _make_layers(self, batch_norm=True):
         layers = []
@@ -37,6 +37,7 @@ class VGGTrunk(nn.Module):
                 else:
                     layers += [conv2d, nn.ReLU(inplace=True)]
                 in_channels = out
+
         return layers
 
 class VGGNet(nn.Module):
