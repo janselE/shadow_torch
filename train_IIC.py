@@ -150,7 +150,7 @@ for epoch in range(0, num_epochs):
         #flat_preds = x1_outs[0].cpu().detach().detach().flatten()
         flat_targets = shadow_mask1.clone().cpu().detach().flatten()
 
-        train_acc = eval_acc(flat_preds, flat_targets)
+        train_acc = eval_acc(flat_preds, flat_targets, 12)
         avg_acc += train_acc
         avg_acc_count += 1
 

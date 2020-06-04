@@ -20,16 +20,16 @@ def original_match(flat_preds, flat_targets, preds_k, targets_k):
     return list(out_to_gts.items())
 
 
-def eval_acc(flat_preds, flat_targets):
+def eval_acc(flat_preds, flat_targets, output_k):
     num_samples = flat_targets.shape[0]
-    match = original_match(flat_preds, flat_targets, 12, 12)
+    match = original_match(flat_preds, flat_targets, output_k, output_k)
 
-    found = torch.zeros(12)
-    reordered_preds = torch.zeros(num_samples, dtype=flat_preds[0].dtype) 
+    found = torch.zeros(output_k)
+    reordered_preds = torch.zeros(num_samples, dtype=flat_preds[0].dtype)
 
     for pred_i, target_i in match:
         reordered_preds[flat_preds == pred_i] = target_i
         found[pred_i] = 1
 
-    acc = _acc(reordered_preds, flat_targets, 12)
+    acc = _acc(reordered_preds, flat_targets, output_k)
     return acc
