@@ -180,8 +180,6 @@ for epoch in range(0, num_epochs):
             o = img1[0].cpu().detach()
             img_to_board = torch.argmax(x1_outs[0].cpu().detach(), dim=1).numpy()[0]  # gets black and white image
             color = color_mapper.add_color(img_to_board) # this is where we send the mask to the scrip
-            print(img_to_board.shape)
-            exit()
 
             # here we add the images to the writer
             writer.add_image('images/train_original', o, curr)
