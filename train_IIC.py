@@ -169,9 +169,6 @@ for epoch in range(0, num_epochs):
             loss_total = avg_loss_batch
 
         # saving loss and accuracy
-        print(train_acc)
-        print(curr)
-        exit()
         writer.add_scalar('loss/discrete_loss', avg_loss_batch.item(), curr)
         writer.add_scalar('accuracy/discrete_acc', train_acc, curr)
 
