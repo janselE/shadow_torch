@@ -13,7 +13,7 @@ class SegmentationNet10aTrunk(VGGTrunk):
         self.conv_size = 3
         self.pad = 1
         self.cfg = cfg
-        self.in_channels = 3 #config.in_channels if hasattr(config, 'in_channels') else 3
+        self.in_channels = 4 #config.in_channels if hasattr(config, 'in_channels') else 3
 
         # on the self parameter we send all of this
         # to the super class
@@ -41,7 +41,7 @@ class SegmentationNet10aHead(nn.Module):
                                                             stride=1, dilation=1, padding=1, bias=False),
                                                             nn.Softmax2d()) for _ in range(self.num_sub_heads)])
 
-        self.input_sz = 240 #config.input_sz # this is the image size, not sure about this
+        self.input_sz = input_sz #config.input_sz # this is the image size, not sure about this
 
     def forward(self, x):
         results = []
