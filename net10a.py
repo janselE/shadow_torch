@@ -9,7 +9,6 @@ __all__ = ["SegmentationNet10a"]
 
 class SegmentationNet10aTrunk(VGGTrunk):
     def __init__(self, cfg):
-        super(SegmentationNet10aTrunk, self).__init__()
 
         #self.batchnorm_track = config.batchnorm_track
 
