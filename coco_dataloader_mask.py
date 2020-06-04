@@ -192,6 +192,7 @@ class CocoDataloader(torch.utils.data.Dataset):
         # I added this to try
         labels -= first_allowed_index
         labels[labels < 0] = 0
+        print(np.max(labels))
         print(labels)
 
         labels = torch.from_numpy(new_labels)
