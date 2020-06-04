@@ -10,8 +10,8 @@ class VGGTrunk(nn.Module):
         #self.in_channels = 4 #config.in_channels if hasattr(config, 'in_channels') else 3
         self.batchnorm_track = False
 
-        layers = self._make_layers()
-        self.layers = nn.Sequential(*layers)
+        #layers = self._make_layers()
+        #self.layers = nn.Sequential(*layers)
 
     def _make_layers(self, batch_norm=True):
         layers = []
@@ -57,6 +57,4 @@ class VGGNet(nn.Module):
             elif isinstance(m, nn.Linear):
                 m.weight.data.normal_(0, 0.01)
                 m.bias.data.zero_()
-
-
 
