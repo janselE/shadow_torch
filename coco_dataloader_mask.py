@@ -211,6 +211,8 @@ class CocoDataloader(torch.utils.data.Dataset):
         for c in range(0, 182):
             new_labels[labels == c] = _fine_to_few_dic[c]
         labels = new_labels
+        print(type(labels))
+        print(np.max(labels))
         print(labels)
         exit()
 
