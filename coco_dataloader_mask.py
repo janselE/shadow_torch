@@ -205,14 +205,12 @@ class CocoDataloader(torch.utils.data.Dataset):
             else:
                 new_few_ind = -1
             _fine_to_few_dic[c] = new_few_ind
-        print('done')
+
+
+        print(_fine_to_few_dic)
         exit()
 
-
-
-
         for c in range(0, 182):
-            orig_coarse_ind = self.fine_to_coarse_name
             new_labels[labels == c] = self._fine_to_coarse_index[c]
         labels = new_labels
 
