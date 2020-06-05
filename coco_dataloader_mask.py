@@ -202,11 +202,10 @@ class CocoDataloader(torch.utils.data.Dataset):
 
             if orig_coarse_ind in label_orig_coarse_inds:
                 new_few_ind = orig_coarse_ind
-                print(new_few_ind)
-                exit()
             else:
                 new_few_ind = -1
             _fine_to_few_dic[c] = new_few_ind
+        print('done')
         exit()
 
 
