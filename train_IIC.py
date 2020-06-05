@@ -23,6 +23,7 @@ from color_segmentation import Color_Mask
 
 h, w, in_channels = 240, 240, 4
 input_sz = h
+NUMBER_CLASSES = 15
 
 # Lists to keep track of progress
 discrete_losses = []
@@ -70,7 +71,7 @@ loss_fn = IID_segmentation_loss_uncollapsed
 optimiser = torch.optim.Adam(net.parameters(), lr=lr, betas=(beta1, 0.1))
 
 # this creates an object of that would color the mask
-color_mapper = Color_Mask(12)
+color_mapper = Color_Mask(NUMBER_CLASSES)
 
 # Need to change this to return img1, img2, affine2_to_1, mask_img1, shadow_mask1, shadow_mask2
 #dataloader = DataLoader(dataset=ShadowAndMaskDataset(h, w, use_random_scale=False, use_random_affine=True),
@@ -150,7 +151,7 @@ for epoch in range(0, num_epochs):
         #flat_preds = x1_outs[0].cpu().detach().detach().flatten()
         flat_targets = shadow_mask1.clone().cpu().detach().flatten()
 
-        train_acc = eval_acc(flat_preds, flat_targets, 12)
+        train_acc = eval_acc(flat_preds, flat_targets, NUMBER_CLASSES)
         avg_acc += train_acc
         avg_acc_count += 1
 

@@ -191,14 +191,9 @@ class CocoDataloader(torch.utils.data.Dataset):
 
         # I added this to try
         labels -= first_allowed_index
-        labels[labels < 0] = 0
-        print(np.max(labels))
-        print(labels)
+        labels[labels < 0] = 0 # here we make it use only the stuff lables
 
         labels = torch.from_numpy(new_labels)
-        print(labels)
-        print(mask_img)
-        exit()
 
         mask_img = torch.from_numpy(mask_img.astype(np.uint8))
 
@@ -237,60 +232,8 @@ class CocoDataloader(torch.utils.data.Dataset):
             img2 = torch.flip(img2, dims=[2])
             affine2_to_1[0, :] *= -1
 
-#        print(img1.shape)
-#        print(img2.shape)
-#        print(affine2_to_1.shape)
-#        print(mask_img.shape)
-#        print(labels.shape)
-#        print(labels)
-
         return img1, img2, affine2_to_1, mask_img, labels
 
-
-
-
-#        img1 = np.asarray(img1)
-#        mask = np.asarray(mask)
-#        img2 = np.asarray(img2)
-#
-#        img1 = img1.astype(np.float32) / 255
-#        img2 = img2.astype(np.float32) / 255
-#        mask = mask.astype(np.float32)
-#
-#
-#        img1 = torch.from_numpy(img1).permute(2, 0, 1)
-#        img2 = torch.from_numpy(img2).permute(2, 0, 1)
-#        mask_cat = torch.zeros(1, self.input_sz, self.input_sz).to(torch.uint8)
-#
-#        mask = mask.reshape(1, self.input_sz, self.input_sz)
-#
-#        # not the best way but this is to flip the labels
-#        mask_cat[0] = Variable(torch.Tensor(mask))
-#
-#        if self.use_random_affine:
-#            affine_kwargs = {"min_rot": self.aff_min_rot, "max_rot": self.aff_max_rot,
-#                    "min_shear": self.aff_min_shear,
-#                    "max_shear": self.aff_max_shear,
-#                    "min_scale": self.aff_min_scale,
-#                    "max_scale": self.aff_max_scale}
-#
-#
-#            img2, affine1_to_2, affine2_to_1 = random_affine(img2, **affine_kwargs)  #
-#
-#        else:
-#            affine2_to_1 = torch.zeros([2, 3]).to(torch.float32) # cuda
-#            affine2_to_1[0, 0] = 1
-#            affine2_to_1[1, 1] = 1
-#
-#        if np.random.rand() > self.flip_p:
-#            img2 = torch.flip(img2, dims=[2])
-#            affine2_to_1[0, :] *= -1
-#
-#        mask_cat = mask_cat.view(1, self.input_sz, self.input_sz)
-#        mask_img1 = torch.ones(self.input_sz, self.input_sz).to(torch.uint8) #cuda
-#
-#
-#        return img1, img2, affine2_to_1, mask_img1, mask_cat
 
     def __len__(self):
         return len(self.mask)
