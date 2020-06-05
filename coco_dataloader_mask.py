@@ -176,6 +176,7 @@ class CocoDataloader(torch.utils.data.Dataset):
 
         self._fine_to_coarse_index, self.fine_to_coarse_name = generate_fine_to_coarse()
         print(self.fine_to_coarse_name)
+        print(self.fine_index_to_coarse_index)
         exit()
 
 
