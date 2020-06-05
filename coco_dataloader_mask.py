@@ -64,7 +64,6 @@ _sorted_coarse_names = [
         "person-things",  # 9
         "sports-things",  # 10
         "vehicle-things",  # 11
-
         "ceiling-stuff",  # 12
         "floor-stuff",  # 13
         "food-stuff",  # 14
@@ -194,9 +193,9 @@ class CocoDataloader(torch.utils.data.Dataset):
 
         label_orig_coarse_inds = []
         for label_name in self.label_names:
-            orig_coarse_ind = list(self.fine_to_coarse_name.keys()).index(label_name)
+            orig_coarse_ind = _sorted_coarse_name_to_coarse_index[label_name]
             label_orig_coarse_inds.append(orig_coarse_ind)
-        print(label_orig_coarse_inds)
+            print(label_orig_coarse_inds)
         exit()
 
         _fine_to_few_dic = {}
