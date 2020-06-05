@@ -175,8 +175,6 @@ class CocoDataloader(torch.utils.data.Dataset):
                 hue=0.125)
 
         self._fine_to_coarse_index, self.fine_to_coarse_name = generate_fine_to_coarse()
-        print(type(self._fine_to_coarse_index))
-        exit()
 
 
     def __getitem__(self, index):
@@ -208,6 +206,7 @@ class CocoDataloader(torch.utils.data.Dataset):
             else:
                 new_few_ind = -1
             _fine_to_few_dic[c] = new_few_ind
+            exit()
 
 
 
