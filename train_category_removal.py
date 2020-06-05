@@ -10,12 +10,12 @@ from random import randint
 
 # scripts
 from image_loader import ShadowShadowFreeDataset
-from net10a_twohead import SegmentationNet10a
+from net10a_twohead import SegmentationNet10a, SegmentationNet10aTwoHead
 from IIC_Losses import IID_segmentation_loss
 from models_for_gan import Discriminator_inpainted, Generator_inpaint
 from utils import remove_catx, remove_random_region, custom_loss_iic
 # from coco_dataloader import CocoDataloader
-from coco_dataloader_with_mask import CocoDataloader
+from coco_dataloader_mask import CocoDataloader
 from image_loader_cityscapes import CityscapesLoader
 
 from torch.utils.tensorboard import SummaryWriter
@@ -24,13 +24,11 @@ import tensorflow as tf
 from eval import eval_acc
 from color_segmentation import Color_Mask
 
-
-
-NUM_CLASSES = 12  # number of segmentation classes in dataset, 11 for cocothings, 20 for cityscapes
+NUM_CLASSES = 4  # number of segmentation classes in dataset, 11 for cocothings, 20 for cityscapes
 REAL = 1
 FAKE = 0
 
-h, w, in_channels = 240, 240, 3
+h, w, in_channels = 240, 240, 4
 input_sz = h
 
 # Lists to keep track of progress
@@ -39,7 +37,7 @@ ave_losses = []
 
 val_discrete_losses = []
 val_ave_losses = []
-val_ave_acc= []
+val_ave_acc = []
 
 # keep track of folders and saved files when model is run multiple times
 time_begin = str(datetime.now()).replace(' ', '-')
@@ -58,7 +56,7 @@ half_T_side_dense = 0
 half_T_side_sparse_min = 0
 half_T_side_sparse_max = 0
 
-curr = -1 # this is to correctly store values
+curr = -1  # this is to correctly store values
 
 # Defining the learning rate, number of epochs and beta for the optimizers
 lr = 0.001
@@ -71,8 +69,22 @@ min_val_loss = np.Inf
 total_train = 0
 Lcorrect_train = 0
 
+'''
+pre-trained model (555) config: Namespace(aff_max_rot=30.0, aff_max_scale=1.2, aff_max_shear=10.0, aff_min_rot=-30.0, 
+aff_min_scale=0.8, aff_min_shear=-10.0, arch='SegmentationNet10aTwoHead', batch_sz=120, batchnorm_track=True, 
+coco_164k_curated_version=6, dataloader_batch_sz=120, dataset='Coco164kCuratedFew', 
+dataset_root='/scratch/local/ssd/xuji/COCO/CocoStuff164k' 
+'''
+# pretrained model path
+pretrained_555_path = './pretrained_models/models/555/best_net.pytorch'
+pretrained_555 = torch.load(pretrained_555_path)
+
 # Create the models
-IIC = SegmentationNet10a(num_sub_heads, NUM_CLASSES).cuda()  # produces segmentation maps from images
+# IIC = SegmentationNet10a(num_sub_heads, NUM_CLASSES).cuda()  # produces segmentation maps from images
+# pretrained model should match config.arch which is 'SegmentationNet10aTwoHead'
+IIC = SegmentationNet10aTwoHead()
+IIC.load_state_dict(pretrained_555['net'])
+IIC.cuda()
 Gen = Generator_inpaint().cuda()  # fills in image with blacked out regions (catX and random area), with L1 loss for non-catX pixels
 Disc = Discriminator_inpainted().cuda()  # given real image - catX and generated - catX
 # use another disc? Somehow make sure catX pixels look real
@@ -89,7 +101,6 @@ optimizer_iic = torch.optim.Adam(IIC.parameters(), lr=lr, betas=(beta1, 0.1))
 optimizer_g = torch.optim.Adam(Gen.parameters(), lr=lr, betas=(beta1, 0.1))
 optimizer_d = torch.optim.Adam(Disc.parameters(), lr=lr, betas=(beta1, 0.1))
 
-
 # this creates an object of that would color the mask
 color_mapper = Color_Mask(NUM_CLASSES)
 
@@ -105,13 +116,15 @@ if coco:
     # train_dataloader = DataLoader(dataset=CocoDataloader(root=train_data_dir, annotation=train_coco, input_sz=input_sz, classes_path=None),
     #                         batch_size=batch_sz, shuffle=True, collate_fn=CocoDataloader.collate_fn, drop_last=True)
     dataL = CocoDataloader(input_sz, mode="train")
-    train_dataloader = DataLoader(dataset=dataL, batch_size=batch_sz, shuffle=True, drop_last=True)  # for coco add collate
+    train_dataloader = DataLoader(dataset=dataL, batch_size=batch_sz, shuffle=True,
+                                  drop_last=True)  # for coco add collate
 
     val_data_dir = 'data/val2017'
     val_coco = 'data/instances_val2017.json'
 
     dataL = CocoDataloader(input_sz, mode="val")
-    val_dataloader = DataLoader(dataset=dataL, batch_size=batch_sz, shuffle=True, drop_last=True)  # for coco add collate
+    val_dataloader = DataLoader(dataset=dataL, batch_size=batch_sz, shuffle=True,
+                                drop_last=True)  # for coco add collate
     # there is no option for using validation set yet
     # val_dataloader = DataLoader(dataset=CocoDataloader(root=train_data_dir, annotation=train_coco, input_sz=input_sz, classes_path=None),
     #                         batch_size=batch_sz, shuffle=True, collate_fn=CocoDataloader.collate_fn, drop_last=True)
@@ -185,7 +198,6 @@ for epoch in range(0, num_epochs):
 
                 curr += 1
 
-
                 # batch is passed through each subhead to calculate loss, store average loss per sub_head
                 avg_loss_batch = None
                 avg_loss_no_lamb_batch = None
@@ -207,13 +219,12 @@ for epoch in range(0, num_epochs):
 
                 avg_loss_batch /= num_sub_heads
                 # avg_loss_batch *= -1 # this is to make the loss positive, only flip the labels
-                #avg_loss_no_lamb_batch /= num_sub_heads
-
+                # avg_loss_no_lamb_batch /= num_sub_heads
 
                 pred = torch.argmax(x1_outs[0].cpu().detach(), dim=1)
-                #with tf.name_scope("input_reshape"):
+                # with tf.name_scope("input_reshape"):
                 #    tf.summary.image("images", pred, epoch)
-                #exit()
+                # exit()
 
                 if not np.isfinite(avg_loss_batch.item()):
                     print("Loss is not finite... %s:" % str(avg_loss_batch))
@@ -242,7 +253,6 @@ for epoch in range(0, num_epochs):
             train_acc = eval_acc(flat_preds, flat_targets)
             avg_acc += train_acc
             avg_acc_count += 1
-
 
             catx = randint(0, NUM_CLASSES - 1)
 
@@ -306,7 +316,7 @@ for epoch in range(0, num_epochs):
                 # this consecutive lines are for the image on tensorboard
                 if curr % 500 == 0:
                     img_to_board = torch.argmax(x1_outs[0].cpu().detach(), dim=1).numpy()  # gets black and white image
-                    color = color_mapper.add_color(img_to_board) # this is where we send the mask to the scrip
+                    color = color_mapper.add_color(img_to_board)  # this is where we send the mask to the scrip
                     img2_to_board = img1_filled[0].cpu().detach()
                     o = img1[0].cpu().detach()
                     writer.add_image('images/val_original', o, curr)
@@ -334,7 +344,7 @@ for epoch in range(0, num_epochs):
                     print(x1_outs[0].shape)
                     print(img_to_board.shape)
                     exit()
-                    color = color_mapper.add_color(img_to_board) # this is where we send the mask to the scrip
+                    color = color_mapper.add_color(img_to_board)  # this is where we send the mask to the scrip
                     img2_to_board = img1_filled[0].cpu().detach()
                     o = img1[0].cpu().detach()
                     writer.add_image('images/train_original', o, curr)
@@ -347,14 +357,12 @@ for epoch in range(0, num_epochs):
                     #     [avg_loss_batch.item(), disc_loss.item(), gen_loss.item(), filled_data_loss.item(),
                     #      gen_adv_loss.item(), adv_seg_loss.item()])  # store for graphing
 
-
                     writer.add_scalar('accuracy/discrete_acc_train', train_acc, curr)
                     writer.add_scalar('loss/discrete_loss_train', disc_loss.item(), curr)
                     writer.add_scalar('loss/discrete_loss_gen_train', gen_loss.item(), curr)
                     writer.add_scalar('loss/discrete_loss_filled_data_train', filled_data_loss.item(), curr)
                     writer.add_scalar('loss/discrete_loss_gen_adv_train', gen_adv_loss.item(), curr)
                     writer.add_scalar('loss/discrete_loss_adv_seg_train', adv_seg_loss.item(), curr)
-
 
                 # if epoch < 50:
                 if epoch < 1 and idx < 3000 and predict_seg:  # pretrain just iic (later just load pretrained one instead)
@@ -394,13 +402,12 @@ for epoch in range(0, num_epochs):
                 if idx % 1000 == 0:
                     torch.save({
                         'epoch': epoch,
-                        'idx' : idx,
-                        'time_begin' : time_begin,
+                        'idx': idx,
+                        'time_begin': time_begin,
                         'IIC_state_dict': IIC.state_dict(),
                         'Gen_state_dict': Gen.state_dict(),
                         'Disc_state_dict': Disc.state_dict(),
                     }, "saved_models/cat_removal_e{}_idx{}_{}.model".format(epoch, idx, time_begin))
-
 
         torch.cuda.empty_cache()
         # change to make loop only go through portion of dataset since there are so many training files
@@ -421,11 +428,10 @@ for epoch in range(0, num_epochs):
     avg_adv_seg_loss = float(avg_adv_seg_loss / avg_loss_count)
 
     if mode == 'train':
-        #if not predict_seg:
+        # if not predict_seg:
         #    train_acc = 100  # since not using iic
         ## keep track of accuracy to plot
-        #ave_acc.append([train_acc])
-
+        # ave_acc.append([train_acc])
 
         writer.add_scalar('accuracy/avg_acc_train', avg_acc, epoch)
         writer.add_scalar('loss/avg_loss_train', avg_loss, epoch)
@@ -435,28 +441,28 @@ for epoch in range(0, num_epochs):
         writer.add_scalar('loss/avg_loss_gen_adv_train', avg_gen_adv_loss, epoch)
         writer.add_scalar('loss/avg_loss_adv_seg_train', avg_adv_seg_loss, epoch)
 
-        #ave_losses.append([avg_loss, avg_disc_loss, avg_gen_loss, avg_sf_data_loss, avg_gen_adv_loss,
+        # ave_losses.append([avg_loss, avg_disc_loss, avg_gen_loss, avg_sf_data_loss, avg_gen_adv_loss,
         #                   avg_adv_seg_loss])  # store for graphing
 
         # save lists of losses and accuracy as csv files for reading and graphing later
-        #df0 = pd.DataFrame(list(zip(*ave_acc))).add_prefix('Col')
-        #filename = 'loss_csvs/' + time_begin + '/cat_removal_acc_e' + str(epoch) + '_' + time_begin + '.csv'
-        #print('saving to', filename)
-        #df0.to_csv(filename, index=False)
+        # df0 = pd.DataFrame(list(zip(*ave_acc))).add_prefix('Col')
+        # filename = 'loss_csvs/' + time_begin + '/cat_removal_acc_e' + str(epoch) + '_' + time_begin + '.csv'
+        # print('saving to', filename)
+        # df0.to_csv(filename, index=False)
 
-        #df1 = pd.DataFrame(list(zip(*ave_losses))).add_prefix('Col')
-        #filename = 'loss_csvs/cat_removal_ave_e' + str(epoch) + '_' + time_begin + '.csv'
-        #print('saving to', filename)
-        #df1.to_csv(filename, index=False)
+        # df1 = pd.DataFrame(list(zip(*ave_losses))).add_prefix('Col')
+        # filename = 'loss_csvs/cat_removal_ave_e' + str(epoch) + '_' + time_begin + '.csv'
+        # print('saving to', filename)
+        # df1.to_csv(filename, index=False)
 
-        #df2 = pd.DataFrame(list(zip(*discrete_losses))).add_prefix('Col')
-        #filename = 'loss_csvs/cat_removal_discrete_e' + str(epoch) + '_' + time_begin + '.csv'
-        #print('saving to', filename)
-        #df2.to_csv(filename, index=False)
+        # df2 = pd.DataFrame(list(zip(*discrete_losses))).add_prefix('Col')
+        # filename = 'loss_csvs/cat_removal_discrete_e' + str(epoch) + '_' + time_begin + '.csv'
+        # print('saving to', filename)
+        # df2.to_csv(filename, index=False)
 
     elif mode == 'val':
-#        if not predict_seg:
-#            train_acc = 100  # since not using iic
+        #        if not predict_seg:
+        #            train_acc = 100  # since not using iic
 
         writer.add_scalar('accuracy/avg_acc_validation', avg_acc, epoch)
         writer.add_scalar('loss/avg_loss_validation', avg_loss, epoch)
