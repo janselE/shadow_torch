@@ -175,8 +175,7 @@ class CocoDataloader(torch.utils.data.Dataset):
                 hue=0.125)
 
         self._fine_to_coarse_index, self.fine_to_coarse_name = generate_fine_to_coarse()
-        print(type(self.fine_to_coarse_name))
-        print(type(self.fine_index_to_coarse_index))
+        print(type(self._fine_to_coarse_index))
         exit()
 
 
@@ -191,6 +190,9 @@ class CocoDataloader(torch.utils.data.Dataset):
         labels, _ = pad_and_or_crop(labels, self.input_sz, mode="fixed",coords=coords)
 
         new_labels = np.zeros(labels.shape, dtype=labels.dtype)
+
+
+
 
         label_orig_coarse_inds = []
         for label_name in self.label_names:
