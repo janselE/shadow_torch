@@ -23,7 +23,7 @@ from color_segmentation import Color_Mask
 
 h, w, in_channels = 240, 240, 4
 input_sz = h
-NUMBER_CLASSES = 15
+NUMBER_CLASSES = 3
 
 # Lists to keep track of progress
 discrete_losses = []
