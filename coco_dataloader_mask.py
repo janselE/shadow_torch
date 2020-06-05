@@ -191,15 +191,15 @@ class CocoDataloader(torch.utils.data.Dataset):
 
         label_orig_coarse_inds = []
         for label_name in self.label_names:
-            orig_coarse_ind = self.fine_to_coarse_name.index(label_name)
+            orig_coarse_ind = list(self.fine_to_coarse_name).index(label_name)
             label_orig_coarse_inds.append(orig_coarse_ind)
 
         _fine_to_few_dic = {}
         for c in range(0, 182):
-            orig_coarse_ind = self.fine_index_to_coarse_index.index(c)
+            orig_coarse_ind = list(self.fine_index_to_coarse_index).index(c)
 
             if orig_coarse_ind in label_orig_coarse_inds:
-                new_few_ind = label_orig_coarse_inds.index(orig_coarse_ind)
+                new_few_ind = list(label_orig_coarse_inds).index(orig_coarse_ind)
             else:
                 new_few_ind = -1
             _fine_to_few_dic[c] = new_few_ind
