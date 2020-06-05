@@ -195,8 +195,6 @@ class CocoDataloader(torch.utils.data.Dataset):
         for label_name in self.label_names:
             orig_coarse_ind = _sorted_coarse_name_to_coarse_index[label_name]
             label_orig_coarse_inds.append(orig_coarse_ind)
-            print(label_orig_coarse_inds)
-        exit()
 
         _fine_to_few_dic = {}
         for c in range(0, 182):
@@ -207,7 +205,7 @@ class CocoDataloader(torch.utils.data.Dataset):
             else:
                 new_few_ind = -1
             _fine_to_few_dic[c] = new_few_ind
-            exit()
+        exit()
 
 
 
