@@ -162,12 +162,19 @@ class CocoDataloader(torch.utils.data.Dataset):
         self.aff_max_scale = 1.2
         self.flip_p = 0.5
 
+        # this is for coco stuff 3
+        self.label_names = [
+                "sky-stuff",
+                "plant-stuff",
+                "ground-stuff",
+                ]
+
         self.jitter_tf = transforms.ColorJitter(brightness=0.4,
                 contrast=0.4,
                 saturation=0.4,
                 hue=0.125)
 
-        self._fine_to_coarse_index, self.fine_tor_coarse_name = generate_fine_to_coarse()
+        self._fine_to_coarse_index, self.fine_to_coarse_name = generate_fine_to_coarse()
 
 
     def __getitem__(self, index):
@@ -181,8 +188,31 @@ class CocoDataloader(torch.utils.data.Dataset):
         labels, _ = pad_and_or_crop(labels, self.input_sz, mode="fixed",coords=coords)
 
         new_labels = np.zeros(labels.shape, dtype=labels.dtype)
+
+        label_orig_coarse_inds = []
+        for label_name in self.label_names:
+            orig_coarse_ind = self.fine_to_coarse_name.index(label_name)
+            label_orig_coarse_inds.append(orig_coarse_ind)
+
+        _fine_to_few_dic = {}
         for c in range(0, 182):
-           new_labels[labels == c] = self._fine_to_coarse_index[c]
+            orig_coarse_ind = self.fine_index_to_coarse_index.index(c)
+
+            if orig_coarse_ind in label_orig_coarse_inds:
+                new_few_ind = label_orig_coarse_inds.index(orig_coarse_ind)
+            else:
+                new_few_ind = -1
+            _fine_to_few_dic[c] = new_few_ind
+
+        print(_fine_to_few_dic)
+        print("done")
+        exit()
+
+
+
+        for c in range(0, 182):
+            orig_coarse_ind = self.fine_to_coarse_name
+            new_labels[labels == c] = self._fine_to_coarse_index[c]
         labels = new_labels
 
 
