@@ -178,6 +178,12 @@ def train():
         dict = torch.load(os.path.join(config.out_dir, dict_name),
                           map_location=lambda storage, loc: storage)
         net.load_state_dict(dict["net"])
+
+    # pretrained model path, should load pretrained weights
+    pretrained_555_path = './pretrained_models/models/555/best_net.pytorch'
+    pretrained_555 = torch.load(pretrained_555_path)
+    net.load_state_dict(pretrained_555["net"])
+
     net.cuda()
     net = torch.nn.DataParallel(net)
     net.train()
@@ -241,7 +247,7 @@ def train():
     # Train
     # ------------------------------------------------------------------------
 
-    for e_i in xrange(next_epoch, config.num_epochs):
+    for e_i in range(next_epoch, config.num_epochs):
         print("Starting e_i: %d %s" % (e_i, datetime.now()))
         sys.stdout.flush()
 
@@ -288,7 +294,7 @@ def train():
                                             config.input_sz).to(torch.float32).cuda()
 
                 curr_batch_sz = tup[0][0].shape[0]
-                for d_i in xrange(config.num_dataloaders):
+                for d_i in range(config.num_dataloaders):
                     img1, img2, affine2_to_1, mask_img1 = tup[d_i]
                     assert (img1.shape[0] == curr_batch_sz)
 
@@ -323,7 +329,7 @@ def train():
                 avg_loss_batch = None  # avg over the heads
                 avg_loss_no_lamb_batch = None
 
-                for i in xrange(config.num_sub_heads):
+                for i in range(config.num_sub_heads):
                     loss, loss_no_lamb = loss_fn(x1_outs[i],
                                                  x2_outs[i],
                                                  all_affine2_to_1=all_affine2_to_1,
