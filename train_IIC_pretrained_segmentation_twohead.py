@@ -325,6 +325,9 @@ def train():
 
                 x1_outs = net(all_img1, head=head)
                 x2_outs = net(all_img2, head=head)
+                print(x1_outs[0].shape)
+                print(x2_outs[0].shape)
+                exit()
 
                 avg_loss_batch = None  # avg over the heads
                 avg_loss_no_lamb_batch = None
