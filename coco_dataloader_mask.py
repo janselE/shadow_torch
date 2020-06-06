@@ -191,6 +191,7 @@ class CocoDataloader(torch.utils.data.Dataset):
 
 
 
+# this can be moved to run only once
         label_orig_coarse_inds = []
         for label_name in self.label_names:
             orig_coarse_ind = _sorted_coarse_name_to_coarse_index[label_name]
@@ -205,6 +206,7 @@ class CocoDataloader(torch.utils.data.Dataset):
             else:
                 new_few_ind = -1
             _fine_to_few_dic[c] = new_few_ind
+# until here
 
 
 
