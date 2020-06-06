@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 
+IMAGE_CHANNELS = 4
+
 # takes image (3 channels) and softmax predictions of shadow mask (2 channels) as input and generates shadow-free image
 class Generator_sf(nn.Module):
     def  __init__(self):
@@ -135,7 +137,7 @@ class Generator_inpaint(nn.Module):
     def  __init__(self):
         super(Generator_inpaint, self).__init__()
         self.conv0 = nn.Sequential(
-            nn.Conv2d(3, 64, 3, 1, 1),  # 3 color channels plus 35 seg category channels
+            nn.Conv2d(IMAGE_CHANNELS, 64, 3, 1, 1),  # 3 color channels plus 35 seg category channels
             nn.LeakyReLU(),
         )
         self.conv1 = nn.Sequential(
@@ -188,7 +190,7 @@ class Generator_inpaint(nn.Module):
             nn.ReLU()
         )
         self.convt11 = nn.Sequential(
-            nn.ConvTranspose2d(128, 3, 3, 1, 1),
+            nn.ConvTranspose2d(128, IMAGE_CHANNELS, 3, 1, 1),
             nn.Tanh()  # how are images normalized? Scale to match this range
         )
         self._initialize_weights()
@@ -233,7 +235,7 @@ class Discriminator_inpainted(nn.Module):
     def __init__(self):
         super(Discriminator_inpainted, self).__init__()
         self.feature = nn.Sequential(
-            nn.Conv2d(3, 64, 3, 1, 1),
+            nn.Conv2d(IMAGE_CHANNELS, 64, 3, 1, 1),
             nn.LeakyReLU(),
             nn.Conv2d(64, 128, 3, 1, 1),
             nn.BatchNorm2d(128),
