@@ -139,6 +139,7 @@ config.dataset_root = '/work/LAS/jannesar-lab/shadow_torch/data3'
 config.fine_to_course_dict = '/work/LAS/jannesar-lab/shadow_torch/pretrained_models/fine_to_course_dict.pickle'
 config.out_root = "configs"
 config.model_ind = "" 
+config.restart = False
 
 
 
@@ -180,10 +181,10 @@ config.model_ind = ""
 # Model ------------------------------------------------------
 
 def train():
-#    dataloaders_head_A, mapping_assignment_dataloader, mapping_test_dataloader = \
-#        segmentation_create_dataloaders(config)
-#    dataloaders_head_B = dataloaders_head_A  # unlike for clustering datasets
-#
+    dataloaders_head_A, mapping_assignment_dataloader, mapping_test_dataloader = \
+        segmentation_create_dataloaders(config)
+    dataloaders_head_B = dataloaders_head_A  # unlike for clustering datasets
+
     net = archs.__dict__[config.arch](config)
 #    if config.restart:
 #        dict = torch.load(os.path.join(config.out_dir, dict_name),
@@ -195,12 +196,6 @@ def train():
     pretrained_555 = torch.load(pretrained_555_path)
 
     net.load_state_dict(pretrained_555)
-    print(net)
-    exit()
-
-
-
-
 
     net.cuda()
     net = torch.nn.DataParallel(net)
@@ -209,6 +204,7 @@ def train():
     optimiser = get_opt(config.opt)(net.module.parameters(), lr=config.lr)
     if config.restart:
         optimiser.load_state_dict(dict["optimiser"])
+
 
     heads = ["A", "B"]
     if hasattr(config, "head_B_first") and config.head_B_first:
@@ -343,9 +339,6 @@ def train():
 
                 x1_outs = net(all_img1, head=head)
                 x2_outs = net(all_img2, head=head)
-                print(x1_outs[0].shape)
-                print(x2_outs[0].shape)
-                exit()
 
                 avg_loss_batch = None  # avg over the heads
                 avg_loss_no_lamb_batch = None
