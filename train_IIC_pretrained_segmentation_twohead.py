@@ -137,10 +137,11 @@ with open('./pretrained_models/models/555/config.pickle', "rb") as f:
 # make sure --dataset_root is set to (absolute path of) my_CocoStuff164k_directory, and --fine_to_coarse_dict is set to
 # (absolute path of) code/datasets/segmentation/util/out/fine_to_coarse_dict.pickle
 config.dataset_root = '/work/LAS/jannesar-lab/shadow_torch/data3'
-config.fine_to_coarse_dict = '/work/LAS/jannesar-lab/shadow_torch/pretrained_models/fine_to_course_dict.pickle'
+config.fine_to_coarse_dict = '/work/LAS/jannesar-lab/shadow_torch/IIC/code/datasets/segmentation/util/out/fine_to_coarse_dict.pickle'
 config.out_root = "configs"
 config.model_ind = 555
 config.restart = False
+config.test_code = True 
 
 '''
 The config file contains the following:
@@ -264,15 +265,14 @@ else:
 # Model ------------------------------------------------------
 
 def train():
-     dataloaders_head_A, mapping_assignment_dataloader, mapping_test_dataloader = \
-         segmentation_create_dataloaders(config)
-     dataloaders_head_B = dataloaders_head_A  # unlike for clustering datasets
+    dataloaders_head_A, mapping_assignment_dataloader, mapping_test_dataloader = segmentation_create_dataloaders(config) 
+    dataloaders_head_B = dataloaders_head_A  # unlike for clustering datasets
 
     net = archs.__dict__[config.arch](config)
-        if config.restart:
-            dict = torch.load(os.path.join(config.out_dir, dict_name),
-                              map_location=lambda storage, loc: storage)
-            net.load_state_dict(dict["net"])
+#        if config.restart:
+#            dict = torch.load(os.path.join(config.out_dir, dict_name),
+#                              map_location=lambda storage, loc: storage)
+#            net.load_state_dict(dict["net"])
 
     # pretrained model path, should load pretrained weights
     pretrained_555_path = './pretrained_models/models/555/best_net.pytorch'
@@ -471,6 +471,8 @@ def train():
                 b_i += 1
                 if b_i == 2 and config.test_code:
                     break
+                print("testing one iteration")
+                exit()
 
             avg_loss = float(avg_loss / avg_loss_count)
             avg_loss_no_lamb = float(avg_loss_no_lamb / avg_loss_count)
@@ -548,6 +550,7 @@ def train():
             text_file.write("%s" % config)
 
         if config.test_code:
+            print("test code completed")
             exit(0)
 
 
