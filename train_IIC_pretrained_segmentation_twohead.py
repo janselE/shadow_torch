@@ -6,7 +6,6 @@ import pickle
 import sys
 from datetime import datetime
 
-
 import matplotlib
 import numpy as np
 import torch
@@ -15,7 +14,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import os
 
-sys.path.append('IIC/code') 
+sys.path.append('IIC/code')
 
 import IIC.code.archs as archs
 from IIC.code.utils.cluster.general import config_to_str, get_opt, update_lr, nice
@@ -132,33 +131,109 @@ with open('./pretrained_models/models/555/config.pickle', "rb") as f:
     u.encoding = 'latin1'
     config = u.load()
 
-#config = pickle.load(open('./pretrained_models/models/555/config.pickle', "rb"))
+# config = pickle.load(open('./pretrained_models/models/555/config.pickle', "rb"))
 # make sure --dataset_root is set to (absolute path of) my_CocoStuff164k_directory, and --fine_to_coarse_dict is set to
 # (absolute path of) code/datasets/segmentation/util/out/fine_to_coarse_dict.pickle
 config.dataset_root = '/work/LAS/jannesar-lab/shadow_torch/data3'
 config.fine_to_course_dict = '/work/LAS/jannesar-lab/shadow_torch/pretrained_models/fine_to_course_dict.pickle'
 config.out_root = "configs"
-config.model_ind = "" 
+config.model_ind = 555
+config.restart = False
 
+'''
+The config file contains the following:
+
+Namespace(aff_max_rot=30.0, 
+          aff_max_scale=1.2, 
+          aff_max_shear=10.0, 
+          aff_min_rot=-30.0, 
+          aff_min_scale=0.8,
+          aff_min_shear=-10.0, 
+          arch='SegmentationNet10aTwoHead', 
+          batch_sz=120, 
+          batchnorm_track=True,
+          coco_164k_curated_version=6, 
+          dataloader_batch_sz=120, 
+          dataset='Coco164kCuratedFew',
+          dataset_root='/scratch/local/ssd/xuji/COCO/CocoStuff164k', 
+          epoch_acc=[0.3565545631495595, 0.4611281067913882, ..., 0.7049956389275988],
+          epoch_ari=[-1.0, -1.0, ..., -1.0], 
+          epoch_loss_head_A=[-0.9078965678955071, ..., -1.4899453563627854], 
+          epoch_loss_head_B=[-1.6547690672812119, ..., -1.7504075118918825],
+          epoch_loss_no_lamb_head_A=[-0.9078965678955071, ..., 0.6537394435966716], 
+          epoch_masses=array([[0.01755809, 0.1158256, 0.86661631],
+                            [0.32405867, 0.32008566, 0.35585567]]),
+          epoch_nmi=[-1.0, -1.0, -1.0], 
+          eval_mode='hung',
+          fine_to_coarse_dict='/users/xuji/iid/iid_private/code/datasets/segmentation/util/out/fine_to_coarse_dict.pickle',
+          flip_p=0.5, 
+          gt_k=3, 
+          half_T_side_dense=10, 
+          half_T_side_sparse_max=0, 
+          half_T_side_sparse_min=0, 
+          in_channels=5,
+          incl_animal_things=False, 
+          include_rgb=True, 
+          include_things_labels=False, 
+          input_sz=128, 
+          jitter_brightness=0.4,
+          jitter_contrast=0.4, 
+          jitter_hue=0.125, 
+          jitter_saturation=0.4, 
+          lamb_A=1.0, 
+          lamb_B=1.5, 
+          last_epoch=108,
+          lr=0.0001, 
+          lr_mult=0.1, 
+          lr_schedule=[], 
+          mapping_assignment_partitions=['train2017', 'val2017'],
+          mapping_test_partitions=['train2017', 'val2017'], 
+          mask_input=False, 
+          mode='IID', 
+          model_ind=555,
+          no_pre_eval=False, 
+          no_sobel=False, 
+          num_dataloaders=1, 
+          num_epochs=4800, 
+          num_heads=1, 
+          num_sub_heads=1,
+          opt='Adam', 
+          out_dir='/scratch/shared/slow/xuji/iid_private/555',
+          out_root='/scratch/shared/slow/xuji/iid_private', 
+          output_k=3, output_k_A=15, output_k_B=3, 
+          pre_scale_all=True,
+          pre_scale_factor=0.33, 
+          restart=True, 
+          save_multiple=True, 
+          scale_max=1.4, scale_min=0.6,
+          train_partitions=['train2017', 'val2017'], 
+          use_coarse_labels=True, 
+          use_doersch_datasets=False,
+          use_random_affine=False, 
+          use_random_scale=False, 
+          use_uncollapsed_loss=True, 
+          using_IR=False)
+
+'''
 
 
 # Setup ------------------------------------------------------------------------
 
-#config.out_dir = os.path.join(config.out_root, str(config.model_ind))
-#config.dataloader_batch_sz = int(config.batch_sz / config.num_dataloaders)
-#assert (config.mode == "IID")
-#assert ("TwoHead" in config.arch)
-#assert (config.output_k_B == config.gt_k)
-#config.output_k = config.output_k_B  # for eval code
-#assert (config.output_k_A >= config.gt_k)  # sanity
-#config.use_doersch_datasets = False
-#config.eval_mode = "hung"
-#set_segmentation_input_channels(config)
+# config.out_dir = os.path.join(config.out_root, str(config.model_ind))
+# config.dataloader_batch_sz = int(config.batch_sz / config.num_dataloaders)
+# assert (config.mode == "IID")
+# assert ("TwoHead" in config.arch)
+# assert (config.output_k_B == config.gt_k)
+# config.output_k = config.output_k_B  # for eval code
+# assert (config.output_k_A >= config.gt_k)  # sanity
+# config.use_doersch_datasets = False
+# config.eval_mode = "hung"
+# set_segmentation_input_channels(config)
 #
-#if not os.path.exists(config.out_dir):
+# if not os.path.exists(config.out_dir):
 #    os.makedirs(config.out_dir)
 #
-#if config.restart:
+# if config.restart:
 #    config_name = "config.pickle"
 #    dict_name = "latest.pytorch"
 #
@@ -173,22 +248,22 @@ config.model_ind = ""
 #    # copy over new num_epochs and lr schedule
 #    config.num_epochs = given_config.num_epochs
 #    config.lr_schedule = given_config.lr_schedule
-#else:
+# else:
 #    print("Given config: %s" % config_to_str(config))
 
 
 # Model ------------------------------------------------------
 
 def train():
-#    dataloaders_head_A, mapping_assignment_dataloader, mapping_test_dataloader = \
-#        segmentation_create_dataloaders(config)
-#    dataloaders_head_B = dataloaders_head_A  # unlike for clustering datasets
-#
+    # dataloaders_head_A, mapping_assignment_dataloader, mapping_test_dataloader = \
+    #     segmentation_create_dataloaders(config)
+    # dataloaders_head_B = dataloaders_head_A  # unlike for clustering datasets
+
     net = archs.__dict__[config.arch](config)
-#    if config.restart:
-#        dict = torch.load(os.path.join(config.out_dir, dict_name),
-#                          map_location=lambda storage, loc: storage)
-#        net.load_state_dict(dict["net"])
+    #    if config.restart:
+    #        dict = torch.load(os.path.join(config.out_dir, dict_name),
+    #                          map_location=lambda storage, loc: storage)
+    #        net.load_state_dict(dict["net"])
 
     # pretrained model path, should load pretrained weights
     pretrained_555_path = './pretrained_models/models/555/best_net.pytorch'
@@ -197,10 +272,6 @@ def train():
     net.load_state_dict(pretrained_555)
     print(net)
     exit()
-
-
-
-
 
     net.cuda()
     net = torch.nn.DataParallel(net)
