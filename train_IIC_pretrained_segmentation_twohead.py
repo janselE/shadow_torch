@@ -26,6 +26,8 @@ from IIC.code.utils.segmentation.IID_losses import IID_segmentation_loss, \
 from IIC.code.utils.segmentation.data import segmentation_create_dataloaders
 from IIC.code.utils.segmentation.general import set_segmentation_input_channels
 
+time_begin = str(datetime.now()).replace(' ', '-')
+
 """
   Fully unsupervised clustering for segmentation ("IIC" = "IID").
   Train and test script.
@@ -135,7 +137,7 @@ with open('./pretrained_models/models/555/config.pickle', "rb") as f:
 # make sure --dataset_root is set to (absolute path of) my_CocoStuff164k_directory, and --fine_to_coarse_dict is set to
 # (absolute path of) code/datasets/segmentation/util/out/fine_to_coarse_dict.pickle
 config.dataset_root = '/work/LAS/jannesar-lab/shadow_torch/data3'
-config.fine_to_course_dict = '/work/LAS/jannesar-lab/shadow_torch/pretrained_models/fine_to_course_dict.pickle'
+config.fine_to_coarse_dict = '/work/LAS/jannesar-lab/shadow_torch/pretrained_models/fine_to_course_dict.pickle'
 config.out_root = "configs"
 config.model_ind = 555
 config.restart = False
@@ -220,36 +222,43 @@ Namespace(aff_max_rot=30.0,
 # Setup ------------------------------------------------------------------------
 
 # config.out_dir = os.path.join(config.out_root, str(config.model_ind))
-# config.dataloader_batch_sz = int(config.batch_sz / config.num_dataloaders)
-# assert (config.mode == "IID")
-# assert ("TwoHead" in config.arch)
-# assert (config.output_k_B == config.gt_k)
-# config.output_k = config.output_k_B  # for eval code
-# assert (config.output_k_A >= config.gt_k)  # sanity
-# config.use_doersch_datasets = False
-# config.eval_mode = "hung"
-# set_segmentation_input_channels(config)
-#
-# if not os.path.exists(config.out_dir):
-#    os.makedirs(config.out_dir)
-#
-# if config.restart:
-#    config_name = "config.pickle"
-#    dict_name = "latest.pytorch"
-#
-#    given_config = config
-#    reloaded_config_path = os.path.join(given_config.out_dir, config_name)
-#    print("Loading restarting config from: %s" % reloaded_config_path)
-#    with open(reloaded_config_path, "rb") as config_f:
-#        config = pickle.load(config_f)
-#    assert (config.model_ind == given_config.model_ind)
-#    config.restart = True
-#
-#    # copy over new num_epochs and lr schedule
-#    config.num_epochs = given_config.num_epochs
-#    config.lr_schedule = given_config.lr_schedule
-# else:
-#    print("Given config: %s" % config_to_str(config))
+config.out_root = '/work/LAS/jannesar-lab/shadow_torch/saved_models'
+config.out_dir = '/work/LAS/jannesar-lab/shadow_torch/saved_models/' + time_begin
+os.mkdir(config.out_dir)
+config.batch_sz = 1  # until we implement gradient accumulation
+config.dataloader_batch_sz = int(config.batch_sz / config.num_dataloaders)  # should be 1/1
+assert (config.mode == "IID")
+assert ("TwoHead" in config.arch)
+assert (config.output_k_B == config.gt_k)
+config.output_k = config.output_k_B  # for eval code
+assert (config.output_k_A >= config.gt_k)  # sanity
+config.use_doersch_datasets = False
+config.eval_mode = "hung"
+set_segmentation_input_channels(config)  # changed config.in_channels
+print('config.in_channels = ', config.in_channels)
+
+if not os.path.exists(config.out_dir):
+   os.makedirs(config.out_dir)  # did above
+
+if config.restart:
+   config_name = "config.pickle"
+   dict_name = "latest.pytorch"
+
+   given_config = config
+   reloaded_config_path = os.path.join(given_config.out_dir, config_name)
+   # loads config file, which we did above instead
+   # print("Loading restarting config from: %s" % reloaded_config_path)
+   # with open(reloaded_config_path, "rb") as config_f:
+   #     config = pickle.load(config_f)
+   # assert (config.model_ind == given_config.model_ind)
+   # config.restart = True
+
+   # copy over new num_epochs and lr schedule
+   config.num_epochs = given_config.num_epochs
+   config.lr_schedule = given_config.lr_schedule
+   print("Given config: %s" % config_to_str(config))
+else:
+   print("Given config: %s" % config_to_str(config))
 
 
 # Model ------------------------------------------------------
