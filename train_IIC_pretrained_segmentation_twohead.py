@@ -6,6 +6,7 @@ import pickle
 import sys
 from datetime import datetime
 
+
 import matplotlib
 import numpy as np
 import torch
@@ -13,6 +14,8 @@ import torch
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import os
+
+sys.path.append('IIC/code') 
 
 import IIC.code.archs as archs
 from IIC.code.utils.cluster.general import config_to_str, get_opt, update_lr, nice
@@ -124,65 +127,80 @@ parser.add_argument("--half_T_side_sparse_max", type=int, default=0)
 '''
 
 # config = parser.parse_args()  # change to have predefined args or load config file
-config = pickle.load('./pretrained_models/models/555/config.pickle')
+with open('./pretrained_models/models/555/config.pickle', "rb") as f:
+    u = pickle._Unpickler(f)
+    u.encoding = 'latin1'
+    config = u.load()
+
+#config = pickle.load(open('./pretrained_models/models/555/config.pickle', "rb"))
 # make sure --dataset_root is set to (absolute path of) my_CocoStuff164k_directory, and --fine_to_coarse_dict is set to
 # (absolute path of) code/datasets/segmentation/util/out/fine_to_coarse_dict.pickle
 config.dataset_root = '/work/LAS/jannesar-lab/shadow_torch/data3'
 config.fine_to_course_dict = '/work/LAS/jannesar-lab/shadow_torch/pretrained_models/fine_to_course_dict.pickle'
+config.out_root = "configs"
+config.model_ind = "" 
+
 
 
 # Setup ------------------------------------------------------------------------
 
-config.out_dir = os.path.join(config.out_root, str(config.model_ind))
-config.dataloader_batch_sz = int(config.batch_sz / config.num_dataloaders)
-assert (config.mode == "IID")
-assert ("TwoHead" in config.arch)
-assert (config.output_k_B == config.gt_k)
-config.output_k = config.output_k_B  # for eval code
-assert (config.output_k_A >= config.gt_k)  # sanity
-config.use_doersch_datasets = False
-config.eval_mode = "hung"
-set_segmentation_input_channels(config)
-
-if not os.path.exists(config.out_dir):
-    os.makedirs(config.out_dir)
-
-if config.restart:
-    config_name = "config.pickle"
-    dict_name = "latest.pytorch"
-
-    given_config = config
-    reloaded_config_path = os.path.join(given_config.out_dir, config_name)
-    print("Loading restarting config from: %s" % reloaded_config_path)
-    with open(reloaded_config_path, "rb") as config_f:
-        config = pickle.load(config_f)
-    assert (config.model_ind == given_config.model_ind)
-    config.restart = True
-
-    # copy over new num_epochs and lr schedule
-    config.num_epochs = given_config.num_epochs
-    config.lr_schedule = given_config.lr_schedule
-else:
-    print("Given config: %s" % config_to_str(config))
+#config.out_dir = os.path.join(config.out_root, str(config.model_ind))
+#config.dataloader_batch_sz = int(config.batch_sz / config.num_dataloaders)
+#assert (config.mode == "IID")
+#assert ("TwoHead" in config.arch)
+#assert (config.output_k_B == config.gt_k)
+#config.output_k = config.output_k_B  # for eval code
+#assert (config.output_k_A >= config.gt_k)  # sanity
+#config.use_doersch_datasets = False
+#config.eval_mode = "hung"
+#set_segmentation_input_channels(config)
+#
+#if not os.path.exists(config.out_dir):
+#    os.makedirs(config.out_dir)
+#
+#if config.restart:
+#    config_name = "config.pickle"
+#    dict_name = "latest.pytorch"
+#
+#    given_config = config
+#    reloaded_config_path = os.path.join(given_config.out_dir, config_name)
+#    print("Loading restarting config from: %s" % reloaded_config_path)
+#    with open(reloaded_config_path, "rb") as config_f:
+#        config = pickle.load(config_f)
+#    assert (config.model_ind == given_config.model_ind)
+#    config.restart = True
+#
+#    # copy over new num_epochs and lr schedule
+#    config.num_epochs = given_config.num_epochs
+#    config.lr_schedule = given_config.lr_schedule
+#else:
+#    print("Given config: %s" % config_to_str(config))
 
 
 # Model ------------------------------------------------------
 
 def train():
-    dataloaders_head_A, mapping_assignment_dataloader, mapping_test_dataloader = \
-        segmentation_create_dataloaders(config)
-    dataloaders_head_B = dataloaders_head_A  # unlike for clustering datasets
-
+#    dataloaders_head_A, mapping_assignment_dataloader, mapping_test_dataloader = \
+#        segmentation_create_dataloaders(config)
+#    dataloaders_head_B = dataloaders_head_A  # unlike for clustering datasets
+#
     net = archs.__dict__[config.arch](config)
-    if config.restart:
-        dict = torch.load(os.path.join(config.out_dir, dict_name),
-                          map_location=lambda storage, loc: storage)
-        net.load_state_dict(dict["net"])
+#    if config.restart:
+#        dict = torch.load(os.path.join(config.out_dir, dict_name),
+#                          map_location=lambda storage, loc: storage)
+#        net.load_state_dict(dict["net"])
 
     # pretrained model path, should load pretrained weights
     pretrained_555_path = './pretrained_models/models/555/best_net.pytorch'
     pretrained_555 = torch.load(pretrained_555_path)
-    net.load_state_dict(pretrained_555["net"])
+
+    net.load_state_dict(pretrained_555)
+    print(net)
+    exit()
+
+
+
+
 
     net.cuda()
     net = torch.nn.DataParallel(net)
