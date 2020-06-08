@@ -10,6 +10,9 @@ import matplotlib
 import numpy as np
 import torch
 
+# this is for tensorboard
+from torch.utils.tensorboard import SummaryWriter
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import os
@@ -127,6 +130,11 @@ parser.add_argument("--half_T_side_sparse_min", type=int, default=0)
 parser.add_argument("--half_T_side_sparse_max", type=int, default=0)
 '''
 
+board = "boards/" + time_begin
+os.mkdir(board)
+
+writer = SummaryWriter(board)
+
 # config = parser.parse_args()  # change to have predefined args or load config file
 with open('./pretrained_models/models/555/config.pickle', "rb") as f:
     u = pickle._Unpickler(f)
@@ -140,7 +148,7 @@ config.dataset_root = '/work/LAS/jannesar-lab/shadow_torch/data3'
 config.fine_to_coarse_dict = '/work/LAS/jannesar-lab/shadow_torch/IIC/code/datasets/segmentation/util/out/fine_to_coarse_dict.pickle'
 config.out_root = "configs"
 config.model_ind = 555
-config.restart = False
+config.restart = True 
 config.test_code = True 
 
 '''
@@ -222,7 +230,6 @@ Namespace(aff_max_rot=30.0,
 
 # Setup ------------------------------------------------------------------------
 
-# config.out_dir = os.path.join(config.out_root, str(config.model_ind))
 config.out_root = '/work/LAS/jannesar-lab/shadow_torch/saved_models'
 config.out_dir = '/work/LAS/jannesar-lab/shadow_torch/saved_models/' + time_begin
 os.mkdir(config.out_dir)
@@ -261,8 +268,8 @@ if config.restart:
 else:
    print("Given config: %s" % config_to_str(config))
 
-
 # Model ------------------------------------------------------
+print("Starting the Model section")
 
 def train():
     dataloaders_head_A, mapping_assignment_dataloader, mapping_test_dataloader = segmentation_create_dataloaders(config) 
@@ -270,8 +277,7 @@ def train():
 
     net = archs.__dict__[config.arch](config)
 #        if config.restart:
-#            dict = torch.load(os.path.join(config.out_dir, dict_name),
-#                              map_location=lambda storage, loc: storage)
+#            dict = torch.load(config.out_dir)
 #            net.load_state_dict(dict["net"])
 
     # pretrained model path, should load pretrained weights
@@ -285,8 +291,8 @@ def train():
     net.train()
 
     optimiser = get_opt(config.opt)(net.module.parameters(), lr=config.lr)
-    if config.restart:
-        optimiser.load_state_dict(dict["optimiser"])
+#    if config.restart:
+#        optimiser.load_state_dict(dict["optimiser"])
 
 
     heads = ["A", "B"]
@@ -295,42 +301,42 @@ def train():
 
     # Results
     # ----------------------------------------------------------------------
+    print("Starting the Results section")
 
-    if config.restart:
-        next_epoch = config.last_epoch + 1
-        print("starting from epoch %d" % next_epoch)
-
-        config.epoch_acc = config.epoch_acc[:next_epoch]  # in case we overshot
-        config.epoch_avg_subhead_acc = config.epoch_avg_subhead_acc[:next_epoch]
-        config.epoch_stats = config.epoch_stats[:next_epoch]
-
-        config.epoch_loss_head_A = config.epoch_loss_head_A[:(next_epoch - 1)]
-        config.epoch_loss_no_lamb_head_A = config.epoch_loss_no_lamb_head_A[
-                                           :(next_epoch - 1)]
-        config.epoch_loss_head_B = config.epoch_loss_head_B[:(next_epoch - 1)]
-        config.epoch_loss_no_lamb_head_B = config.epoch_loss_no_lamb_head_B[
-                                           :(next_epoch - 1)]
-    else:
-        config.epoch_acc = []
-        config.epoch_avg_subhead_acc = []
-        config.epoch_stats = []
-
-        config.epoch_loss_head_A = []
-        config.epoch_loss_no_lamb_head_A = []
-
-        config.epoch_loss_head_B = []
-        config.epoch_loss_no_lamb_head_B = []
-
-        _ = segmentation_eval(config, net,
-                              mapping_assignment_dataloader=mapping_assignment_dataloader,
-                              mapping_test_dataloader=mapping_test_dataloader,
-                              sobel=(not config.no_sobel),
-                              using_IR=config.using_IR)
-
-        print(
-            "Pre: time %s: \n %s" % (datetime.now(), nice(config.epoch_stats[-1])))
-        sys.stdout.flush()
-        next_epoch = 1
+#    if config.restart:
+#        next_epoch = config.last_epoch + 1
+#        print("starting from epoch %d" % next_epoch)
+#
+#        config.epoch_acc = config.epoch_acc[:next_epoch]  # in case we overshot
+#        config.epoch_avg_subhead_acc = config.epoch_avg_subhead_acc[:next_epoch]
+#        config.epoch_stats = config.epoch_stats[:next_epoch]
+#
+#        config.epoch_loss_head_A = config.epoch_loss_head_A[:(next_epoch - 1)]
+#        config.epoch_loss_no_lamb_head_A = config.epoch_loss_no_lamb_head_A[
+#                                           :(next_epoch - 1)]
+#        config.epoch_loss_head_B = config.epoch_loss_head_B[:(next_epoch - 1)]
+#        config.epoch_loss_no_lamb_head_B = config.epoch_loss_no_lamb_head_B[
+#                                           :(next_epoch - 1)]
+#    else:
+    config.epoch_acc = []
+    config.epoch_avg_subhead_acc = []
+    config.epoch_stats = []
+    
+    config.epoch_loss_head_A = []
+    config.epoch_loss_no_lamb_head_A = []
+    
+    config.epoch_loss_head_B = []
+    config.epoch_loss_no_lamb_head_B = []
+    
+    _ = segmentation_eval(config, net,
+                          mapping_assignment_dataloader=mapping_assignment_dataloader,
+                          mapping_test_dataloader=mapping_test_dataloader,
+                          sobel=(not config.no_sobel),
+                          using_IR=config.using_IR)
+    
+    print("Pre: time %s: \n %s" % (datetime.now(), nice(config.epoch_stats[-1])))
+    sys.stdout.flush()
+    next_epoch = 1
 
     fig, axarr = plt.subplots(6, sharex=False, figsize=(20, 20))
 
@@ -343,9 +349,11 @@ def train():
 
     # Train
     # ------------------------------------------------------------------------
+    print("Starting the Traing section")
 
     for e_i in range(next_epoch, config.num_epochs):
         print("Starting e_i: %d %s" % (e_i, datetime.now()))
+        exit()
         sys.stdout.flush()
 
         if e_i in config.lr_schedule:
@@ -447,6 +455,7 @@ def train():
                 avg_loss_no_lamb_batch /= config.num_sub_heads
 
                 if ((b_i % 100) == 0) or (e_i == next_epoch):
+                    #writer.add_scalar('head_{}/avg_loss_batch'.format(head), avg_loss_batch.item(), b_i)
                     print(
                         "Model ind %d epoch %d head %s batch: %d avg loss %f avg loss no "
                         "lamb %f "
@@ -471,8 +480,6 @@ def train():
                 b_i += 1
                 if b_i == 2 and config.test_code:
                     break
-                print("testing one iteration")
-                exit()
 
             avg_loss = float(avg_loss / avg_loss_count)
             avg_loss_no_lamb = float(avg_loss_no_lamb / avg_loss_count)
