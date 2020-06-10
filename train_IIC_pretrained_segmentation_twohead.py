@@ -281,14 +281,20 @@ def train():
 #            net.load_state_dict(dict["net"])
 
     # pretrained model path, should load pretrained weights
+    print("Loading pretrained")
     pretrained_555_path = './pretrained_models/models/555/best_net.pytorch'
     pretrained_555 = torch.load(pretrained_555_path)
+    print("Done loading pretrained")
 
+    print("Loading state dic")
     net.load_state_dict(pretrained_555)
+    print("Done loading state dic")
 
+    print("Setting the model in cuda")
     net.cuda()
     net = torch.nn.DataParallel(net)
     net.train()
+    print("Done setting the model in cuda")
 
     optimiser = get_opt(config.opt)(net.module.parameters(), lr=config.lr)
 #    if config.restart:
@@ -327,6 +333,7 @@ def train():
     
     config.epoch_loss_head_B = []
     config.epoch_loss_no_lamb_head_B = []
+    print("Line after all initialization")
     
     _ = segmentation_eval(config, net,
                           mapping_assignment_dataloader=mapping_assignment_dataloader,
