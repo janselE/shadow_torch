@@ -148,8 +148,8 @@ config.dataset_root = '/work/LAS/jannesar-lab/shadow_torch/data3'
 config.fine_to_coarse_dict = '/work/LAS/jannesar-lab/shadow_torch/IIC/code/datasets/segmentation/util/out/fine_to_coarse_dict.pickle'
 config.out_root = "configs"
 config.model_ind = 555
-config.restart = True 
-config.test_code = True 
+config.restart = True
+config.test_code = True
 
 '''
 The config file contains the following:
@@ -227,6 +227,17 @@ Namespace(aff_max_rot=30.0,
 
 '''
 
+'''
+The command for running/reproducing model 555, all same as given in config above
+COCO-Stuff-3 (555)
+  export CUDA_VISIBLE_DEVICES=0,1,2,3 && nohup python -m code.scripts.segmentation.segmentation_twohead --mode IID 
+  --dataset Coco164kCuratedFew --dataset_root /scratch/local/ssd/xuji/COCO/CocoStuff164k --model_ind 555 
+  --arch SegmentationNet10aTwoHead --num_epochs 4800 --lr 0.0001 --lamb_A 1.0 --lamb_B 1.5 --num_sub_heads 1 
+  --batch_sz 120 --num_dataloaders 1 --use_coarse_labels --output_k_A 15 --output_k_B 3 --gt_k 3 --pre_scale_all 
+  --pre_scale_factor 0.33 --input_sz 128 --half_T_side_sparse_min 0 --half_T_side_sparse_max 0 
+  --half_T_side_dense 10 --include_rgb  --coco_164k_curated_version 6 --use_uncollapsed_loss 
+  --batchnorm_track > gnoded1_gpu0123_m555_r1.out &
+  '''
 
 # Setup ------------------------------------------------------------------------
 
@@ -246,39 +257,40 @@ set_segmentation_input_channels(config)  # changed config.in_channels
 print('config.in_channels = ', config.in_channels)
 
 if not os.path.exists(config.out_dir):
-   os.makedirs(config.out_dir)  # did above
+    os.makedirs(config.out_dir)  # did above
 
 if config.restart:
-   config_name = "config.pickle"
-   dict_name = "latest.pytorch"
+    config_name = "config.pickle"
+    dict_name = "latest.pytorch"
 
-   given_config = config
-   reloaded_config_path = os.path.join(given_config.out_dir, config_name)
-   # loads config file, which we did above instead
-   # print("Loading restarting config from: %s" % reloaded_config_path)
-   # with open(reloaded_config_path, "rb") as config_f:
-   #     config = pickle.load(config_f)
-   # assert (config.model_ind == given_config.model_ind)
-   # config.restart = True
+    given_config = config
+    reloaded_config_path = os.path.join(given_config.out_dir, config_name)
+    # loads config file, which we did above instead
+    # print("Loading restarting config from: %s" % reloaded_config_path)
+    # with open(reloaded_config_path, "rb") as config_f:
+    #     config = pickle.load(config_f)
+    # assert (config.model_ind == given_config.model_ind)
+    # config.restart = True
 
-   # copy over new num_epochs and lr schedule
-   config.num_epochs = given_config.num_epochs
-   config.lr_schedule = given_config.lr_schedule
-   print("Given config: %s" % config_to_str(config))
+    # copy over new num_epochs and lr schedule
+    config.num_epochs = given_config.num_epochs
+    config.lr_schedule = given_config.lr_schedule
+    print("Given config: %s" % config_to_str(config))
 else:
-   print("Given config: %s" % config_to_str(config))
+    print("Given config: %s" % config_to_str(config))
 
 # Model ------------------------------------------------------
 print("Starting the Model section")
 
+
 def train():
-    dataloaders_head_A, mapping_assignment_dataloader, mapping_test_dataloader = segmentation_create_dataloaders(config) 
+    dataloaders_head_A, mapping_assignment_dataloader, mapping_test_dataloader = segmentation_create_dataloaders(config)
     dataloaders_head_B = dataloaders_head_A  # unlike for clustering datasets
 
     net = archs.__dict__[config.arch](config)
-#        if config.restart:
-#            dict = torch.load(config.out_dir)
-#            net.load_state_dict(dict["net"])
+    #        if config.restart:
+    #            dict = torch.load(config.out_dir)
+    #            net.load_state_dict(dict["net"])
 
     # pretrained model path, should load pretrained weights
     print("Loading pretrained")
@@ -297,9 +309,8 @@ def train():
     print("Done setting the model in cuda")
 
     optimiser = get_opt(config.opt)(net.module.parameters(), lr=config.lr)
-#    if config.restart:
-#        optimiser.load_state_dict(dict["optimiser"])
-
+    # if config.restart:
+    #     optimiser.load_state_dict(dict["optimiser"]) # no "optimiser" in saved config
 
     heads = ["A", "B"]
     if hasattr(config, "head_B_first") and config.head_B_first:
@@ -309,41 +320,41 @@ def train():
     # ----------------------------------------------------------------------
     print("Starting the Results section")
 
-#    if config.restart:
-#        next_epoch = config.last_epoch + 1
-#        print("starting from epoch %d" % next_epoch)
-#
-#        config.epoch_acc = config.epoch_acc[:next_epoch]  # in case we overshot
-#        config.epoch_avg_subhead_acc = config.epoch_avg_subhead_acc[:next_epoch]
-#        config.epoch_stats = config.epoch_stats[:next_epoch]
-#
-#        config.epoch_loss_head_A = config.epoch_loss_head_A[:(next_epoch - 1)]
-#        config.epoch_loss_no_lamb_head_A = config.epoch_loss_no_lamb_head_A[
-#                                           :(next_epoch - 1)]
-#        config.epoch_loss_head_B = config.epoch_loss_head_B[:(next_epoch - 1)]
-#        config.epoch_loss_no_lamb_head_B = config.epoch_loss_no_lamb_head_B[
-#                                           :(next_epoch - 1)]
-#    else:
-    config.epoch_acc = []
-    config.epoch_avg_subhead_acc = []
-    config.epoch_stats = []
-    
-    config.epoch_loss_head_A = []
-    config.epoch_loss_no_lamb_head_A = []
-    
-    config.epoch_loss_head_B = []
-    config.epoch_loss_no_lamb_head_B = []
-    print("Line after all initialization")
-    
-    _ = segmentation_eval(config, net,
-                          mapping_assignment_dataloader=mapping_assignment_dataloader,
-                          mapping_test_dataloader=mapping_test_dataloader,
-                          sobel=(not config.no_sobel),
-                          using_IR=config.using_IR)
-    
-    print("Pre: time %s: \n %s" % (datetime.now(), nice(config.epoch_stats[-1])))
-    sys.stdout.flush()
-    next_epoch = 1
+    if config.restart:
+        next_epoch = config.last_epoch + 1
+        print("starting from epoch %d" % next_epoch)
+
+        config.epoch_acc = config.epoch_acc[:next_epoch]  # in case we overshot
+        config.epoch_avg_subhead_acc = config.epoch_avg_subhead_acc[:next_epoch]
+        config.epoch_stats = config.epoch_stats[:next_epoch]
+
+        config.epoch_loss_head_A = config.epoch_loss_head_A[:(next_epoch - 1)]
+        config.epoch_loss_no_lamb_head_A = config.epoch_loss_no_lamb_head_A[
+                                           :(next_epoch - 1)]
+        config.epoch_loss_head_B = config.epoch_loss_head_B[:(next_epoch - 1)]
+        config.epoch_loss_no_lamb_head_B = config.epoch_loss_no_lamb_head_B[
+                                           :(next_epoch - 1)]
+    else:
+        config.epoch_acc = []
+        config.epoch_avg_subhead_acc = []
+        config.epoch_stats = []
+
+        config.epoch_loss_head_A = []
+        config.epoch_loss_no_lamb_head_A = []
+
+        config.epoch_loss_head_B = []
+        config.epoch_loss_no_lamb_head_B = []
+        print("Line after all initialization")
+
+        _ = segmentation_eval(config, net,
+                              mapping_assignment_dataloader=mapping_assignment_dataloader,
+                              mapping_test_dataloader=mapping_test_dataloader,
+                              sobel=(not config.no_sobel),
+                              using_IR=config.using_IR)
+
+        print("Pre: time %s: \n %s" % (datetime.now(), nice(config.epoch_stats[-1])))
+        sys.stdout.flush()
+        next_epoch = 1
 
     fig, axarr = plt.subplots(6, sharex=False, figsize=(20, 20))
 
@@ -462,7 +473,7 @@ def train():
                 avg_loss_no_lamb_batch /= config.num_sub_heads
 
                 if ((b_i % 100) == 0) or (e_i == next_epoch):
-                    #writer.add_scalar('head_{}/avg_loss_batch'.format(head), avg_loss_batch.item(), b_i)
+                    # writer.add_scalar('head_{}/avg_loss_batch'.format(head), avg_loss_batch.item(), b_i)
                     print(
                         "Model ind %d epoch %d head %s batch: %d avg loss %f avg loss no "
                         "lamb %f "
