@@ -144,8 +144,8 @@ with open('./pretrained_models/models/555/config.pickle', "rb") as f:
 # config = pickle.load(open('./pretrained_models/models/555/config.pickle', "rb"))
 # make sure --dataset_root is set to (absolute path of) my_CocoStuff164k_directory, and --fine_to_coarse_dict is set to
 # (absolute path of) code/datasets/segmentation/util/out/fine_to_coarse_dict.pickle
-config.dataset_root = '/work/LAS/jannesar-lab/shadow_torch/data3'
-config.fine_to_coarse_dict = '/work/LAS/jannesar-lab/shadow_torch/IIC/code/datasets/segmentation/util/out/fine_to_coarse_dict.pickle'
+config.dataset_root = './data3'
+config.fine_to_coarse_dict = './IIC/code/datasets/segmentation/util/out/fine_to_coarse_dict.pickle'
 config.out_root = "configs"
 config.model_ind = 555
 config.restart = True
@@ -241,8 +241,8 @@ COCO-Stuff-3 (555)
 
 # Setup ------------------------------------------------------------------------
 
-config.out_root = '/work/LAS/jannesar-lab/shadow_torch/saved_models'
-config.out_dir = '/work/LAS/jannesar-lab/shadow_torch/saved_models/' + time_begin
+config.out_root = './saved_models'
+config.out_dir = './saved_models/' + time_begin
 os.mkdir(config.out_dir)
 config.batch_sz = 1  # until we implement gradient accumulation
 config.dataloader_batch_sz = int(config.batch_sz / config.num_dataloaders)  # should be 1/1
@@ -325,8 +325,8 @@ def train():
         print("starting from epoch %d" % next_epoch)
 
         config.epoch_acc = config.epoch_acc[:next_epoch]  # in case we overshot
-        config.epoch_avg_subhead_acc = config.epoch_avg_subhead_acc[:next_epoch]
-        config.epoch_stats = config.epoch_stats[:next_epoch]
+        config.epoch_avg_subhead_acc = []  # config.epoch_avg_subhead_acc[:next_epoch]
+        config.epoch_stats = []  # config.epoch_stats[:next_epoch]
 
         config.epoch_loss_head_A = config.epoch_loss_head_A[:(next_epoch - 1)]
         config.epoch_loss_no_lamb_head_A = config.epoch_loss_no_lamb_head_A[
