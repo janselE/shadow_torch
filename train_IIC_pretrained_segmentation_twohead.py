@@ -325,8 +325,8 @@ def train():
         print("starting from epoch %d" % next_epoch)
 
         config.epoch_acc = config.epoch_acc[:next_epoch]  # in case we overshot
-        config.epoch_avg_subhead_acc = config.epoch_avg_subhead_acc[:next_epoch]
-        config.epoch_stats = config.epoch_stats[:next_epoch]
+        config.epoch_avg_subhead_acc = .0 #config.epoch_avg_subhead_acc[:next_epoch]
+        config.epoch_stats = 0 #config.epoch_stats[:next_epoch]
 
         config.epoch_loss_head_A = config.epoch_loss_head_A[:(next_epoch - 1)]
         config.epoch_loss_no_lamb_head_A = config.epoch_loss_no_lamb_head_A[
@@ -371,7 +371,6 @@ def train():
 
     for e_i in range(next_epoch, config.num_epochs):
         print("Starting e_i: %d %s" % (e_i, datetime.now()))
-        exit()
         sys.stdout.flush()
 
         if e_i in config.lr_schedule:
@@ -397,7 +396,7 @@ def train():
             avg_loss_no_lamb = 0.
             avg_loss_count = 0
 
-            for tup in itertools.izip(*iterators):
+            for tup in zip(*iterators):
                 net.module.zero_grad()
 
                 if not config.no_sobel:
