@@ -144,12 +144,13 @@ with open('./pretrained_models/models/555/config.pickle', "rb") as f:
 # config = pickle.load(open('./pretrained_models/models/555/config.pickle', "rb"))
 # make sure --dataset_root is set to (absolute path of) my_CocoStuff164k_directory, and --fine_to_coarse_dict is set to
 # (absolute path of) code/datasets/segmentation/util/out/fine_to_coarse_dict.pickle
-config.dataset_root = '/work/LAS/jannesar-lab/shadow_torch/data3'
-config.fine_to_coarse_dict = '/work/LAS/jannesar-lab/shadow_torch/IIC/code/datasets/segmentation/util/out/fine_to_coarse_dict.pickle'
+config.dataset_root = './data3'
+config.fine_to_coarse_dict = './IIC/code/datasets/segmentation/util/out/fine_to_coarse_dict.pickle'
 config.out_root = "configs"
 config.model_ind = 555
 config.restart = True
-config.test_code = True
+config.test_code = False 
+config.save_freq = 100 # Added this
 
 '''
 The config file contains the following:
@@ -241,8 +242,8 @@ COCO-Stuff-3 (555)
 
 # Setup ------------------------------------------------------------------------
 
-config.out_root = '/work/LAS/jannesar-lab/shadow_torch/saved_models'
-config.out_dir = '/work/LAS/jannesar-lab/shadow_torch/saved_models/' + time_begin
+config.out_root = './saved_models'
+config.out_dir = './saved_models/' + time_begin
 os.mkdir(config.out_dir)
 config.batch_sz = 1  # until we implement gradient accumulation
 config.dataloader_batch_sz = int(config.batch_sz / config.num_dataloaders)  # should be 1/1
@@ -281,6 +282,7 @@ else:
 
 # Model ------------------------------------------------------
 print("Starting the Model section")
+print("This is the number of epochs",config.lr_schedule)
 
 
 def train():
@@ -325,8 +327,8 @@ def train():
         print("starting from epoch %d" % next_epoch)
 
         config.epoch_acc = config.epoch_acc[:next_epoch]  # in case we overshot
-        config.epoch_avg_subhead_acc = .0 #config.epoch_avg_subhead_acc[:next_epoch]
-        config.epoch_stats = 0 #config.epoch_stats[:next_epoch]
+        config.epoch_avg_subhead_acc = []  # config.epoch_avg_subhead_acc[:next_epoch]
+        config.epoch_stats = []  # config.epoch_stats[:next_epoch]
 
         config.epoch_loss_head_A = config.epoch_loss_head_A[:(next_epoch - 1)]
         config.epoch_loss_no_lamb_head_A = config.epoch_loss_no_lamb_head_A[
@@ -368,6 +370,8 @@ def train():
     # Train
     # ------------------------------------------------------------------------
     print("Starting the Traing section")
+    curr = 0
+	
 
     for e_i in range(next_epoch, config.num_epochs):
         print("Starting e_i: %d %s" % (e_i, datetime.now()))
@@ -471,8 +475,9 @@ def train():
                 avg_loss_batch /= config.num_sub_heads
                 avg_loss_no_lamb_batch /= config.num_sub_heads
 
+
                 if ((b_i % 100) == 0) or (e_i == next_epoch):
-                    # writer.add_scalar('head_{}/avg_loss_batch'.format(head), avg_loss_batch.item(), b_i)
+                    writer.add_scalar('loss/head_{}_avg_loss_batch'.format(head), avg_loss_batch.item(), curr)
                     print(
                         "Model ind %d epoch %d head %s batch: %d avg loss %f avg loss no "
                         "lamb %f "
@@ -493,6 +498,7 @@ def train():
                 optimiser.step()
 
                 torch.cuda.empty_cache()
+        	curr += 1
 
                 b_i += 1
                 if b_i == 2 and config.test_code:
