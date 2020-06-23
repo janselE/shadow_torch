@@ -149,7 +149,7 @@ config.fine_to_coarse_dict = './IIC/code/datasets/segmentation/util/out/fine_to_
 config.out_root = "configs"
 config.model_ind = 555
 config.restart = True
-config.test_code = False 
+config.test_code = False
 config.save_freq = 100 # Added this
 
 '''
@@ -371,7 +371,6 @@ def train():
     # ------------------------------------------------------------------------
     print("Starting the Traing section")
     curr = 0
-	
 
     for e_i in range(next_epoch, config.num_epochs):
         print("Starting e_i: %d %s" % (e_i, datetime.now()))
@@ -477,7 +476,8 @@ def train():
 
 
                 if ((b_i % 100) == 0) or (e_i == next_epoch):
-                    writer.add_scalar('loss/head_{}_avg_loss_batch'.format(head), avg_loss_batch.item(), curr)
+                    writer.add_scalar('loss/head_{}_discrete_loss_batch'.format(head), avg_loss_batch.item(), curr) # is this descrete
+
                     print(
                         "Model ind %d epoch %d head %s batch: %d avg loss %f avg loss no "
                         "lamb %f "
@@ -527,10 +527,17 @@ def train():
         axarr[0].clear()
         axarr[0].plot(config.epoch_acc)
         axarr[0].set_title("acc (best), top: %f" % max(config.epoch_acc))
+        print("config.epoch_acc: ", config.epoch_acc)
+        print("type:", type(config.epoch_acc))
+        print("best", max(config.epoch_acc))
+
 
         axarr[1].clear()
         axarr[1].plot(config.epoch_avg_subhead_acc)
         axarr[1].set_title("acc (avg), top: %f" % max(config.epoch_avg_subhead_acc))
+        print("config.epoch_avg_subhead_acc: ", config.epoch_avg_subhead_acc)
+        print("type:", type(config.epoch_avg_subhead_acc))
+        print("best", max(config.epoch_avg_subhead_acc))
 
         axarr[2].clear()
         axarr[2].plot(config.epoch_loss_head_A)
