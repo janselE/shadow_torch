@@ -421,6 +421,7 @@ def train():
                 curr_batch_sz = tup[0][0].shape[0]
                 for d_i in range(config.num_dataloaders):
                     img1, img2, affine2_to_1, mask_img1 = tup[d_i]
+                    writer.add_image('images/train_original', img1[0], curr)
                     assert (img1.shape[0] == curr_batch_sz)
 
                     actual_batch_start = d_i * curr_batch_sz
