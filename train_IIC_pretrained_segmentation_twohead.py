@@ -28,6 +28,9 @@ from IIC.code.utils.segmentation.IID_losses import IID_segmentation_loss, \
     IID_segmentation_loss_uncollapsed
 from IIC.code.utils.segmentation.data import segmentation_create_dataloaders
 from IIC.code.utils.segmentation.general import set_segmentation_input_channels
+from color_segmentation import Color_Mask # I added this to map the outputs
+
+
 
 time_begin = str(datetime.now()).replace(' ', '-')
 
@@ -257,6 +260,8 @@ config.eval_mode = "hung"
 set_segmentation_input_channels(config)  # changed config.in_channels
 print('config.in_channels = ', config.in_channels)
 
+color_mapper = [Color_Mask(config.output_k_A), Color_Mask(config.output_k_B)]
+
 if not os.path.exists(config.out_dir):
     os.makedirs(config.out_dir)  # did above
 
@@ -476,8 +481,17 @@ def train():
 
 
                 if ((b_i % 100) == 0) or (e_i == next_epoch):
+                    o = img1[0][:3, :, :].cpu().detach()
+                    img_to_board = torch.argmax(x1_outs[0].cpu().detach(), dim=1).numpy()[0]  # gets black and white image
+
+                    if head == 'A':
+                        color = color_mapper[0].add_color(img_to_board) # this is where we send the mask to the scrip
+                    else:
+                        color = color_mapper[1].add_color(img_to_board) # this is where we send the mask to the scrip
+
                     writer.add_scalar('loss/head_{}_discrete_loss_batch'.format(head), avg_loss_batch.item(), curr) # is this descrete
-                    writer.add_image('images/train_original', img1[0][:3, :, :], curr)
+                    writer.add_image('images/head_{}_train_images'.format(head), color, curr)
+                    writer.add_image('images/train_images', color, curr)
 
                     print(
                         "Model ind %d epoch %d head %s batch: %d avg loss %f avg loss no "
