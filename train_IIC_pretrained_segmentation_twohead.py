@@ -490,8 +490,6 @@ def train():
                         color = color_mapper[1].add_color(img_to_board) # this is where we send the mask to the scrip
 
                     writer.add_scalar('loss/head_{}_discrete_loss_batch'.format(head), avg_loss_batch.item(), curr) # is this descrete
-                    writer.add_image('images/head_{}_train_images'.format(head), color, curr)
-                    writer.add_image('images/train_images', color, curr)
 
                     print(
                         "Model ind %d epoch %d head %s batch: %d avg loss %f avg loss no "
@@ -511,6 +509,10 @@ def train():
 
                 avg_loss_batch.backward()
                 optimiser.step()
+
+                if curr % 500 == 0:
+                    writer.add_image('images/train_original', img1[0][:3, :, :], curr)
+                    writer.add_image('images/head_{}_train_images'.format(head), color, curr)
 
                 torch.cuda.empty_cache()
         	curr += 1
