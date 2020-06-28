@@ -511,7 +511,7 @@ def train():
                 optimiser.step()
 
                 if curr % 500 == 0:
-                    writer.add_image('images/train_original', img1[0][:3, :, :], curr)
+                    writer.add_image('images/head_{}_train_original'.format(head), img1[0][:3, :, :], curr)
                     writer.add_image('images/head_{}_train_images'.format(head), color, curr)
 
                 torch.cuda.empty_cache()
