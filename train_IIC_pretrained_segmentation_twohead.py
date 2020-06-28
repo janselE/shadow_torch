@@ -375,7 +375,7 @@ def train():
     # Train
     # ------------------------------------------------------------------------
     print("Starting the Traing section")
-    curr = 0
+    curr_heads = [0, 0]
 
     for e_i in range(next_epoch, config.num_epochs):
         print("Starting e_i: %d %s" % (e_i, datetime.now()))
@@ -386,6 +386,8 @@ def train():
 
         for head_i in range(2):
             head = heads[head_i]
+            curr = curr_heads[head_i]
+
             if head == "A":
                 dataloaders = dataloaders_head_A
                 epoch_loss = config.epoch_loss_head_A
@@ -516,6 +518,7 @@ def train():
 
                 torch.cuda.empty_cache()
         	curr += 1
+                curr_heads[head_i] = curr
 
                 b_i += 1
                 if b_i == 2 and config.test_code:
