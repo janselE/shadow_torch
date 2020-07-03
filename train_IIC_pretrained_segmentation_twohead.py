@@ -375,7 +375,7 @@ def train():
     # Train
     # ------------------------------------------------------------------------
     print("Starting the Traing section")
-    curr_heads = [0, 0]
+    curr = 0
 
     for e_i in range(next_epoch, config.num_epochs):
         print("Starting e_i: %d %s" % (e_i, datetime.now()))
@@ -386,8 +386,6 @@ def train():
 
         for head_i in range(2):
             head = heads[head_i]
-            curr = curr_heads[head_i]
-
             if head == "A":
                 dataloaders = dataloaders_head_A
                 epoch_loss = config.epoch_loss_head_A
